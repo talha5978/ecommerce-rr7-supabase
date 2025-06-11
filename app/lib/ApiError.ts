@@ -1,7 +1,7 @@
 export class ApiError extends Error {
 	public statusCode: number;
 	public ok: false;
-	public details?: any[];
+	public details: any[] = [];
     public message: string;
 
 	/**
@@ -13,14 +13,14 @@ export class ApiError extends Error {
 	constructor(
         message: string = "Internal Server Error", 
         statusCode: number = 500, 
-        details?: any[]
+        details: any[] = []
     ) {
 		super(message);
 		Object.setPrototypeOf(this, ApiError.prototype);
-        this.message = message;     // ← this line is “redundant,” but makes TS aware
+        this.message = message;
 		this.name = "ApiError";
 		this.statusCode = statusCode;
 		this.ok = false;
-		if (details) this.details = details;
+		this.details.push({ stack: this.stack });
 	}
 }

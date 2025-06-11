@@ -6,7 +6,7 @@ export async function getCurrentUserFromRequest(request: Request) {
     const userCacheKey = "user";
 	const cachedUser = getCache(userCacheKey);
 	if (cachedUser) {
-        console.log("cache hit 📕");
+        console.log("current user cache hit 📕");
         return { user: cachedUser };
     }
 

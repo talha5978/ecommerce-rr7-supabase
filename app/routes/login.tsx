@@ -4,22 +4,16 @@ import { Input } from "~/components/ui/input";
 import { ActionFunctionArgs, Link, LoaderFunctionArgs, redirect, useActionData, useNavigate, useNavigation } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { toast } from "sonner";
 import React, { useEffect } from "react";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { Form as RouterForm } from "react-router";
+import { type LoginFormData, loginSchema } from "~/schemas/login.schema";
 
 export async function loader({ request: _ }: LoaderFunctionArgs) {
 	return null;
 }
-
-const loginSchema = z.object({
-	email: z.string({ required_error: "Email is required" }).email(),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
@@ -48,7 +42,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 function Login() {
-	const actionData = useActionData<{ error: string }>();
+	const actionData = useActionData<{ error: string } | undefined>();
 
 	const navigation = useNavigation();
 	const isSubmitting =
@@ -58,18 +52,14 @@ function Login() {
 	// React Hook Form setup
 	const form = useForm<LoginFormData>({
 		resolver: zodResolver(loginSchema),
-		mode: "onTouched",
+		mode: "onChange",
 	});
 
 	// If actionData.error changes, show a toast
 	useEffect(() => {
 		if (actionData?.error) {
 			toast.error(actionData.error);
-		} else if (actionData == undefined) {
-			toast.success("OTP sent successfully");
 		}
-		console.log(actionData);
-		
 	}, [actionData]);
 
 	return (
@@ -102,11 +92,11 @@ function Login() {
 				<div>
 					<p className="text-center text-sm text-muted-foreground">
 						By clicking “Get Code,” you agree to our{" "}
-						<Link to="#" className="underline" prefetch="viewport">
+						<Link to="#" className="underline" prefetch="viewport" viewTransition>
 							Terms of Service
 						</Link>{" "}
 						and{" "}
-						<Link to="#" className="underline" prefetch="viewport">
+						<Link to="#" className="underline" prefetch="viewport" viewTransition>
 							Privacy Policy
 						</Link>
 						.

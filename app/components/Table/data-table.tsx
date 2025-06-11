@@ -9,6 +9,7 @@ import {
 	ColumnDef,
 	flexRender,
 	getCoreRowModel,
+	Row,
 	Table,
 	useReactTable,
 } from "@tanstack/react-table";
@@ -33,7 +34,7 @@ import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "~/components/ui/skeleton";
 
 export const schema = z.object({
 	id: z.number(),
@@ -47,15 +48,6 @@ export const schema = z.object({
 
 interface DataTableProps<T> {
 	table: Table<T>;
-	// pagination?: {
-	// 	currentPage: number;
-	// 	totalPages: number;
-	// 	onPageChange: (page: number) => void;
-	// 	limit: number;
-	// 	onLimitChange?: (limit: number) => void;
-	// 	hasPrevPage: boolean;
-	// 	hasNextPage: boolean;
-	// };
 	onPageChange: (page: number) => void;
 	onPageSizeChange: (pageSize: number) => void;
 	pageSize: number;
@@ -68,11 +60,17 @@ export interface DataTableViewOptionsProps<T> {
 }
 
 export interface DataTableSkeletonProps {
-	NoOfSkeletonRows: number;
+	noOfSkeletons: number;
 	columns: ColumnDef<any>[];
 }
 
-export function DataTable<T>({ table, onPageChange, onPageSizeChange, pageSize, total }: DataTableProps<T>) {
+export function DataTable<T>({
+	table,
+	onPageChange,
+	onPageSizeChange,
+	pageSize,
+	total
+}: DataTableProps<T>) {
 	if (!table) {
 		return (
 			<div>
@@ -82,7 +80,7 @@ export function DataTable<T>({ table, onPageChange, onPageSizeChange, pageSize, 
 			</div>
 		);
 	}
-	
+
 	return (
 		<section>
 			<TableComponent>
@@ -104,7 +102,10 @@ export function DataTable<T>({ table, onPageChange, onPageSizeChange, pageSize, 
 				<TableBody className="**:data-[slot=table-cell]:first:w-8">
 					{table.getRowModel().rows?.length > 0 ? (
 						table.getRowModel().rows.map((row) => (
-							<TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+							<TableRow 
+								key={row.id}
+								data-state={row.getIsSelected() && "selected"}
+							>
 								{row.getVisibleCells().map((cell) => (
 									<TableCell key={cell.id}>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -126,14 +127,17 @@ export function DataTable<T>({ table, onPageChange, onPageSizeChange, pageSize, 
 			</TableComponent>
 			<div className="mt-4">
 				<div className="px-4">
-					<p>({total}) records found</p>
+					<p>({total}) record{total ? total === 1 ? "" : "s" : "s"} found</p>
 				</div>
 				<div className="mt-4 flex w-full items-center gap-8 justify-between px-4">
 					<div className="hidden items-center gap-2 lg:flex">
 						<Label htmlFor="rows-per-page" className="text-sm font-medium">
 							Rows per page
 						</Label>
-						<Select value={`${pageSize}`} onValueChange={(value) => onPageSizeChange(Number(value))}>
+						<Select
+							value={`${pageSize}`}
+							onValueChange={(value) => onPageSizeChange(Number(value))}
+						>
 							<SelectTrigger size="sm" className="w-20" id="rows-per-page">
 								<SelectValue placeholder={table.getState().pagination.pageSize} />
 							</SelectTrigger>
@@ -196,7 +200,7 @@ export function DataTable<T>({ table, onPageChange, onPageSizeChange, pageSize, 
 	);
 }
 
-export function DataTableSkeleton({ NoOfSkeletonRows = 8, columns } : DataTableSkeletonProps) {
+export function DataTableSkeleton({ noOfSkeletons = 8, columns } : DataTableSkeletonProps) {
 
 	const table = useReactTable({
 		data: [],
@@ -222,7 +226,7 @@ export function DataTableSkeleton({ NoOfSkeletonRows = 8, columns } : DataTableS
 				))}
 			</TableHeader>
 			<TableBody className="**:data-[slot=table-cell]:first:w-8">
-				{Array.from({ length: NoOfSkeletonRows }, (_, i) => i + 1).map((i) => (
+				{Array.from({ length: noOfSkeletons }, (_, i) => i + 1).map((i) => (
 					<TableRow key={i}>
 						{Array.from({ length: columns.length }, (_, i) => i + 1).map((index) => {
 							return (

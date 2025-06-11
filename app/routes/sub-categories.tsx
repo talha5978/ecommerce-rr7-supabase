@@ -1,7 +1,7 @@
-import { Await, Form, Link, LoaderFunctionArgs, useFetcher, useLoaderData, useLocation, useNavigate, useSearchParams } from "react-router";
-import { Route } from "./+types/categories";
+import { Await, Form, Link, LoaderFunctionArgs, useFetcher, useLoaderData, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { Route } from "./+types/sub-categories";
 import { Button } from "~/components/ui/button";
-import { Badge, CirclePlus, Copy, Filter, Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { Badge, CirclePlus, Copy, Filter, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, Row, useReactTable } from "@tanstack/react-table";
@@ -9,36 +9,49 @@ import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
 import { getFormattedDate } from "~/lib/utils";
-import { categoriesQuery } from "~/queries/categories.q";
-import type { FullCategoryRow } from "~/types/category";
+import { subCategoriesQuery } from "~/queries/categories.q";
+import type { FullSubCategoryRow } from "~/types/category";
 import { queryClient } from "~/lib/queryClient";
 import { defaults } from "~/constants";
-import { useEffect } from "react";
-import { MetaDetails } from "~/components/SEO/MetaDetails";
+import BackButton from "~/components/Nav/BackButton";
 import TableId from "~/components/Table/TableId";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const categoryId = (params.categoryId as string) || "";
+	if (!categoryId || categoryId == "") {
+		throw new Response("Category ID is required", { status: 400 });
+	}
+
 	const url = new URL(request.url);
 	const q = url.searchParams.get("q")?.trim() ?? "";
-	const pageParam = Number(url.searchParams.get("page") ?? String(defaults.DEFAULT_CATEGORY_PAGE));
-	const sizeParam = Number(url.searchParams.get("size") ?? String(defaults.DEFAULT_CATEGORY_PAGE_SIZE));
+	const pageParam = Number(url.searchParams.get("page") ?? "1");
+	const sizeParam = Number(url.searchParams.get("size") ?? "10");
 
 	const pageIndex = Math.max(0, pageParam - 1);
 	const pageSize = Math.max(1, sizeParam);
 
-	const data = await queryClient.fetchQuery(categoriesQuery({request, q, pageIndex, pageSize}));
+	const data = await queryClient.fetchQuery(
+		subCategoriesQuery({request, categoryId, q, pageIndex, pageSize})
+	);
 
 	return {
-		data, // { categories: [...], total, error: null }
+		data, // { subCategories: [...], total, error }
+		categoryId,
 		query: q,
-		pageIndex, // zero-based
+		pageIndex,
 		pageSize,
 	};
 };
 
-export default function CategoriesPage({
-	loaderData: { data, query, pageIndex, pageSize },
+export default function SubCategoriesPage({
+	loaderData: { data, categoryId, query, pageIndex, pageSize },
 }: Route.ComponentProps) {
+	if (data.subCategories == null) {
+		throw new Response("Error fetching categories", { status: 404 });
+	}
+	// console.log(data);
+	
 	const navigation = useNavigation();
 	const location = useLocation();
 
@@ -49,48 +62,11 @@ export default function CategoriesPage({
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
-	useEffect(() => {
-		if (data.error != null && data.error.message) {
-			console.log(data);
-			
-			toast.error(`${data.error.statusCode} - ${data.error.message}`);
-		}
-	}, [data.error]);
-
-	const fetcher = useFetcher();
-
-	// Handle fetcher state for toasts and query invalidation
-	useEffect(() => {
-		if (fetcher.data) {
-			if (fetcher.data.success) {
-				toast.success("Category deleted successfully");
-				queryClient.invalidateQueries({ queryKey: ["categories"] });
-			} else if (fetcher.data.error) {
-				toast.error(fetcher.data.error);
-			}
-		}
-		console.log(fetcher.data);
-		
-	}, [fetcher.data, queryClient]);
-
-	const handleDeleteClick = (categoryId: string) => {
-		const formData = new FormData();
-		formData.append("categoryId", categoryId);
-		fetcher.submit(formData, {
-			method: "POST",
-			action: `/categories/delete/${categoryId}`,
-		});
-	};
-
-	function handleViewSubCategoriesClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/sub-categories`);
+	function handleUpdateNaviateClick(id: string, parent_id: string) {
+		return navigate(`/categories/${parent_id}/sub-categories/${id}/update`);
 	}
 
-	function handleUpdateNaviateClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/update`);
-	}
-
-	const tableColumns: ColumnDef<FullCategoryRow, unknown>[] = [
+	const tableColumns: ColumnDef<FullSubCategoryRow, unknown>[] = [
 		{
 			accessorKey: "ID",
 			header: "ID",
@@ -100,7 +76,7 @@ export default function CategoriesPage({
 			id: "Name",
 			enableHiding: false,
 			accessorKey: "category_name",
-			cell: (info: any) => info.row.original.category_name,
+			cell: (info: any) => info.row.original.sub_category_name,
 			header: () => "Name",
 		},
 		{
@@ -110,18 +86,12 @@ export default function CategoriesPage({
 			header: () => "Url Key"
 		},
 		{
-			id: "Sub Categories",
-			enableHiding: false,
-			accessorKey: "sub_category",
-			cell: (info: any) => {
-				const len = info.row.original.sub_category?.length ?? 0;
-				return (
-					<span className={`${len == 0 ? "text-destructive" : ""}`}>
-						{len}
-					</span>
-				);
-			},
-			header: () => "Sub Categories",
+			id: "Description",
+			accessorKey: "description",
+			cell: (info: any) => (
+				<div className="truncate max-w-[300px]">{info.row.original.description}</div>
+			),
+			header: () => "Description",
 		},
 		{
 			id: "Created At",
@@ -132,7 +102,7 @@ export default function CategoriesPage({
 		{
 			id: "actions",
 			cell: ({ row }) => {
-				const rowData: FullCategoryRow = row.original;
+				const rowData: FullSubCategoryRow = row.original;
 
 				return (
 					<>
@@ -144,24 +114,19 @@ export default function CategoriesPage({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
-								<DropdownMenuItem onClick={() => handleViewSubCategoriesClick(rowData.id)}>
-									View Sub Categories
-								</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={() =>
-										handleUpdateNaviateClick(rowData.id)
+										handleUpdateNaviateClick(rowData.id, rowData.parent_id)
 									}
 								>
 									Update
 								</DropdownMenuItem>
 								<DropdownMenuItem
-									disabled={fetcher.state === "submitting"}
 									variant="destructive"
-									onClick={() => handleDeleteClick(rowData.id)}
+									// onClick={() =>
+									// 	handleDetailsClick(rowData)
+									// }
 								>
-									{fetcher.state === "submitting" ? (
-										<Loader2 className="animate-spin" color="white" />
-									) : null}
 									Delete
 								</DropdownMenuItem>
 							</DropdownMenuContent>
@@ -171,7 +136,7 @@ export default function CategoriesPage({
 			},
 		},
 	];
-
+	
 	const onPageChange = (newPageIndex: number) => {
 		searchParams.set("page", (newPageIndex + 1).toString());
 		navigate({ search: searchParams.toString() });
@@ -184,7 +149,7 @@ export default function CategoriesPage({
 	};
 
 	const table = useReactTable({
-		data: (data.categories as FullCategoryRow[]) ?? [],
+		data: (data.subCategories as FullSubCategoryRow[]) ?? [],
 		columns: tableColumns,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: true,
@@ -200,18 +165,21 @@ export default function CategoriesPage({
 	return (
 		<>
 			<MetaDetails
-				metaTitle="Categories | Admin Panel"
-				metaDescription="Manage your categories here."
-				metaKeywords="Categories, Manage"
+				metaTitle="Sub Categories | Admin Panel"
+				metaDescription="Manage your sub categories here."
+				metaKeywords="Sub Categories, Manage"
 			/>
-			<section className="flex flex-1 flex-col gap-6">
+			<div className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">
-						<h1 className="text-2xl font-semibold">Categories</h1>
-						<Link to="/categories/create" viewTransition>
-							<Button size="sm" className="ml-auto">
+						<div className="flex gap-4 items-center">
+							<BackButton href={"/categories"} />
+							<h1 className="text-2xl font-semibold">Sub Categories</h1>
+						</div>
+						<Link to={`/categories/${categoryId}/sub-categories/create`} viewTransition>
+							<Button size={"sm"} className="ml-auto">
 								<PlusCircle width={18} />
-								<span>Add Category</span>
+								<span>Add New</span>
 							</Button>
 						</Link>
 					</div>
@@ -235,19 +203,19 @@ export default function CategoriesPage({
 						/>
 					)}
 				</div>
-			</section>
+			</div>
 		</>
 	);
 }
 
-function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<FullCategoryRow>) {
+function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<FullSubCategoryRow>) {
     const [searchParams] = useSearchParams();
     let currentQuery = searchParams.get("q") ?? "";
-
+	
     return (
 		<div className="w-full flex justify-between gap-4">
 			<div>
-				<Form method="get" action="/categories">
+				<Form method="get">
 					<div className="relative">
 						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2" width={18} />
 						<Input

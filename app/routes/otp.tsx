@@ -9,15 +9,9 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { ActionFunctionArgs, Form as AuthForm, Link, redirect, useActionData, useNavigation, useSearchParams, useSubmit } from "react-router";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-
-const OtpSchema = z.object({
-    email: z.string({ required_error: "Email is required" }).email(),
-	token: z.string({ required_error: "OTP is required" }).length(6, "OTP must be exactly 6 digits"),
-});
+import { type OtpFormData, OtpSchema } from "~/schemas/otp.schema";
 
 type OtpActionData = { error: string } | null;
-type OtpFormData = z.infer<typeof OtpSchema>;
-
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
@@ -55,8 +49,9 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function OtpPage() {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const emailParam = searchParams.get("email") || "";
+	const sentParam = searchParams.get("sent") || "";
 
 	useEffect(() => {
 		if (!emailParam) {
@@ -76,13 +71,12 @@ export default function OtpPage() {
     const actionData = useActionData<OtpActionData>();
 
     useEffect(() => {
-        if (actionData?.error) {
-            toast.error(actionData.error);
-			console.error(actionData.error);
-        } else if (actionData == null) {
-			toast.success("OTP verified successfully");
+		if (sentParam === "true") {
+			toast.success("OTP sent successfully to your e-mail");
+			searchParams.delete("sent");
+			setSearchParams(searchParams, { replace: true });
 		}
-    }, [actionData]);
+    }, [actionData, sentParam]);
 
     const navigation = useNavigation();
     const isVerifying =
@@ -138,7 +132,7 @@ export default function OtpPage() {
 				</div>
 				<div className="*:text-center *:text-sm *:text-muted-foreground flex gap-2 flex-wrap justify-center">
 					<p>Didn’t receive a code?</p>
-					<Link to="/login" className="hover:underline" prefetch="viewport">
+					<Link to="/login" className="hover:underline" prefetch="viewport" viewTransition>
 						Request again
 					</Link>
 				</div>
