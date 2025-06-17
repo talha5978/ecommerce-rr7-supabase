@@ -35,6 +35,7 @@ function SubItem({ url, icon, title }: NavSubItem) {
 					to={url}
 					className={isActive ? "bg-sidebar-accent" : ""}
 					prefetch="intent"
+					viewTransition
 				>
 					{icon && <>{icon}</>}
 					<span>{title}</span>

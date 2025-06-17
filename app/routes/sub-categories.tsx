@@ -1,21 +1,22 @@
-import { Await, Form, Link, LoaderFunctionArgs, useFetcher, useLoaderData, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { Form, Link, LoaderFunctionArgs, useLocation, useNavigate, useSearchParams } from "react-router";
 import { Route } from "./+types/sub-categories";
 import { Button } from "~/components/ui/button";
-import { Badge, CirclePlus, Copy, Filter, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
-import { ColumnDef, getCoreRowModel, Row, useReactTable } from "@tanstack/react-table";
-import { toast } from "sonner";
+import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
-import { getFormattedDate } from "~/lib/utils";
+import { GetFormattedDate } from "~/lib/utils";
 import { subCategoriesQuery } from "~/queries/categories.q";
-import type { FullSubCategoryRow } from "~/types/category";
+import type { FullSubCategoryRow } from "~/types/category.d";
 import { queryClient } from "~/lib/queryClient";
 import { defaults } from "~/constants";
 import BackButton from "~/components/Nav/BackButton";
 import TableId from "~/components/Table/TableId";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
+import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
+import { GetPaginationControls } from "~/utils/getPaginationControls";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const categoryId = (params.categoryId as string) || "";
@@ -23,13 +24,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response("Category ID is required", { status: 400 });
 	}
 
-	const url = new URL(request.url);
-	const q = url.searchParams.get("q")?.trim() ?? "";
-	const pageParam = Number(url.searchParams.get("page") ?? "1");
-	const sizeParam = Number(url.searchParams.get("size") ?? "10");
-
-	const pageIndex = Math.max(0, pageParam - 1);
-	const pageSize = Math.max(1, sizeParam);
+	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
+		request,
+		defaultPageNo: defaults.DEFAULT_SUB_CATEGORY_PAGE,
+		defaultPageSize: defaults.DEFAULT_SUB_CATEGORY_PAGE_SIZE,
+	});
 
 	const data = await queryClient.fetchQuery(
 		subCategoriesQuery({request, categoryId, q, pageIndex, pageSize})
@@ -55,7 +54,6 @@ export default function SubCategoriesPage({
 	const navigation = useNavigation();
 	const location = useLocation();
 
-	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const pageCount = Math.ceil(data.total / pageSize);
 
@@ -96,7 +94,7 @@ export default function SubCategoriesPage({
 		{
 			id: "Created At",
 			accessorKey: "createdAt",
-			cell: (info: any) => getFormattedDate(info.row.original.createdAt),
+			cell: (info: any) => GetFormattedDate(info.row.original.createdAt),
 			header: () => "Created At",
 		},
 		{
@@ -136,17 +134,10 @@ export default function SubCategoriesPage({
 			},
 		},
 	];
-	
-	const onPageChange = (newPageIndex: number) => {
-		searchParams.set("page", (newPageIndex + 1).toString());
-		navigate({ search: searchParams.toString() });
-	};
 
-	const onPageSizeChange = (newPageSize: number) => {
-		searchParams.set("size", newPageSize.toString());
-		searchParams.set("page", String(defaults.DEFAULT_CATEGORY_PAGE));
-		navigate({ search: searchParams.toString() });
-	};
+	const { onPageChange, onPageSizeChange } = GetPaginationControls({
+		defaultPageSize: defaults.DEFAULT_SUB_CATEGORY_PAGE_SIZE,
+	});
 
 	const table = useReactTable({
 		data: (data.subCategories as FullSubCategoryRow[]) ?? [],
@@ -176,7 +167,7 @@ export default function SubCategoriesPage({
 							<BackButton href={"/categories"} />
 							<h1 className="text-2xl font-semibold">Sub Categories</h1>
 						</div>
-						<Link to={`/categories/${categoryId}/sub-categories/create`} viewTransition>
+						<Link to={`/categories/${categoryId}/sub-categories/create`} viewTransition className="ml-auto">
 							<Button size={"sm"} className="ml-auto">
 								<PlusCircle width={18} />
 								<span>Add New</span>

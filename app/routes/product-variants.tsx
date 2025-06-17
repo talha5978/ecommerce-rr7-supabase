@@ -1,138 +1,142 @@
-import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useNavigate, useSearchParams } from "react-router";
-import { Route } from "./+types/categories";
+import { Form, Link, LoaderFunctionArgs, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Route } from "./+types/product-variants";
 import { Button } from "~/components/ui/button";
-import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
 import { GetFormattedDate } from "~/lib/utils";
-import { categoriesQuery } from "~/queries/categories.q";
-import type { FullCategoryRow } from "~/types/category.d";
+import type { FullSubCategoryRow } from "~/types/category.d";
 import { queryClient } from "~/lib/queryClient";
-import { defaults } from "~/constants";
-import { useEffect } from "react";
-import { MetaDetails } from "~/components/SEO/MetaDetails";
+import { defaults, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
+import BackButton from "~/components/Nav/BackButton";
 import TableId from "~/components/Table/TableId";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
-import {GetPaginationControls} from "~/utils/getPaginationControls";
+import { GetPaginationControls } from "~/utils/getPaginationControls";
+import { productVariantsQuery } from "~/queries/products.q";
+import { ProductVariantRow } from "~/types/products";
+import StatusBadge from "~/components/status-badge";
+import { Skeleton } from "~/components/ui/skeleton";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const productId = (params.productId as string) || "";
+	if (!productId || productId == "") {
+		throw new Response("Product ID is required", { status: 400 });
+	}
+
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
 		request,
-		defaultPageNo: defaults.DEFAULT_CATEGORY_PAGE,
-		defaultPageSize: defaults.DEFAULT_CATEGORY_PAGE_SIZE,
+		defaultPageNo: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE,
+		defaultPageSize: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE,
 	});
 
-	const data = await queryClient.fetchQuery(categoriesQuery({request, q, pageIndex, pageSize}));
+	const data = await queryClient.fetchQuery(
+		productVariantsQuery({request, productId, q, pageIndex, pageSize})
+	);
 
 	return {
-		data, // { categories: [...], total, error: null }
+		data,
+		productId,
 		query: q,
-		pageIndex, // zero-based
+		pageIndex,
 		pageSize,
 	};
 };
 
-export default function CategoriesPage({
-	loaderData: { data, query, pageIndex, pageSize },
+export default function ProductVariantsPage({
+	loaderData: { data, productId, query, pageIndex, pageSize },
 }: Route.ComponentProps) {
+	if (data.product_variants == null) {
+		throw new Response("Error fetching variants", { status: 404 });
+	}
+	// console.log(data);
+	
 	const navigation = useNavigation();
 	const location = useLocation();
 
-	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const pageCount = Math.ceil(data.total / pageSize);
 
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
-	useEffect(() => {
-		if (data.error != null && data.error.message) {
-			console.log(data);
-			
-			toast.error(`${data.error.statusCode} - ${data.error.message}`);
-		}
-	}, [data.error]);
-
-	const fetcher = useFetcher();
-
-	// Handle fetcher state for toasts and query invalidation
-	useEffect(() => {
-		if (fetcher.data) {
-			if (fetcher.data.success) {
-				toast.success("Category deleted successfully");
-				queryClient.invalidateQueries({ queryKey: ["categories"] });
-			} else if (fetcher.data.error) {
-				toast.error(fetcher.data.error);
-			}
-		}
-		console.log(fetcher.data);
-		
-	}, [fetcher.data, queryClient]);
-
-	const handleDeleteClick = (categoryId: string) => {
-		const formData = new FormData();
-		formData.append("categoryId", categoryId);
-		fetcher.submit(formData, {
-			method: "POST",
-			action: `/categories/delete/${categoryId}`,
-		});
-	};
-
-	function handleViewSubCategoriesClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/sub-categories`);
+	function handleUpdateNaviateClick(id: string, parent_id: string) {
+		return navigate(`/categories/${parent_id}/sub-categories/${id}/update`);
 	}
 
-	function handleUpdateNaviateClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/update`);
-	}
-
-	const tableColumns: ColumnDef<FullCategoryRow, unknown>[] = [
+	const tableColumns: ColumnDef<ProductVariantRow, unknown>[] = [
 		{
-			accessorKey: "ID",
-			header: "ID",
-			cell: (info: any) => <TableId id={info.row.original.id} />,
-		},
-		{
-			id: "Name",
+			id: "Sr. No.",
 			enableHiding: false,
-			accessorKey: "category_name",
-			cell: (info: any) => info.row.original.category_name,
-			header: () => "Name",
+			accessorKey: "id",
+			cell: (info: any) => `(${info.row.index + 1})`,
+			header: () => "Sr. No.",
 		},
 		{
-			id: "Url Key",
-			accessorKey: "url_key",
-			cell: (info: any) => "/" + info.row.original.meta_details.url_key,
-			header: () => "Url Key"
-		},
-		{
-			id: "Sub Categories",
-			enableHiding: false,
-			accessorKey: "sub_category",
+			id: "Cover",
+			accessorKey: "images",
 			cell: (info: any) => {
-				const len = info.row.original.sub_category?.length ?? 0;
+				const image = info.row.original.images[0];
+
+				if (image) {
+					return (
+						<img
+							src={`${SUPABASE_IMAGE_BUCKET_PATH}/${image}`}
+							alt={info.row.original.name}
+							className="h-16 w-16 rounded-sm object-cover shadow-2xl"
+							loading="lazy"
+						/>
+					);
+				} else {
+					return <Skeleton className="h-16 w-16 rounded-sm" />;
+				}
+			},
+			header: () => "Cover",
+		},
+		{
+			id: "SKU",
+			enableHiding: false,
+			accessorKey: "sku",
+			cell: (info: any) => info.row.original.sku,
+			header: () => "SKU",
+		},
+		{
+			id: "Status",
+			accessorKey: "status",
+			cell: (info: any) => {
 				return (
-					<span className={`${len == 0 ? "text-destructive" : ""}`}>
-						{len}
-					</span>
+					<StatusBadge variant={info.row.original.status ? "success" : "destructive"}>
+						{info.row.original.status ? "Active" : "Inactive"}
+					</StatusBadge>
 				);
 			},
-			header: () => "Sub Categories",
+			header: () => "Status",
 		},
 		{
-			id: "Created At",
-			accessorKey: "createdAt",
-			cell: (info: any) => GetFormattedDate(info.row.original.createdAt),
-			header: () => "Created At",
+			id: "Sale Price",
+			accessorKey: "sale_price",
+			cell: (info: any) => info.row.original.sale_price,
+			header: () => "Sale Price",
+		},
+		{
+			id: "Stock",
+			accessorKey: "stock",
+			cell: (info: any) => info.row.original.stock,
+			header: () => "Stock",
+		},
+		{
+			id: "Re-order Level",
+			accessorKey: "reorder_level",
+			cell: (info: any) => info.row.original.reorder_level,
+			header: () => "Re-order Level",
 		},
 		{
 			id: "actions",
 			cell: ({ row }) => {
-				const rowData: FullCategoryRow = row.original;
+				// const rowData: FullSubCategoryRow = row.original;
 
 				return (
 					<>
@@ -144,24 +148,19 @@ export default function CategoriesPage({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
-								<DropdownMenuItem onClick={() => handleViewSubCategoriesClick(rowData.id)}>
-									View Sub Categories
-								</DropdownMenuItem>
 								<DropdownMenuItem
-									onClick={() =>
-										handleUpdateNaviateClick(rowData.id)
-									}
+								// onClick={() =>
+								// 	handleUpdateNaviateClick(rowData.id, rowData.parent_id)
+								// }
 								>
 									Update
 								</DropdownMenuItem>
 								<DropdownMenuItem
-									disabled={fetcher.state === "submitting"}
 									variant="destructive"
-									onClick={() => handleDeleteClick(rowData.id)}
+									// onClick={() =>
+									// 	handleDetailsClick(rowData)
+									// }
 								>
-									{fetcher.state === "submitting" ? (
-										<Loader2 className="animate-spin" color="white" />
-									) : null}
 									Delete
 								</DropdownMenuItem>
 							</DropdownMenuContent>
@@ -173,11 +172,11 @@ export default function CategoriesPage({
 	];
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPageSize: defaults.DEFAULT_CATEGORY_PAGE_SIZE,
+		defaultPageSize: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE,
 	});
 
 	const table = useReactTable({
-		data: (data.categories as FullCategoryRow[]) ?? [],
+		data: (data.product_variants as ProductVariantRow[]) ?? [],
 		columns: tableColumns,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: true,
@@ -193,18 +192,20 @@ export default function CategoriesPage({
 	return (
 		<>
 			<MetaDetails
-				metaTitle="Categories | Admin Panel"
-				metaDescription="Manage your categories here."
-				metaKeywords="Categories, Manage"
+				metaTitle="Product Variants | Admin Panel"
+				metaDescription="Manage your product variants here."
 			/>
-			<section className="flex flex-1 flex-col gap-6">
+			<div className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">
-						<h1 className="text-2xl font-semibold">Categories</h1>
-						<Link to="/categories/create" viewTransition className="ml-auto">
-							<Button size="sm" className="ml-auto">
+						<div className="flex gap-4 items-center">
+							<BackButton href={"/products"} />
+							<h1 className="text-2xl font-semibold">Variants</h1>
+						</div>
+						<Link to="create" viewTransition className="ml-auto">
+							<Button size={"sm"} className="ml-auto">
 								<PlusCircle width={18} />
-								<span>Add Category</span>
+								<span>Add Variant</span>
 							</Button>
 						</Link>
 					</div>
@@ -228,19 +229,19 @@ export default function CategoriesPage({
 						/>
 					)}
 				</div>
-			</section>
+			</div>
 		</>
 	);
 }
 
-function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<FullCategoryRow>) {
+function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<ProductVariantRow>) {
     const [searchParams] = useSearchParams();
     let currentQuery = searchParams.get("q") ?? "";
-
+	
     return (
 		<div className="w-full flex justify-between gap-4">
 			<div>
-				<Form method="get" action="/categories">
+				<Form method="get">
 					<div className="relative">
 						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2" width={18} />
 						<Input

@@ -93,6 +93,7 @@ export type Database = {
 			product: {
 				Row: {
 					cover_image: string;
+					createdAt: string;
 					description: string;
 					free_shipping: boolean;
 					id: string;
@@ -100,10 +101,11 @@ export type Database = {
 					meta_details: string | null;
 					name: string;
 					status: boolean;
-					sub_category_id: string;
+					sub_category: string;
 				};
 				Insert: {
 					cover_image: string;
+					createdAt?: string;
 					description: string;
 					free_shipping?: boolean;
 					id?: string;
@@ -111,10 +113,11 @@ export type Database = {
 					meta_details?: string | null;
 					name: string;
 					status?: boolean;
-					sub_category_id: string;
+					sub_category: string;
 				};
 				Update: {
 					cover_image?: string;
+					createdAt?: string;
 					description?: string;
 					free_shipping?: boolean;
 					id?: string;
@@ -122,7 +125,7 @@ export type Database = {
 					meta_details?: string | null;
 					name?: string;
 					status?: boolean;
-					sub_category_id?: string;
+					sub_category?: string;
 				};
 				Relationships: [
 					{
@@ -133,8 +136,8 @@ export type Database = {
 						referencedColumns: ["id"];
 					},
 					{
-						foreignKeyName: "product_sub_category_id_fkey";
-						columns: ["sub_category_id"];
+						foreignKeyName: "product_sub_category_fkey";
+						columns: ["sub_category"];
 						isOneToOne: false;
 						referencedRelation: "sub_category";
 						referencedColumns: ["id"];
@@ -143,28 +146,27 @@ export type Database = {
 			};
 			product_attributes: {
 				Row: {
+					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
 					id: string;
 					name: string;
-					type: Database["public"]["Enums"]["attribute_type_enum"];
 					value: string;
 				};
 				Insert: {
+					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
 					id?: string;
 					name: string;
-					type: Database["public"]["Enums"]["attribute_type_enum"];
 					value: string;
 				};
 				Update: {
+					attribute_type?: Database["public"]["Enums"]["attribute_type_enum"];
 					id?: string;
 					name?: string;
-					type?: Database["public"]["Enums"]["attribute_type_enum"];
 					value?: string;
 				};
 				Relationships: [];
 			};
 			product_variant: {
 				Row: {
-					color_id: string;
 					id: string;
 					images: string[];
 					is_default: boolean;
@@ -172,14 +174,12 @@ export type Database = {
 					product_id: string;
 					reorder_level: number;
 					sale_price: number;
-					size_id: string;
 					sku: string;
 					status: boolean;
 					stock: number;
 					weight: number;
 				};
 				Insert: {
-					color_id: string;
 					id?: string;
 					images?: string[];
 					is_default?: boolean;
@@ -187,14 +187,12 @@ export type Database = {
 					product_id: string;
 					reorder_level?: number;
 					sale_price?: number;
-					size_id: string;
 					sku: string;
 					status?: boolean;
 					stock?: number;
 					weight?: number;
 				};
 				Update: {
-					color_id?: string;
 					id?: string;
 					images?: string[];
 					is_default?: boolean;
@@ -202,7 +200,6 @@ export type Database = {
 					product_id?: string;
 					reorder_level?: number;
 					sale_price?: number;
-					size_id?: string;
 					sku?: string;
 					status?: boolean;
 					stock?: number;
@@ -210,24 +207,10 @@ export type Database = {
 				};
 				Relationships: [
 					{
-						foreignKeyName: "product_variant_color_id_fkey";
-						columns: ["color_id"];
-						isOneToOne: false;
-						referencedRelation: "product_attributes";
-						referencedColumns: ["id"];
-					},
-					{
 						foreignKeyName: "product_variant_product_id_fkey";
 						columns: ["product_id"];
 						isOneToOne: false;
 						referencedRelation: "product";
-						referencedColumns: ["id"];
-					},
-					{
-						foreignKeyName: "product_variant_size_id_fkey";
-						columns: ["size_id"];
-						isOneToOne: false;
-						referencedRelation: "product_attributes";
 						referencedColumns: ["id"];
 					}
 				];
@@ -271,7 +254,7 @@ export type Database = {
 					{
 						foreignKeyName: "sub_category_parent_id_fkey";
 						columns: ["parent_id"];
-						isOneToOne: true;
+						isOneToOne: false;
 						referencedRelation: "category";
 						referencedColumns: ["id"];
 					}
@@ -319,12 +302,51 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			variant_attributes: {
+				Row: {
+					attribute_id: string;
+					id: string;
+					variant_id: string;
+				};
+				Insert: {
+					attribute_id: string;
+					id?: string;
+					variant_id: string;
+				};
+				Update: {
+					attribute_id?: string;
+					id?: string;
+					variant_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "variant_attributes_attribute_id_fkey";
+						columns: ["attribute_id"];
+						isOneToOne: false;
+						referencedRelation: "product_attributes";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "variant_attributes_variant_id_fkey";
+						columns: ["variant_id"];
+						isOneToOne: false;
+						referencedRelation: "product_variant";
+						referencedColumns: ["id"];
+					}
+				];
+			};
 		};
 		Views: {
 			[_ in never]: never;
 		};
 		Functions: {
-			[_ in never]: never;
+			get_product_attribute_types: {
+				Args: Record<PropertyKey, never>;
+				Returns: {
+					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
+					values_count: number;
+				}[];
+			};
 		};
 		Enums: {
 			attribute_type_enum: "color" | "size" | "material" | "style" | "brand";

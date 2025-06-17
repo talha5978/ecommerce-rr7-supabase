@@ -73,7 +73,6 @@ body {
   --spacing: 0.25rem;
   --header-spacing: 3.6rem;
   --tracking-normal: 0em;
-
   --muted-dark: oklch(0.95 0 0);
 }
 
@@ -132,7 +131,6 @@ body {
   --letter-spacing: 0em;
   --spacing: 0.25rem;
   --header-spacing: 3.6rem;
-
   --muted-dark: oklch(0.95 0 0);
 }
 
@@ -204,7 +202,6 @@ body {
   --shadow-blur: var(--shadow-blur);
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
-
   --color-muted-dark: var(--muted-dark);
 }
 
@@ -244,4 +241,9 @@ input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
+}
+
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }

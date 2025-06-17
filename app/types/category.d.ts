@@ -1,11 +1,10 @@
-import type { ApiError } from "~/lib/ApiError";
+import type { ApiError } from "~/utils/ApiError";
 import type { Database } from "~/types/supabase"
+import type { MetaDetailsRow } from "~/types/meta_details";
 
 export type CategoryRow =  Database["public"]["Tables"]["category"]["Row"];
 
 export type SubCategoryRow =  Database["public"]["Tables"]["sub_category"]["Row"];
-
-export type MetaDetailsRow = Database["public"]["Tables"]["meta_details"]["Row"];
 
 export type FullSubCategoryRow = Omit<SubCategoryRow, "meta_details"> & {
     meta_details: MetaDetailsRow | null;

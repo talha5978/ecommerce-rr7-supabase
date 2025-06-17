@@ -48,9 +48,9 @@ export const schema = z.object({
 
 interface DataTableProps<T> {
 	table: Table<T>;
-	onPageChange: (page: number) => void;
-	onPageSizeChange: (pageSize: number) => void;
-	pageSize: number;
+	onPageChange?: (page: number) => void;
+	onPageSizeChange?: (pageSize: number) => void;
+	pageSize?: number;
 	total: number;
 }
 
@@ -102,10 +102,7 @@ export function DataTable<T>({
 				<TableBody className="**:data-[slot=table-cell]:first:w-8">
 					{table.getRowModel().rows?.length > 0 ? (
 						table.getRowModel().rows.map((row) => (
-							<TableRow 
-								key={row.id}
-								data-state={row.getIsSelected() && "selected"}
-							>
+							<TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
 								{row.getVisibleCells().map((cell) => (
 									<TableCell key={cell.id}>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -127,74 +124,78 @@ export function DataTable<T>({
 			</TableComponent>
 			<div className="mt-4">
 				<div className="px-4">
-					<p>({total}) record{total ? total === 1 ? "" : "s" : "s"} found</p>
+					<p>
+						({total}) record{total ? (total === 1 ? "" : "s") : "s"} found
+					</p>
 				</div>
-				<div className="mt-4 flex w-full items-center gap-8 justify-between px-4">
-					<div className="hidden items-center gap-2 lg:flex">
-						<Label htmlFor="rows-per-page" className="text-sm font-medium">
-							Rows per page
-						</Label>
-						<Select
-							value={`${pageSize}`}
-							onValueChange={(value) => onPageSizeChange(Number(value))}
-						>
-							<SelectTrigger size="sm" className="w-20" id="rows-per-page">
-								<SelectValue placeholder={table.getState().pagination.pageSize} />
-							</SelectTrigger>
-							<SelectContent side="top" defaultValue={`${pageSize}`}>
-								{[10, 20, 30, 40, 50].map((size) => (
-									<SelectItem key={size} value={`${size}`}>
-										{size}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+				{onPageSizeChange && onPageChange && pageSize ? (
+					<div className="mt-4 flex w-full items-center gap-8 justify-between px-4">
+						<div className="hidden items-center gap-2 lg:flex">
+							<Label htmlFor="rows-per-page" className="text-sm font-medium">
+								Rows per page
+							</Label>
+							<Select
+								value={`${pageSize}`}
+								onValueChange={(value) => onPageSizeChange(Number(value))}
+							>
+								<SelectTrigger size="sm" className="w-20" id="rows-per-page">
+									<SelectValue placeholder={table.getState().pagination.pageSize} />
+								</SelectTrigger>
+								<SelectContent side="top" defaultValue={`${pageSize}`}>
+									{[10, 20, 30, 40, 50].map((size) => (
+										<SelectItem key={size} value={`${size}`}>
+											{size}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="flex w-fit items-center justify-center text-sm font-medium">
+							Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+						</div>
+						<div className="ml-auto flex items-center gap-2 lg:ml-0">
+							<Button
+								variant="outline"
+								className="hidden h-8 w-8 p-0 lg:flex"
+								onClick={() => onPageChange(0)}
+								disabled={!table.getCanPreviousPage()}
+							>
+								<span className="sr-only">Go to first page</span>
+								<IconChevronsLeft />
+							</Button>
+							<Button
+								variant="outline"
+								className="size-8"
+								size="icon"
+								onClick={() => onPageChange(table.getState().pagination.pageIndex - 1)}
+								disabled={!table.getCanPreviousPage()}
+							>
+								<span className="sr-only">Go to previous page</span>
+								<IconChevronLeft />
+							</Button>
+							<Button
+								variant="outline"
+								className="size-8"
+								size="icon"
+								onClick={() => onPageChange(table.getState().pagination.pageIndex + 1)}
+								disabled={!table.getCanNextPage()}
+							>
+								<span className="sr-only">Go to next page</span>
+								<IconChevronRight />
+							</Button>
+							<Button
+								variant="outline"
+								className="hidden size-8 lg:flex"
+								size="icon"
+								onClick={() => onPageChange(table.getPageCount() - 1)}
+								disabled={!table.getCanNextPage()}
+							>
+								<span className="sr-only">Go to last page</span>
+								<IconChevronsRight />
+							</Button>
+						</div>
 					</div>
-					<div className="flex w-fit items-center justify-center text-sm font-medium">
-						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
-					</div>
-					<div className="ml-auto flex items-center gap-2 lg:ml-0">
-						<Button
-							variant="outline"
-							className="hidden h-8 w-8 p-0 lg:flex"
-							onClick={() => onPageChange(0)}
-							disabled={!table.getCanPreviousPage()}
-						>
-							<span className="sr-only">Go to first page</span>
-							<IconChevronsLeft />
-						</Button>
-						<Button
-							variant="outline"
-							className="size-8"
-							size="icon"
-							onClick={() => onPageChange(table.getState().pagination.pageIndex - 1)}
-							disabled={!table.getCanPreviousPage()}
-						>
-							<span className="sr-only">Go to previous page</span>
-							<IconChevronLeft />
-						</Button>
-						<Button
-							variant="outline"
-							className="size-8"
-							size="icon"
-							onClick={() => onPageChange(table.getState().pagination.pageIndex + 1)}
-							disabled={!table.getCanNextPage()}
-						>
-							<span className="sr-only">Go to next page</span>
-							<IconChevronRight />
-						</Button>
-						<Button
-							variant="outline"
-							className="hidden size-8 lg:flex"
-							size="icon"
-							onClick={() => onPageChange(table.getPageCount() - 1)}
-							disabled={!table.getCanNextPage()}
-						>
-							<span className="sr-only">Go to last page</span>
-							<IconChevronsRight />
-						</Button>
-					</div>
-				</div>
+				) : null}
 			</div>
 		</section>
 	);

@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-export function getFormattedDate(input: string) {
+export function GetFormattedDate(input: string) {
 	const date = new Date(input);
 	return date.toLocaleDateString();
 }

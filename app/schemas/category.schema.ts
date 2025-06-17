@@ -1,36 +1,5 @@
 import { z } from "zod";
-
-export const MetaDetailsInputSchema = z.object({
-	meta_description: z
-		.string({ required_error: "Meta description is required." })
-		.min(1, "Meta description is required.")
-		.refine((value) => value.trim().length > 0, {
-			message: "Meta description is required.",
-		}),
-
-	meta_title: z
-		.string({ required_error: "Meta title is required." })
-		.min(1, "Meta title is required.")
-		.refine((value) => value.trim().length > 0, {
-			message: "Meta title is required.",
-		}),
-
-	url_key: z
-		.string({ required_error: "URL key is required." })
-		.min(1, "URL key is required.")
-		.regex(
-			/^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-			"URL key must be lowercase, alphanumeric, and hyphen-separated only."
-		)
-		.refine((value) => value.trim().length > 0, {
-			message: "URL key is required.",
-		}),
-
-	meta_keywords: z
-		.array(z.string())
-		.optional()
-		.default([]),
-});
+import { MetaDetailsInputSchema } from "./meta-details.schema";
 
 // for category creation
 export const CategoryInputSchema = z.object({
@@ -55,8 +24,6 @@ export const CategoryInputSchema = z.object({
 
 	meta_details: MetaDetailsInputSchema,
 });
-
-export type MetaDetailsInput = Omit<z.infer<typeof MetaDetailsInputSchema>, "meta_keywords"> & { meta_keywords: string[] };
 
 export type CategoryFormValues = z.input<typeof CategoryInputSchema>;
 

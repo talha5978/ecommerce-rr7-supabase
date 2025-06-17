@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import { CategoryFunction } from "~/services/category.service";
-import { GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse } from "~/types/category";
+import { CategoryService } from "~/services/category.service";
+import { GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse } from "~/types/category.d";
 
 interface categoriesQueryArgs {
     request: Request;
@@ -31,7 +31,7 @@ export const categoriesQuery = ({ request, q, pageIndex, pageSize }: categoriesQ
 	return queryOptions<GetAllCategoriesResponse>({
 		queryKey: ["categories", q, pageIndex, pageSize],
 		queryFn: async () => {
-			const categoryService = new CategoryFunction(request);
+			const categoryService = new CategoryService(request);
 			const result = await categoryService.getAllCategories(q, pageIndex, pageSize);
 			return result;
 		},
@@ -48,7 +48,7 @@ export const subCategoriesQuery = ({
 	return queryOptions<GetSubCategoriesResponse>({
 		queryKey: ["subCategories", categoryId, q, pageIndex, pageSize],
 		queryFn: async () => {
-			const categoryService = new CategoryFunction(request);
+			const categoryService = new CategoryService(request);
 			const result = await categoryService.getSubCategories(categoryId, q, pageIndex, pageSize);
 			return result;
 		},
@@ -59,7 +59,7 @@ export const singleCategoryQuery = ({ request, categoryId }: singleCategoryQuery
 	return queryOptions<GetCategoryResponse>({
 		queryKey: ["category", categoryId],
 		queryFn: async () => {
-			const categoryService = new CategoryFunction(request);
+			const categoryService = new CategoryService(request);
 			const result = await categoryService.getCategoryById(categoryId);
 			return result;
 		},
@@ -70,7 +70,7 @@ export const singleSubCategoryQuery = ({ request, subCategoryId }: singleSubCate
 	return queryOptions<GetSubCategoryResponse>({
 		queryKey: ["subCategory", subCategoryId],
 		queryFn: async () => {
-			const categoryService = new CategoryFunction(request);
+			const categoryService = new CategoryService(request);
 			const result = await categoryService.getSubCategoryById(subCategoryId);
 			return result;
 		},

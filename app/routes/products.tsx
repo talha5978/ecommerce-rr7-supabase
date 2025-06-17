@@ -1,49 +1,50 @@
-import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useNavigate, useSearchParams } from "react-router";
-import { Route } from "./+types/categories";
+import { Form, Link, LoaderFunctionArgs, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Route } from "./+types/products";
 import { Button } from "~/components/ui/button";
-import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
-import { GetFormattedDate } from "~/lib/utils";
-import { categoriesQuery } from "~/queries/categories.q";
-import type { FullCategoryRow } from "~/types/category.d";
 import { queryClient } from "~/lib/queryClient";
-import { defaults } from "~/constants";
 import { useEffect } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
-import TableId from "~/components/Table/TableId";
+import { productsQuery } from "~/queries/products.q";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
-import {GetPaginationControls} from "~/utils/getPaginationControls";
+import { defaults, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
+import { GetPaginationControls } from "~/utils/getPaginationControls";
+import { HighLevelProduct } from "~/types/products";
+import { GetFormattedDate } from "~/lib/utils";
+import StatusBadge from "~/components/status-badge";
+import { Skeleton } from "~/components/ui/skeleton";
+import ImageViewer from "~/components/ImageViewer/image-viewer";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
 		request,
-		defaultPageNo: defaults.DEFAULT_CATEGORY_PAGE,
-		defaultPageSize: defaults.DEFAULT_CATEGORY_PAGE_SIZE,
+		defaultPageNo: defaults.DEFAULT_PRODUCTS_PAGE,
+		defaultPageSize: defaults.DEFAULT_PRODUCTS_PAGE_SIZE,
 	});
 
-	const data = await queryClient.fetchQuery(categoriesQuery({request, q, pageIndex, pageSize}));
+	const data = await queryClient.fetchQuery(productsQuery({ request, q, pageIndex, pageSize }));
 
 	return {
-		data, // { categories: [...], total, error: null }
+		data,
 		query: q,
-		pageIndex, // zero-based
+		pageIndex,
 		pageSize,
 	};
 };
 
-export default function CategoriesPage({
+export default function ProductsMainPage({
 	loaderData: { data, query, pageIndex, pageSize },
 }: Route.ComponentProps) {
+
 	const navigation = useNavigation();
 	const location = useLocation();
 
-	const [searchParams] = useSearchParams();
-	const navigate = useNavigate();
 	const pageCount = Math.ceil(data.total / pageSize);
 
 	const isFetchingThisRoute =
@@ -57,71 +58,94 @@ export default function CategoriesPage({
 		}
 	}, [data.error]);
 
-	const fetcher = useFetcher();
-
-	// Handle fetcher state for toasts and query invalidation
 	useEffect(() => {
-		if (fetcher.data) {
-			if (fetcher.data.success) {
-				toast.success("Category deleted successfully");
-				queryClient.invalidateQueries({ queryKey: ["categories"] });
-			} else if (fetcher.data.error) {
-				toast.error(fetcher.data.error);
-			}
+		if (data.error != null && data.error.message) {
+			console.log(data);
+			toast.error(`${data.error.statusCode} - ${data.error.message}`);
 		}
-		console.log(fetcher.data);
-		
-	}, [fetcher.data, queryClient]);
+	}, [data.error]);
 
-	const handleDeleteClick = (categoryId: string) => {
-		const formData = new FormData();
-		formData.append("categoryId", categoryId);
-		fetcher.submit(formData, {
-			method: "POST",
-			action: `/categories/delete/${categoryId}`,
-		});
-	};
-
-	function handleViewSubCategoriesClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/sub-categories`);
-	}
-
-	function handleUpdateNaviateClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/update`);
-	}
-
-	const tableColumns: ColumnDef<FullCategoryRow, unknown>[] = [
+	const tableColumns: ColumnDef<HighLevelProduct, unknown>[] = [
 		{
-			accessorKey: "ID",
-			header: "ID",
-			cell: (info: any) => <TableId id={info.row.original.id} />,
+			id: "Sr. No.",
+			enableHiding: false,
+			accessorKey: "id",
+			cell: (info: any) => `(${info.row.index + 1})`,
+			header: () => "Sr. No.",
+		},
+		{
+			id: "Cover",
+			accessorKey: "cover_image",
+			cell: (info: any) => {
+				const rowImg = info.row.original.cover_image;
+				const image = `${SUPABASE_IMAGE_BUCKET_PATH}/${rowImg}`;
+
+				if (rowImg) {
+					return (
+						<div>
+							<ImageViewer
+								thumbnailUrl={image}
+								imageUrl={image}
+								classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
+							/>
+						</div>
+					)
+				} else {
+					return (
+						<Skeleton className="h-16 w-16 rounded-sm" />
+					)
+				}
+			},
+			header: () => "Cover",
 		},
 		{
 			id: "Name",
 			enableHiding: false,
-			accessorKey: "category_name",
-			cell: (info: any) => info.row.original.category_name,
+			accessorKey: "name",
+			cell: (info: any) => {
+				return (
+					<p className="md:max-w-[40ch] lg:max-w-[50ch] max-w-[20ch] truncate">{info.row.original.name}</p>
+				)
+			},
 			header: () => "Name",
 		},
 		{
-			id: "Url Key",
-			accessorKey: "url_key",
-			cell: (info: any) => "/" + info.row.original.meta_details.url_key,
-			header: () => "Url Key"
-		},
-		{
-			id: "Sub Categories",
-			enableHiding: false,
-			accessorKey: "sub_category",
+			id: "No. of Variants",
+			accessorKey: "variants_count",
 			cell: (info: any) => {
-				const len = info.row.original.sub_category?.length ?? 0;
+				const len = info.row.original.variants_count;
 				return (
 					<span className={`${len == 0 ? "text-destructive" : ""}`}>
 						{len}
 					</span>
 				);
 			},
-			header: () => "Sub Categories",
+			header: () => "No. of Variants",
+		},
+		{
+			id: "Featured",
+			accessorKey: "is_featured",
+			cell: (info: any) => {
+				const featured = info.row.original.is_featured;
+				return (
+					<StatusBadge variant={featured ? "success" : "default"}>
+						{featured ? "Yes" : "No"}
+					</StatusBadge>
+				);
+			},
+			header: () => "Featured",
+		},
+		{
+			id: "Status",
+			accessorKey: "status",
+			cell: (info: any) => {
+				return (
+					<StatusBadge variant={info.row.original.status ? "success" : "destructive"}>
+						{info.row.original.status ? "Active" : "Inactive"}
+					</StatusBadge>
+				);
+			},
+			header: () => "Status",
 		},
 		{
 			id: "Created At",
@@ -132,52 +156,36 @@ export default function CategoriesPage({
 		{
 			id: "actions",
 			cell: ({ row }) => {
-				const rowData: FullCategoryRow = row.original;
+				const rowData: HighLevelProduct = row.original;
 
 				return (
-					<>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-									<span className="sr-only">Open menu</span>
-									<MoreHorizontal className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem onClick={() => handleViewSubCategoriesClick(rowData.id)}>
-									View Sub Categories
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() =>
-										handleUpdateNaviateClick(rowData.id)
-									}
-								>
-									Update
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									disabled={fetcher.state === "submitting"}
-									variant="destructive"
-									onClick={() => handleDeleteClick(rowData.id)}
-								>
-									{fetcher.state === "submitting" ? (
-										<Loader2 className="animate-spin" color="white" />
-									) : null}
-									Delete
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+								<span className="sr-only">Open menu</span>
+								<MoreHorizontal className="h-4 w-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<Link to={`${rowData.id}/variants`} viewTransition prefetch="intent">
+								<DropdownMenuItem>View Variants</DropdownMenuItem>
+							</Link>
+							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
+								<DropdownMenuItem>Update</DropdownMenuItem>
+							</Link>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				);
 			},
 		},
 	];
-
+	
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPageSize: defaults.DEFAULT_CATEGORY_PAGE_SIZE,
+		defaultPageSize: defaults.DEFAULT_PRODUCTS_PAGE_SIZE,
 	});
 
 	const table = useReactTable({
-		data: (data.categories as FullCategoryRow[]) ?? [],
+		data: (data.products as HighLevelProduct[]) ?? [],
 		columns: tableColumns,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: true,
@@ -193,18 +201,18 @@ export default function CategoriesPage({
 	return (
 		<>
 			<MetaDetails
-				metaTitle="Categories | Admin Panel"
-				metaDescription="Manage your categories here."
-				metaKeywords="Categories, Manage"
-			/>
+                metaTitle="Products | Admin Panel"
+                metaDescription="Manage your products here."
+                metaKeywords="Products"
+            />
 			<section className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">
-						<h1 className="text-2xl font-semibold">Categories</h1>
-						<Link to="/categories/create" viewTransition className="ml-auto">
+						<h1 className="text-2xl font-semibold">Products</h1>
+						<Link to="create" viewTransition className="ml-auto">
 							<Button size="sm" className="ml-auto">
 								<PlusCircle width={18} />
-								<span>Add Category</span>
+								<span>Add Product</span>
 							</Button>
 						</Link>
 					</div>
@@ -233,14 +241,14 @@ export default function CategoriesPage({
 	);
 }
 
-function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<FullCategoryRow>) {
-    const [searchParams] = useSearchParams();
-    let currentQuery = searchParams.get("q") ?? "";
+function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelProduct>) {
+	const [searchParams] = useSearchParams();
+	let currentQuery = searchParams.get("q") ?? "";
 
     return (
 		<div className="w-full flex justify-between gap-4">
 			<div>
-				<Form method="get" action="/categories">
+				<Form method="get" action="/products">
 					<div className="relative">
 						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2" width={18} />
 						<Input
@@ -249,7 +257,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Ful
 							className="w-full pl-8"
 							id="search"
 							defaultValue={currentQuery}
-                            disabled={disabled}
+							disabled={disabled}
 						/>
 					</div>
 					{/* Invisible submit button: Enter in input triggers submit */}

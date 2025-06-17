@@ -1,23 +1,26 @@
 
-import type { CategoryUpdationPayload, FullCategoryRow, FullSubCategoryRow, GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse,  SubCategoryUpdationPayload } from "~/types/category";
+import type { CategoryUpdationPayload, FullCategoryRow, FullSubCategoryRow, GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse,  SubCategoryUpdationPayload } from "~/types/category.d";
 import type { Database } from "~/types/supabase";
-import { ApiError } from "~/lib/ApiError";
+import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { defaults } from "~/constants";
 import type { CategoryActionData, CategoryUpdateActionData, SubCategoryActionData, SubCategoryUpdateActionData } from "~/schemas/category.schema";
-import { MetaUpdationPayload } from "~/types/meta_details";
+import { MetaUpdationPayload } from "~/types/meta_details.d";
+import { MetaDetailsService } from "~/services/meta-details.service";
 
 
-export class CategoryFunction {
+export class CategoryService {
 	private supabase: SupabaseClient<Database>;
+	private readonly request: Request;
 	private readonly TABLE = "category";
 	private readonly SUB_TABLE = "sub_category";
 	private readonly META_TABLE = "meta_details";
-
+	
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
 		this.supabase = supabase;
+		this.request = request;
 	}
 
 	/** Fetch and search from all categories. with the given pageIndex and pageSize plus total count */
@@ -71,9 +74,7 @@ export class CategoryFunction {
 		}
 	}
 
-	/**
-	 * Fetch a single page of sub‐categories for a given categoryId, plus total count.
-	 */
+	/** Fetch a single page of sub‐categories for a given categoryId, plus total count. */
 	async getSubCategories(
 		categoryId: string,
 		q = "",
@@ -123,33 +124,12 @@ export class CategoryFunction {
 		}
 	}
 
-	/**
-	 * Create a new category along with the meta details
-	 */
+	/**   Create a new category along with the meta details */
 	async createCategoryWithMeta(input: CategoryActionData): Promise<void> {
 		const { category_name, description, sort_order, meta_details } = input;
 
-		// Start a transaction
-		const { data: metaData, error: metaError } = await this.supabase
-			.from(this.META_TABLE)
-			.insert({
-				meta_title: meta_details.meta_title,
-				meta_description: meta_details.meta_description,
-				url_key: meta_details.url_key,
-				meta_keywords: meta_details.meta_keywords || null, // Convert empty string to null
-			})
-			.select("id")
-			.single();
-
-		if (metaError || !metaData) {
-			throw new ApiError(
-				`Failed to create meta details: ${metaError?.message || "Unknown error"}`,
-				500,
-				[metaError?.details]
-			);
-		}
-
-		const metaDetailsId = metaData.id;
+		const metaDetailsService = new MetaDetailsService(this.request);
+		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
 		const { error: categoryError } = await this.supabase.from(this.TABLE).insert({
 			category_name,
@@ -159,40 +139,19 @@ export class CategoryFunction {
 		});
 
 		if (categoryError) {
-			await this.supabase.from(this.META_TABLE).delete().eq("id", metaDetailsId);
+			await metaDetailsService.deleteMetaDetails(metaDetailsId);
 			throw new ApiError(`Failed to create category: ${categoryError.message}`, 500, [
 				categoryError.details,
 			]);
 		}
 	}
 
-	/**
-	 * Create a new category along with the meta details
-	 */
+	/** Create a new category along with the meta details */
 	async createSubCategoryWithMeta(input: SubCategoryActionData): Promise<void> {
 		const { sub_category_name, description, sort_order, meta_details, parent_id } = input;
 
-		// Start a transaction
-		const { data: metaData, error: metaError } = await this.supabase
-			.from(this.META_TABLE)
-			.insert({
-				meta_title: meta_details.meta_title,
-				meta_description: meta_details.meta_description,
-				url_key: meta_details.url_key,
-				meta_keywords: meta_details.meta_keywords || null, // Convert empty string to null
-			})
-			.select("id")
-			.single();
-
-		if (metaError || !metaData) {
-			throw new ApiError(
-				`Failed to create meta details: ${metaError?.message || "Unknown error"}`,
-				500,
-				[metaError?.details]
-			);
-		}
-
-		const metaDetailsId = metaData.id;
+		const metaDetailsService = new MetaDetailsService(this.request);
+		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
 		const { error: subCategoryError } = await this.supabase.from(this.SUB_TABLE).insert({
 			sub_category_name,
@@ -203,16 +162,14 @@ export class CategoryFunction {
 		});
 
 		if (subCategoryError) {
-			await this.supabase.from(this.META_TABLE).delete().eq("id", metaDetailsId);
+			await metaDetailsService.deleteMetaDetails(metaDetailsId);
 			throw new ApiError(`Failed to create sub category: ${subCategoryError.message}`, 500, [
 				subCategoryError.details,
 			]);
 		}
 	}
 
-	/**
-	 * Get full category
-	 */
+	/** Get full category */
 	async getCategoryById(categoryId: string): Promise<GetCategoryResponse> {
 		try {
 			const { data: categoryData, error: queryError } = await this.supabase
@@ -251,9 +208,7 @@ export class CategoryFunction {
 		}
 	}
 
-	/**
-	 * Update product category with its meta details
-	 */
+	/**  Update product category with its meta details */
 	async updateCategory(categoryId: string, input: Partial<CategoryUpdateActionData>): Promise<void> {
 		const { category_name, description, sort_order, meta_details } = input;
 		// Fetch meta_details ID
@@ -287,31 +242,13 @@ export class CategoryFunction {
 			}
 		}
 
-		// Build meta_details update payload
 		if (meta_details) {
-			const metaUpdate: Partial<MetaUpdationPayload> = {};
-			if (meta_details.meta_title) metaUpdate.meta_title = meta_details.meta_title;
-			if (meta_details.meta_description) metaUpdate.meta_description = meta_details.meta_description;
-			if (meta_details.url_key) metaUpdate.url_key = meta_details.url_key;
-			if (meta_details.meta_keywords || meta_details.meta_keywords === "")
-				metaUpdate.meta_keywords = meta_details.meta_keywords;
-
-			if (Object.keys(metaUpdate).length > 0) {
-				const { error: metaError } = await this.supabase
-					.from(this.META_TABLE)
-					.update(metaUpdate)
-					.eq("id", metaDetailsId);
-
-				if (metaError) {
-					throw new ApiError(`Failed to update meta details: ${metaError.message}`, 500, []);
-				}
-			}
+			const metaDetailsService = new MetaDetailsService(this.request);
+			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
 
-	/**
-	 * Get full sub category
-	 */
+	/**  Get full sub category */ 
 	async getSubCategoryById(sub_category_id: string): Promise<GetSubCategoryResponse> {
 		try {
 			const { data: subCategoryData, error: queryError } = await this.supabase
@@ -347,9 +284,7 @@ export class CategoryFunction {
 		}
 	}
 
-	/**
-	 *  Update sub category with its meta details
-	 */
+	/** Update sub category with its meta details */
 	async updateSubCategory(sub_category_id: string, input: Partial<SubCategoryUpdateActionData>) {
 		const { sub_category_name, description, sort_order, meta_details } = input;
 		// Fetch meta_details ID
@@ -383,25 +318,9 @@ export class CategoryFunction {
 			}
 		}
 
-		// Build meta_details update payload
 		if (meta_details) {
-			const metaUpdate: Partial<MetaUpdationPayload> = {};
-			if (meta_details.meta_title) metaUpdate.meta_title = meta_details.meta_title;
-			if (meta_details.meta_description) metaUpdate.meta_description = meta_details.meta_description;
-			if (meta_details.url_key) metaUpdate.url_key = meta_details.url_key;
-			if (meta_details.meta_keywords || meta_details.meta_keywords === "")
-				metaUpdate.meta_keywords = meta_details.meta_keywords;
-
-			if (Object.keys(metaUpdate).length > 0) {
-				const { error: metaError } = await this.supabase
-					.from(this.META_TABLE)
-					.update(metaUpdate)
-					.eq("id", metaDetailsId);
-
-				if (metaError) {
-					throw new ApiError(`Failed to update meta details: ${metaError.message}`, 500, []);
-				}
-			}
+			const metaDetailsService = new MetaDetailsService(this.request);
+			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
 

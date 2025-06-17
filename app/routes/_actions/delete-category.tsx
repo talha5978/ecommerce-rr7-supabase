@@ -1,6 +1,6 @@
 import { ActionFunctionArgs } from "react-router";
-import { CategoryFunction } from "~/services/category.service";
-import { ApiError } from "~/lib/ApiError";
+import { CategoryService } from "~/services/category.service";
+import { ApiError } from "~/utils/ApiError";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
     const categoryId = (params.categoryId as string) || "";
@@ -12,7 +12,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	}
 
 	try {
-		const categoryService = new CategoryFunction(request);
+		const categoryService = new CategoryService(request);
 		// await categoryService.deleteCategory(categoryId);
 
 		return { success: true };

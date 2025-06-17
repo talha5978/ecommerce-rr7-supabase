@@ -30,12 +30,12 @@ const mainNavItems = [
 			},
 			{
 				title: "New Product",
-				url: "/products/dfadfasdfadfa",
+				url: "/products/create",
 				icon: <Archive />,
 			},
 			{
 				title: "New Coupon",
-				url: "/coupons/fasdfadfafasdf",
+				url: "/coupons/new",
 				icon: <Gift />,
 			},
 		],
@@ -60,7 +60,7 @@ const mainNavItems = [
 			},
 			{
 				title: "Attributes",
-				url: "/attributes",
+				url: "/product-attributes",
 				icon: <TableProperties />,
 			},
 		],
@@ -81,7 +81,7 @@ const mainNavItems = [
 		],
 	},
 	{
-		title: "Promotions",
+		title: "Discounts & News",
 		items: [
 			{
 				title: "Coupons",

@@ -9,7 +9,7 @@ import { SubCategoryActionData, SubCategoryFormValues, SubCategoryInputSchema, S
 import { useEffect } from "react";
 import { toast } from "sonner";
 import BackButton from "~/components/Nav/BackButton";
-import { RefreshCcw, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "~/components/ui/form";
@@ -17,10 +17,10 @@ import { CustomTagsInputClear, TagsInput, TagsInputClear, TagsInputInput, TagsIn
 import { Textarea } from "~/components/ui/textarea";
 import { defaults } from "~/constants";
 import { Input } from "~/components/ui/input";
-import { ApiError } from "~/lib/ApiError";
-import { CategoryFunction } from "~/services/category.service";
-import { Separator } from "~/components/ui/separator";
+import { ApiError } from "~/utils/ApiError";
+import { CategoryService } from "~/services/category.service";
 import { ActionResponse } from "~/types/action-data";
+import { getSanitizedMetaDetailsForAction, getSanitizedMetaDetailsForForm } from "~/utils/getSanitizedMetaDetails";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     const subCategoryId = (params.subCategoryId as string) || "";
@@ -47,8 +47,6 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
-
-	const metaFields = ["meta_title", "meta_description", "url_key", "meta_keywords"] as const;
 	const categoryFields = ["sub_category_name", "description", "sort_order"] as const;
 
 	const data: Partial<SubCategoryActionData> = {};
@@ -63,24 +61,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 		}
 	}
 
-	// Parse meta_details fields
-	const hasMetaFields = metaFields.some((field) => formData.has(`meta_details.${field}`));
-	if (hasMetaFields) {
-		data.meta_details = {
-			meta_title: "",
-			meta_description: "",
-			url_key: "",
-			meta_keywords: "",
-		};
-		for (const field of metaFields) {
-			const formKey = `meta_details.${field}`;
-			if (formData.has(formKey)) {
-				data.meta_details[field] = formData.get(formKey) as string;
-			} else {
-                delete data.meta_details[field];
-            }
-		}
-	}
+	getSanitizedMetaDetailsForAction({ formData, data });
 	// Validate parsed data
 	const parseResult = SubCategoryUpdateActionDataSchema.safeParse(data);
 	// console.log("Parse result:", parseResult?.error); // Debug
@@ -93,7 +74,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 	}
 	// console.log(parseResult.data);
 
-	const categoryService = new CategoryFunction(request);
+	const categoryService = new CategoryService(request);
 
 	try {
 		await categoryService.updateSubCategory(subCategoryId, parseResult.data);
@@ -182,8 +163,6 @@ export default function UpdateCategoryForm({
 			},
 		};
 
-
-        const metaFields = ["meta_title", "meta_description", "url_key"] as const;
         const categoryFields = ["sub_category_name", "description", "sort_order"] as const;
 
 		const formData = new FormData();
@@ -197,35 +176,14 @@ export default function UpdateCategoryForm({
 			}
 		}
 
-		// Compare meta_details fields
-		for (const field of metaFields) {
-			if (normalizedValues.meta_details[field] !== sub_category.meta_details![field]) {
-				formData.set(`meta_details.${field}`, normalizedValues.meta_details[field]);
-				hasChanges = true;
-			}
-		}
+		const { hasChanges: hasMetaChanges } = getSanitizedMetaDetailsForForm({
+			formData,
+			normalizedValues,
+			entity: sub_category,
+			hasChanges,
+		});
 
-		// Compare meta_keywords (array comparison)
-		const submittedKeywords = normalizedValues.meta_details.meta_keywords
-			.map((kw: string) => kw.trim())
-			.filter((kw: string) => kw !== "");
-			console.log(sub_category);
-		
-		const initialKeywords = sub_category.meta_details!.meta_keywords!.split(",")
-			.map((kw: string) => kw.trim())
-			.filter((kw: string) => kw !== "");
-        
-		const keywordsChanged =
-			submittedKeywords.length !== initialKeywords!.length ||
-			!submittedKeywords.every((kw, i) => kw === initialKeywords![i]);
-
-		if (keywordsChanged) {
-			formData.set(
-				"meta_details.meta_keywords",
-				submittedKeywords.length > 0 ? submittedKeywords.join(",") : ""
-			);
-			hasChanges = true;
-		}
+		hasChanges = hasChanges || hasMetaChanges;
         
 		// If no changes, notify user
 		if (!hasChanges) {
@@ -270,8 +228,8 @@ export default function UpdateCategoryForm({
 					<BackButton href={`/categories/${sub_category?.parent_id}/sub-categories`} />
 					<h1 className="text-2xl font-semibold">Update Sub Category</h1>
 				</div>
-				<Form {...form}>
-					<form className="space-y-6" onSubmit={handleSubmit(onFormSubmit)}>
+				<form className="space-y-6" onSubmit={handleSubmit(onFormSubmit)}>
+					<Form {...form}>
 						{/* ----- Section 1: Basic Details ----- */}
 						<Card>
 							<CardHeader>
@@ -329,8 +287,6 @@ export default function UpdateCategoryForm({
 								<Input type="text" value={sub_category?.parent_id} disabled hidden />
 							</CardContent>
 						</Card>
-
-						<Separator />
 
 						{/* ----- Section 2: SEO & Meta Details ----- */}
 						<Card>
@@ -397,7 +353,7 @@ export default function UpdateCategoryForm({
 																		>
 																			{item}
 																		</TagsInputItem>
-																))
+																  ))
 																: null}
 															<TagsInputInput placeholder="Add meta keywords..." />
 														</TagsInputList>
@@ -443,8 +399,8 @@ export default function UpdateCategoryForm({
 								<span>Update</span>
 							</Button>
 						</div>
-					</form>
-				</Form>
+					</Form>
+				</form>
 			</section>
 		</>
 	);

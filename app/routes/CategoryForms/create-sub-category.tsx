@@ -4,7 +4,7 @@ import { ActionFunctionArgs, useActionData, useNavigate, useNavigation, useParam
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-import { CategoryFunction } from "~/services/category.service";
+import { CategoryService } from "~/services/category.service";
 import { queryClient } from "~/lib/queryClient";
 import { SubCategoryActionDataSchema, SubCategoryInputSchema, type SubCategoryFormValues } from "~/schemas/category.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -17,7 +17,8 @@ import { useEffect } from "react";
 import { TagsInput, TagsInputClear, TagsInputInput, TagsInputItem, TagsInputList } from "~/components/ui/tags-input";
 import { defaults } from "~/constants";
 import { toast } from "sonner";
-import { ApiError } from "~/lib/ApiError";
+import { ApiError } from "~/utils/ApiError";
+import { ActionResponse } from "~/types/action-data";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     const formData = await request.formData();
@@ -47,7 +48,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
     }
     const { sub_category_name, description, sort_order, meta_details, parent_id } = parseResult.data;
 
-    const categoryService = new CategoryFunction(request);
+    const categoryService = new CategoryService(request);
 	
     try {
 			await categoryService.createSubCategoryWithMeta({
@@ -87,11 +88,7 @@ export default function CreateCategoryPage() {
 	const navigation = useNavigation();
 	const { categoryId } = useParams();
 
-	const actionData = useActionData() as {
-    	success?: boolean;
-    	error?: string;
-    	validationErrors?: Record<string, string[]>;
- 	} | undefined;
+	const actionData: ActionResponse = useActionData();
 
     const form = useForm<SubCategoryFormValues>({
 		resolver: zodResolver(SubCategoryInputSchema),
@@ -164,8 +161,8 @@ export default function CreateCategoryPage() {
 					<BackButton href={`/categories/${categoryId}/sub-categories`} />
 					<h1 className="text-2xl font-semibold">Create Sub Category</h1>
 				</div>
-				<Form {...form}>
-					<form className="space-y-6" onSubmit={handleSubmit(onFormSubmit)}>
+				<form className="space-y-6" onSubmit={handleSubmit(onFormSubmit)}>
+					<Form {...form}>
 						{/* ----- Section 1: Basic Details ----- */}
 						<Card>
 							<CardHeader>
@@ -206,8 +203,8 @@ export default function CreateCategoryPage() {
 								/>
 
 								{/* Parent Category */}
-								<Input type="text" name="parent_id" value={categoryId} disabled hidden/>
-								
+								<Input type="text" name="parent_id" value={categoryId} disabled hidden />
+
 								{/* Sort Order */}
 								<FormField
 									control={control}
@@ -224,8 +221,6 @@ export default function CreateCategoryPage() {
 								/>
 							</CardContent>
 						</Card>
-
-						<Separator />
 
 						{/* ----- Section 2: SEO & Meta Details ----- */}
 						<Card>
@@ -286,22 +281,28 @@ export default function CreateCategoryPage() {
 															{field.value != undefined &&
 															Array.isArray(field.value)
 																? field.value.map((item) => (
-																		<TagsInputItem key={item} value={item}>
+																		<TagsInputItem
+																			key={item}
+																			value={item}
+																		>
 																			{item}
 																		</TagsInputItem>
-																))
+																  ))
 																: null}
 															<TagsInputInput placeholder="Add meta keywords..." />
 														</TagsInputList>
 														<TagsInputClear className="sm:w-fit w-full">
 															<div className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointe border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 size-9 max-sm:w-full cursor-pointer">
 																<RefreshCcw className="h-4 w-4" />
-																<span className="sm:hidden inline">Clear</span>
+																<span className="sm:hidden inline">
+																	Clear
+																</span>
 															</div>
 														</TagsInputClear>
 													</div>
 													<div className="text-muted-foreground text-sm">
-														You can add up to {defaults.META_KEYWORDS_VALUE} keywords
+														You can add up to {defaults.META_KEYWORDS_VALUE}{" "}
+														keywords
 													</div>
 												</TagsInput>
 											</FormControl>
@@ -318,7 +319,9 @@ export default function CreateCategoryPage() {
 										<FormItem>
 											<div className="flex gap-2">
 												<FormLabel>URL Key</FormLabel>
-												<span className="text-muted-foreground text-sm">(Without spaces)</span>
+												<span className="text-muted-foreground text-sm">
+													(Without spaces)
+												</span>
 											</div>
 											<FormControl>
 												<Input placeholder="e.g. women" {...field} />
@@ -337,8 +340,8 @@ export default function CreateCategoryPage() {
 								<span>Create</span>
 							</Button>
 						</div>
-					</form>
-				</Form>
+					</Form>
+				</form>
 			</section>
 		</>
 	);
