@@ -11,10 +11,10 @@ import type { HighLevelProductAttribute } from "~/types/product-attributes.d";
 import { queryClient } from "~/lib/queryClient";
 import { useEffect } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
-import { productAttributesQuery } from "~/queries/product-attributes.q";
+import { highLevelProductAttributesQuery } from "~/queries/product-attributes.q";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const data = await queryClient.fetchQuery(productAttributesQuery({ request }));
+	const data = await queryClient.fetchQuery(highLevelProductAttributesQuery({ request }));
 
 	return {
 		data
@@ -26,7 +26,6 @@ export default function ProductsAttributesPage({
 }: Route.ComponentProps) {
 	const navigation = useNavigation();
 	const location = useLocation();
-	const navigate = useNavigate();
 
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;

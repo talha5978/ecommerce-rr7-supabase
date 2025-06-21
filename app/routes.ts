@@ -14,14 +14,17 @@ export default [
 		...prefix("/categories", [
 			index("./routes/categories.tsx"),
 			route("create", "./routes/CategoryForms/create-category.tsx"),
-			route(":categoryId/update", "./routes/CategoryForms/update-category.tsx"),
+
+			...prefix(":categoryId", [
+				route("update", "./routes/CategoryForms/update-category.tsx"),
+				// route("delete", "./routes/_actions/delete-category.tsx"),
+			]),
 			
-			route(":categoryId/sub-categories", "./routes/sub-categories.tsx"),
-			route(":categoryId/sub-categories/create", "./routes/CategoryForms/create-sub-category.tsx"),
-			route(":categoryId/sub-categories/:subCategoryId/update", "./routes/CategoryForms/update-sub-category.tsx"),
-			//TODO: DELETE KRNAY WALAY ROUTE BNANAY HAIN!
-			// category deletion route (badd mien bnana hain!! 🤐)
-			route("delete/:categoryId", "./routes/_actions/delete-category.tsx"),
+			...prefix(":categoryId/sub-categories", [
+				route("", "./routes/sub-categories.tsx"),
+				route("create", "./routes/CategoryForms/create-sub-category.tsx"),
+				route(":subCategoryId/update", "./routes/CategoryForms/update-sub-category.tsx"),
+			]),
 		]),
 
 		...prefix("/product-attributes", [
@@ -38,10 +41,17 @@ export default [
 		...prefix("/products", [
 			route("", "./routes/products.tsx"),
 			route("create", "./routes/create-product.tsx"),
-			route(":productId/update", "./routes/update-product.tsx"),
-
-			route(":productId/variants", "./routes/product-variants.tsx"),
-			// route(":productId/update", "./routes/update-product.tsx"),
+			...prefix(":productId", [
+				route("update", "./routes/update-product.tsx"),
+				// route("delete", "./routes/_actions/delete-product.tsx"),
+			]),
+			
+			...prefix(":productId/variants", [
+				route("", "./routes/product-variants.tsx"),
+				route("create", "./routes/create-product-variant.tsx"),
+				route("duplicate", "./routes/_actions/create-product-variant-duplicate.tsx"),
+				// route("update", "./routes/update-product.tsx"),
+			])
 		]),
 	]),
 ] satisfies RouteConfig;

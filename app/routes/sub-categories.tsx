@@ -54,15 +54,10 @@ export default function SubCategoriesPage({
 	const navigation = useNavigation();
 	const location = useLocation();
 
-	const navigate = useNavigate();
 	const pageCount = Math.ceil(data.total / pageSize);
 
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
-
-	function handleUpdateNaviateClick(id: string, parent_id: string) {
-		return navigate(`/categories/${parent_id}/sub-categories/${id}/update`);
-	}
 
 	const tableColumns: ColumnDef<FullSubCategoryRow, unknown>[] = [
 		{
@@ -112,13 +107,9 @@ export default function SubCategoriesPage({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
-								<DropdownMenuItem
-									onClick={() =>
-										handleUpdateNaviateClick(rowData.id, rowData.parent_id)
-									}
-								>
-									Update
-								</DropdownMenuItem>
+								<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
+									<DropdownMenuItem>Update</DropdownMenuItem>
+								</Link>
 								<DropdownMenuItem
 									variant="destructive"
 									// onClick={() =>
@@ -136,7 +127,7 @@ export default function SubCategoriesPage({
 	];
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPageSize: defaults.DEFAULT_SUB_CATEGORY_PAGE_SIZE,
+		defaultPage: defaults.DEFAULT_SUB_CATEGORY_PAGE,
 	});
 
 	const table = useReactTable({

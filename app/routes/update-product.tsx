@@ -32,12 +32,6 @@ import { Route } from "./+types/update-product";
 import ImageInput from "~/components/Custom-Inputs/image-input";
 import { ProductsService } from "~/services/products.service";
 import { getFullSingleProductQuery } from "~/queries/products.q";
-import { DataTable } from "~/components/Table/data-table";
-import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { FullProduct, ProductVariantRow } from "~/types/products";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
-import StatusBadge from "~/components/status-badge";
-import { Skeleton } from "~/components/ui/skeleton";
 import { getSanitizedMetaDetailsForAction, getSanitizedMetaDetailsForForm } from "~/utils/getSanitizedMetaDetails";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -434,7 +428,7 @@ export default function UpdateProductPage({
 											<FormItem>
 												<FormLabel>Cover Image</FormLabel>
 												<FormControl>
-													<ImageInput name="cover_image" register={register} />
+													<ImageInput name="cover_image" />
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -670,167 +664,6 @@ export default function UpdateProductPage({
 					</Form>
 				</form>
 			</section>
-			{!productResp?.error && productResp?.product.product_variant?.length > 0 && (
-				<section className="mt-6 flex flex-col gap-4">
-					<h1 className="text-2xl font-semibold">Available Variants</h1>
-					<VariantsTableComp product={productResp?.product as FullProduct} />
-				</section>
-			)}
 		</>
-	);
-}
-
-const VariantsTableComp = (product: FullProduct) => {
-
-	const tableColumns: ColumnDef<ProductVariantRow, unknown>[] = [
-		{
-			id: "Sr. No.",
-			enableHiding: false,
-			accessorKey: "id",
-			cell: (info: any) => `(${info.row.index + 1})`,
-			header: () => "Sr. No.",
-		},
-		{
-			id: "Cover",
-			accessorKey: "images",
-			cell: (info: any) => {
-				const image = info.row.original.images[0];
-
-				if (image) {
-					return (
-						<img
-							src={`${SUPABASE_IMAGE_BUCKET_PATH}/${image}`}
-							alt={info.row.original.name}
-							className="h-16 w-16 rounded-sm object-cover shadow-2xl"
-							loading="lazy"
-						/>
-					);
-				} else {
-					return <Skeleton className="h-16 w-16 rounded-sm" />;
-				}
-			},
-			header: () => "Cover",
-		},
-		{
-			id: "SKU",
-			enableHiding: false,
-			accessorKey: "sku",
-			cell: (info: any) => info.row.original.sku,
-			header: () => "SKU",
-		},
-		{
-			id: "Status",
-			accessorKey: "status",
-			cell: (info: any) => {
-				return (
-					<StatusBadge variant={info.row.original.status ? "success" : "destructive"}>
-						{info.row.original.status ? "Active" : "Inactive"}
-					</StatusBadge>
-				);
-			},
-			header: () => "Status",
-		},
-		{
-			id: "Sale Price",
-			accessorKey: "sale_price",
-			cell: (info: any) => info.row.original.sale_price,
-			header: () => "Sale Price",
-		},
-		{
-			id: "Stock",
-			accessorKey: "stock",
-			cell: (info: any) => info.row.original.stock,
-			header: () => "Stock",
-		},
-		{
-			id: "Re-order Level",
-			accessorKey: "reorder_level",
-			cell: (info: any) => info.row.original.reorder_level,
-			header: () => "Re-order Level",
-		},
-		{
-			id: "actions",
-			cell: ({ row }) => {
-				// const rowData: FullSubCategoryRow = row.original;
-
-				return (
-					<>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-									<span className="sr-only">Open menu</span>
-									<MoreHorizontal className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem
-								// onClick={() =>
-								// 	handleUpdateNaviateClick(rowData.id, rowData.parent_id)
-								// }
-								>
-									Update
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									variant="destructive"
-									// onClick={() =>
-									// 	handleDetailsClick(rowData)
-									// }
-								>
-									Delete
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</>
-				);
-			},
-		},
-	]
-	
-	const table = useReactTable({
-		data: product?.product_variant ?? [],
-		columns: tableColumns,
-		getCoreRowModel: getCoreRowModel(),
-	});
-	console.log("Data table rerendered");
-	
-	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex justify-end">
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							variant="outline"
-							size="sm"
-							className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-						>
-							<Settings2 />
-							<span className="hidden md:inline">Columns</span>
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-[150px]">
-						<DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-						<DropdownMenuSeparator />
-						{table
-							.getAllColumns()
-							.filter(
-								(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide()
-							)
-							.map((column: any) => {
-								return (
-									<DropdownMenuCheckboxItem
-										key={column.id}
-										className="cursor-pointer"
-										checked={column.getIsVisible()}
-										onCheckedChange={(value) => column.toggleVisibility(!!value)}
-									>
-										{column.id}
-									</DropdownMenuCheckboxItem>
-								);
-							})}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
-			<DataTable table={table} total={product?.product_variant?.length ?? 0} />
-		</div>
 	);
 }

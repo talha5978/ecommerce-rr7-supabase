@@ -1,25 +1,26 @@
-import { Form, Link, LoaderFunctionArgs, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useNavigate, useSearchParams } from "react-router";
 import { Route } from "./+types/product-variants";
 import { Button } from "~/components/ui/button";
-import { MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
-import { GetFormattedDate } from "~/lib/utils";
-import type { FullSubCategoryRow } from "~/types/category.d";
 import { queryClient } from "~/lib/queryClient";
 import { defaults, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
 import BackButton from "~/components/Nav/BackButton";
-import TableId from "~/components/Table/TableId";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
-import { productVariantsQuery } from "~/queries/products.q";
+import { productVariantsQuery } from "~/queries/product-variants.q";
 import { ProductVariantRow } from "~/types/products";
 import StatusBadge from "~/components/status-badge";
 import { Skeleton } from "~/components/ui/skeleton";
+import ImageViewer from "~/components/ImageViewer/image-viewer";
+import { bolleanToStringConverter, GetFormattedDate, stringToBooleanConverter } from "~/lib/utils";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const productId = (params.productId as string) || "";
@@ -57,15 +58,54 @@ export default function ProductVariantsPage({
 	const navigation = useNavigation();
 	const location = useLocation();
 
-	const navigate = useNavigate();
 	const pageCount = Math.ceil(data.total / pageSize);
 
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
-	function handleUpdateNaviateClick(id: string, parent_id: string) {
-		return navigate(`/categories/${parent_id}/sub-categories/${id}/update`);
-	}
+	const fetcher = useFetcher();
+			
+	// Handle fetcher state for toasts and query invalidation
+	useEffect(() => {
+		if (fetcher.data) {
+			if (fetcher.data.success) {
+				toast.success("Variant Duplicated successfully");
+				toast.info("This variant is not visible until it is approved by an admin and make sure to update the variant details.");
+			} else if (fetcher.data.error) {
+				toast.error(fetcher.data.error);
+			}
+		}
+	}, [fetcher.data, queryClient]);
+
+	const handleDuplicateClick = (input: ProductVariantRow) => {
+		toast.loading("Variant Duplication started.");
+
+		const formData = new FormData();
+		
+		input.images.forEach((image) => {
+			formData.append("images", image);
+		});
+
+		console.log(input);
+		const fieldsToExclue = ["id", "images", "createdAt", "status"];
+
+		for (const key in input as Record<string, any>) {
+			const value = (input as Record<string, any>)[key];
+			if (fieldsToExclue.includes(key)) {
+				if (typeof value === "boolean") {
+					const stringifiedVal = bolleanToStringConverter(value);
+					formData.set(key, stringifiedVal);
+				}
+			} else {
+				formData.set(key, value.toString());
+			}
+		}
+		
+		fetcher.submit(formData, {
+			method: "POST",
+			action: `/products/${productId}/variants/duplicate`
+		});
+	};
 
 	const tableColumns: ColumnDef<ProductVariantRow, unknown>[] = [
 		{
@@ -76,25 +116,29 @@ export default function ProductVariantsPage({
 			header: () => "Sr. No.",
 		},
 		{
-			id: "Cover",
+			id: "Image",
 			accessorKey: "images",
 			cell: (info: any) => {
-				const image = info.row.original.images[0];
+				const rowImg = info.row.original.images[0];
+				const image = `${SUPABASE_IMAGE_BUCKET_PATH}/${rowImg}`;
 
-				if (image) {
+				if (rowImg) {
 					return (
-						<img
-							src={`${SUPABASE_IMAGE_BUCKET_PATH}/${image}`}
-							alt={info.row.original.name}
-							className="h-16 w-16 rounded-sm object-cover shadow-2xl"
-							loading="lazy"
-						/>
-					);
+						<div>
+							<ImageViewer
+								thumbnailUrl={image}
+								imageUrl={image}
+								classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
+							/>
+						</div>
+					)
 				} else {
-					return <Skeleton className="h-16 w-16 rounded-sm" />;
+					return (
+						<Skeleton className="h-16 w-16 rounded-sm" />
+					)
 				}
 			},
-			header: () => "Cover",
+			header: () => "Image",
 		},
 		{
 			id: "SKU",
@@ -108,12 +152,18 @@ export default function ProductVariantsPage({
 			accessorKey: "status",
 			cell: (info: any) => {
 				return (
-					<StatusBadge variant={info.row.original.status ? "success" : "destructive"}>
+					<StatusBadge variant={info.row.original.status ? "success" : "destructive"} icon="dot">
 						{info.row.original.status ? "Active" : "Inactive"}
 					</StatusBadge>
 				);
 			},
 			header: () => "Status",
+		},
+		{
+			id: "Original Price",
+			accessorKey: "sale_price",
+			cell: (info: any) => info.row.original.original_price,
+			header: () => "Original Price",
 		},
 		{
 			id: "Sale Price",
@@ -134,9 +184,17 @@ export default function ProductVariantsPage({
 			header: () => "Re-order Level",
 		},
 		{
+			id: "Created At",
+			accessorKey: "createdAt",
+			cell: (info: any) => GetFormattedDate(info.row.original.createdAt),
+			header: () => "Created At",
+		},
+		{
 			id: "actions",
 			cell: ({ row }) => {
-				// const rowData: FullSubCategoryRow = row.original;
+				const rowData: ProductVariantRow = row.original;
+
+				
 
 				return (
 					<>
@@ -149,12 +207,15 @@ export default function ProductVariantsPage({
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
 								<DropdownMenuItem
-								// onClick={() =>
-								// 	handleUpdateNaviateClick(rowData.id, rowData.parent_id)
-								// }
+									disabled={fetcher.state === "submitting"}
+									onClick={() => handleDuplicateClick(rowData)}
 								>
-									Update
+									{fetcher.state === "submitting" ? (
+										<Loader2 className="animate-spin" color="white" />
+									) : null}
+									Create Duplicate
 								</DropdownMenuItem>
+								<DropdownMenuItem>Update</DropdownMenuItem>
 								<DropdownMenuItem
 									variant="destructive"
 									// onClick={() =>
@@ -172,7 +233,7 @@ export default function ProductVariantsPage({
 	];
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPageSize: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE,
+		defaultPage: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE
 	});
 
 	const table = useReactTable({

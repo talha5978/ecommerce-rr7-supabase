@@ -47,6 +47,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 		await queryClient.invalidateQueries({ queryKey: ["productAttributesByType", AttributeParam ?? attribute_type] });
 		await queryClient.invalidateQueries({ queryKey: ["productAttributes"] });
+		await queryClient.invalidateQueries({ queryKey: ["all_productAttributes"] });
 
 		return { success: true };
 	} catch (error:any) {

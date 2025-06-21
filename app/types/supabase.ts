@@ -167,6 +167,7 @@ export type Database = {
 			};
 			product_variant: {
 				Row: {
+					createdAt: string | null;
 					id: string;
 					images: string[];
 					is_default: boolean;
@@ -177,9 +178,10 @@ export type Database = {
 					sku: string;
 					status: boolean;
 					stock: number;
-					weight: number;
+					weight: number | null;
 				};
 				Insert: {
+					createdAt?: string | null;
 					id?: string;
 					images?: string[];
 					is_default?: boolean;
@@ -190,9 +192,10 @@ export type Database = {
 					sku: string;
 					status?: boolean;
 					stock?: number;
-					weight?: number;
+					weight?: number | null;
 				};
 				Update: {
+					createdAt?: string | null;
 					id?: string;
 					images?: string[];
 					is_default?: boolean;
@@ -203,7 +206,7 @@ export type Database = {
 					sku?: string;
 					status?: boolean;
 					stock?: number;
-					weight?: number;
+					weight?: number | null;
 				};
 				Relationships: [
 					{

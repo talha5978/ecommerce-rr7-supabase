@@ -10,7 +10,7 @@ export interface HighLevelProductAttribute {
     values_count: number;
 }
 
-export interface GetAllProductAttributesResponse {
+export interface HighLevelProductAttributesResponse {
     product_attributes: HighLevelProductAttribute[] | null;
     error: ApiError | null;
 }
@@ -19,6 +19,15 @@ export interface ProductAttribute {
     id: string;
     name: string;
     value: string;
+}
+
+export interface GroupedProductAttributes {
+	[attributeType: AttributeType]: ProductAttribute[];
+}
+
+export interface AllProductAttributesResponse {
+    product_attributes: GroupedProductAttributes | null;
+    error: ApiError | null;
 }
 
 export interface ProductAttributesResponse {

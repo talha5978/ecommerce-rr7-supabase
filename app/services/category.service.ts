@@ -38,8 +38,8 @@ export class CategoryService {
 				.select(
 					`
 					*, 
-					${this.SUB_TABLE}:sub_category(*),
-					${this.META_TABLE}:meta_details(*)
+					sub_category:${this.SUB_TABLE}(*),
+					meta_details:${this.META_TABLE}(*)
 				`,
 					{ count: "exact" }
 				)

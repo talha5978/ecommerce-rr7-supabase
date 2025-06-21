@@ -2,17 +2,19 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { FullProduct, GetAllProductsResponse, GetAllProductVariants, GetSingleProductResponse, ProductUpdationPayload } from "~/types/products";
+import { FullProduct, GetAllProductsResponse, GetSingleProductResponse, ProductUpdationPayload } from "~/types/products";
 import { defaults } from "~/constants";
 import { ProductActionData, ProductUpdateActionData } from "~/schemas/product.schema";
 import { MetaDetailsService } from "~/services/meta-details.service";
 import { MediaService } from "~/services/media.service";
+import { stringToBooleanConverter } from "~/lib/utils";
 
 export class ProductsService {
 	private supabase: SupabaseClient<Database>;
 	private readonly request: Request;
-	private readonly TABLE = "product";
+	private readonly PRODUCT_TABLE = "product";
 	private readonly VARIANT_TABLE = "product_variant";
+	private readonly CATEGORIES_TABLE = "category";
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
@@ -40,9 +42,12 @@ export class ProductsService {
 			const to = from + pageSize - 1;
 
 			let query = this.supabase
-				.from(this.TABLE)
+				.from(this.PRODUCT_TABLE)
 				.select(`
-					name, id, cover_image, is_featured, status, createdAt, 
+					name, id, cover_image, is_featured, status, createdAt,
+					sub_category(
+						sub_category_name, ${this.CATEGORIES_TABLE}(category_name)
+					),
 					${this.VARIANT_TABLE}(id)
 				`, { count: "exact" })
 				.order("createdAt", { ascending: false })
@@ -63,7 +68,9 @@ export class ProductsService {
 				products: data?.map((product) => {
 					return {
 						...product,
-						variants_count: product[this.VARIANT_TABLE].length ?? 0
+						variants_count: product[this.VARIANT_TABLE].length ?? 0,
+						categoryName: product.sub_category?.category?.category_name || "",
+						subCategoryName: product.sub_category?.sub_category_name || "",
 					}
 				}) ?? [],
 				total: count ?? 0,
@@ -110,14 +117,14 @@ export class ProductsService {
 			}
 		}
 
-		const { error: prodError } = await this.supabase.from(this.TABLE).insert({
+		const { error: prodError } = await this.supabase.from(this.PRODUCT_TABLE).insert({
 			cover_image: cover_public_url,
 			description,
 			name,
 			meta_details: metaDetailsId,
-			free_shipping: this.stringToBooleanConverter(free_shipping),
-			is_featured: this.stringToBooleanConverter(is_featured),
-			status: this.stringToBooleanConverter(status),
+			free_shipping: stringToBooleanConverter(free_shipping),
+			is_featured: stringToBooleanConverter(is_featured),
+			status: stringToBooleanConverter(status),
 			sub_category: sub_category,
 		});
 
@@ -132,7 +139,7 @@ export class ProductsService {
 	async getFullSingleProduct(productId: string): Promise<GetSingleProductResponse> {
 		try {
 			const { data, error: queryError } = await this.supabase
-				.from(this.TABLE)
+				.from(this.PRODUCT_TABLE)
 				.select(`*, meta_details(*), ${this.VARIANT_TABLE}(*)`)
 				.eq("id", productId)
 				.single();
@@ -171,7 +178,7 @@ export class ProductsService {
 		} = input;
 
 		const { data: prodData, error: fetchError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.PRODUCT_TABLE)
 			.select("meta_details, cover_image")
 			.eq("id", productId)
 			.single();
@@ -206,15 +213,15 @@ export class ProductsService {
 		const prodUpdate: Partial<ProductUpdationPayload> = {};
 		if (name) prodUpdate.name = name;
 		if (description !== undefined) prodUpdate.description = description;
-		if (free_shipping !== undefined) prodUpdate.free_shipping = this.stringToBooleanConverter(free_shipping);
-		if (status !== undefined) prodUpdate.status = this.stringToBooleanConverter(status);
-		if (is_featured !== undefined) prodUpdate.is_featured = this.stringToBooleanConverter(is_featured);
+		if (free_shipping !== undefined) prodUpdate.free_shipping = stringToBooleanConverter(free_shipping);
+		if (status !== undefined) prodUpdate.status = stringToBooleanConverter(status);
+		if (is_featured !== undefined) prodUpdate.is_featured = stringToBooleanConverter(is_featured);
 		if (sub_category !== undefined) prodUpdate.sub_category = sub_category;
 		if (newImagePath != null) prodUpdate.cover_image = newImagePath;
 
 		if (Object.keys(prodUpdate).length > 0) {
 			const { error: prodUpdateError } = await this.supabase
-				.from(this.TABLE)
+				.from(this.PRODUCT_TABLE)
 				.update(prodUpdate)
 				.eq("id", productId);
 

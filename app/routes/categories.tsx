@@ -42,8 +42,6 @@ export default function CategoriesPage({
 	const navigation = useNavigation();
 	const location = useLocation();
 
-	const [searchParams] = useSearchParams();
-	const navigate = useNavigate();
 	const pageCount = Math.ceil(data.total / pageSize);
 
 	const isFetchingThisRoute =
@@ -78,17 +76,9 @@ export default function CategoriesPage({
 		formData.append("categoryId", categoryId);
 		fetcher.submit(formData, {
 			method: "POST",
-			action: `/categories/delete/${categoryId}`,
+			action: `/categories/${categoryId}/delete`,
 		});
 	};
-
-	function handleViewSubCategoriesClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/sub-categories`);
-	}
-
-	function handleUpdateNaviateClick(categrory_id: string) {
-		return navigate(`/categories/${categrory_id}/update`);
-	}
 
 	const tableColumns: ColumnDef<FullCategoryRow, unknown>[] = [
 		{
@@ -144,16 +134,12 @@ export default function CategoriesPage({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
-								<DropdownMenuItem onClick={() => handleViewSubCategoriesClick(rowData.id)}>
-									View Sub Categories
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() =>
-										handleUpdateNaviateClick(rowData.id)
-									}
-								>
-									Update
-								</DropdownMenuItem>
+								<Link to={`${rowData.id}/sub-categories`} viewTransition prefetch="intent">
+									<DropdownMenuItem>View Sub Categories</DropdownMenuItem>
+								</Link>
+								<Link to={`${rowData.id}/update}`} viewTransition prefetch="intent">
+									<DropdownMenuItem>Update</DropdownMenuItem>
+								</Link>
 								<DropdownMenuItem
 									disabled={fetcher.state === "submitting"}
 									variant="destructive"
@@ -173,7 +159,7 @@ export default function CategoriesPage({
 	];
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPageSize: defaults.DEFAULT_CATEGORY_PAGE_SIZE,
+		defaultPage: defaults.DEFAULT_CATEGORY_PAGE
 	});
 
 	const table = useReactTable({

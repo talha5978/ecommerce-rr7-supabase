@@ -7,8 +7,6 @@ export type ProductRow =  Database["public"]["Tables"]["product"]["Row"];
 
 export type AttributeUpdationPayload =  Database["public"]["Tables"]["product_attributes"]["Update"];
 
-type AttributeType = Database["public"]["Enums"]["attribute_type_enum"];
-
 export interface HighLevelProduct {
     id: string;
     name: string;
@@ -17,6 +15,8 @@ export interface HighLevelProduct {
     status: boolean;
     createdAt: string;
     variants_count: number;
+    categoryName: string;
+    subCategoryName: string;
 }
 
 export interface GetAllProductsResponse {
@@ -26,12 +26,6 @@ export interface GetAllProductsResponse {
 }
 
 export type ProductVariantRow =  Database["public"]["Tables"]["product_variant"]["Row"];
-
-export interface GetAllProductVariants {
-    product_variants: ProductVariantRow[] | null;
-    total: number;
-    error: ApiError | null;
-}
 
 export type FullProduct = Omit<ProductRow & {
     meta_details: MetaDetailsRow | null;

@@ -11,6 +11,7 @@ import {
 } from "@radix-ui/react-dialog";
 import { MinusCircle, PlusCircle, X } from "lucide-react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
+import { Button } from "~/components/ui/button";
 
 const DEFAULT_PLACEHOLDER_URL =
 	"https://raw.githubusercontent.com/stackzero-labs/ui/refs/heads/main/public/placeholders/headphone-2.jpg";
@@ -83,32 +84,38 @@ const ImageViewer = ({
 									</TransformComponent>
 									{showControls && (
 										<div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-											<button
+											<Button
 												onClick={() => zoomOut()}
-												className="cursor-pointer rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
+												variant={"ghost"}
+												size={"icon"}
+												className="rounded-full p-2 bg-black/50 text-white transition-colors"
 												aria-label="Zoom out"
 											>
 												<MinusCircle className="size-6" />
-											</button>
-											<button
+											</Button>
+											<Button
 												onClick={() => zoomIn()}
-												className="cursor-pointer rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
+												variant={"ghost"}
+												size={"icon"}
+												className="rounded-full p-2 bg-black/50 text-white transition-colors"
 												aria-label="Zoom in"
 											>
 												<PlusCircle className="size-6" />
-											</button>
+											</Button>
 										</div>
 									)}
 								</>
 							)}
 						</TransformWrapper>
 						<DialogClose asChild>
-							<button
-								className="absolute top-4 right-4 z-10 cursor-pointer rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
+							<Button
+								variant={"ghost"}
+								size={"icon"}
+								className="absolute top-4 right-4 z-10 rounded-full bg-black/50 p-2 text-white transition-colors"
 								aria-label="Close"
 							>
 								<X className="size-6" />
-							</button>
+							</Button>
 						</DialogClose>
 					</div>
 				</DialogContent>

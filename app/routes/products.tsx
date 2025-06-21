@@ -50,6 +50,8 @@ export default function ProductsMainPage({
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
+	const [searchParams] = useSearchParams()
+	
 	useEffect(() => {
 		if (data.error != null && data.error.message) {
 			console.log(data);
@@ -104,10 +106,22 @@ export default function ProductsMainPage({
 			accessorKey: "name",
 			cell: (info: any) => {
 				return (
-					<p className="md:max-w-[40ch] lg:max-w-[50ch] max-w-[20ch] truncate">{info.row.original.name}</p>
+					<p className="md:max-w-[35ch] max-w-[20ch] truncate">{info.row.original.name}</p>
 				)
 			},
 			header: () => "Name",
+		},
+		{
+			id: "Category",
+			accessorKey: "categoryName",
+			cell: (info: any) => info.row.original.categoryName,
+			header: () => "Category",
+		},
+		{
+			id: "Sub Category",
+			accessorKey: "subCategoryName",
+			cell: (info: any) => info.row.original.subCategoryName,
+			header: () => "Sub Category",
 		},
 		{
 			id: "No. of Variants",
@@ -128,7 +142,7 @@ export default function ProductsMainPage({
 			cell: (info: any) => {
 				const featured = info.row.original.is_featured;
 				return (
-					<StatusBadge variant={featured ? "success" : "default"}>
+					<StatusBadge variant={featured ? "success" : "default"} icon={featured ? "tick" : "cross"}>
 						{featured ? "Yes" : "No"}
 					</StatusBadge>
 				);
@@ -140,7 +154,7 @@ export default function ProductsMainPage({
 			accessorKey: "status",
 			cell: (info: any) => {
 				return (
-					<StatusBadge variant={info.row.original.status ? "success" : "destructive"}>
+					<StatusBadge variant={info.row.original.status ? "success" : "destructive"} icon="dot">
 						{info.row.original.status ? "Active" : "Inactive"}
 					</StatusBadge>
 				);
@@ -170,6 +184,9 @@ export default function ProductsMainPage({
 							<Link to={`${rowData.id}/variants`} viewTransition prefetch="intent">
 								<DropdownMenuItem>View Variants</DropdownMenuItem>
 							</Link>
+							<Link to={`${rowData.id}/variants/create`} viewTransition prefetch="intent">
+								<DropdownMenuItem>Add Variant</DropdownMenuItem>
+							</Link>
 							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 								<DropdownMenuItem>Update</DropdownMenuItem>
 							</Link>
@@ -181,7 +198,7 @@ export default function ProductsMainPage({
 	];
 	
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPageSize: defaults.DEFAULT_PRODUCTS_PAGE_SIZE,
+		defaultPage: defaults.DEFAULT_PRODUCTS_PAGE
 	});
 
 	const table = useReactTable({

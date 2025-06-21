@@ -6,138 +6,123 @@ import { useFormContext } from "react-hook-form";
 import { ALLOWED_IMAGE_FORMATS, MAX_IMAGE_SIZE, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
 
 interface ImageInputProps {
-    name: string;
-    register: any;
+	name: string;
 }
 
 interface ImagePreviewProps {
-    url: string;
-    onRemove: () => void;
+	url: string;
+	onRemove: () => void;
 }
 
 const COVER_IMAGE_MIN_DIMENSIONS = { width: 500, height: 600 };
 const COVER_IMAGE_MAX_DIMENSIONS = { width: 1200, height: 1200 };
 
 const ImagePreview = ({ url, onRemove }: ImagePreviewProps) => (
-    <div className="relative">
-        <button className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-pointer" onClick={onRemove}>
-            <XCircleIcon className="h-6 w-6 fill-primary text-primary-foreground" />
-        </button>
-        <img src={url} alt={"Cover Image"} className="border border-border rounded-md object-cover" />
-    </div>
+	<div className="relative">
+		<button
+			className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-pointer"
+			onClick={onRemove}
+		>
+			<XCircleIcon className="h-6 w-6 fill-primary text-primary-foreground" />
+		</button>
+		<img src={url} alt="Cover Image" className="border border-border rounded-md object-cover" />
+	</div>
 );
 
-export default function ImageInput({ name, register }: ImageInputProps) {
-    const { setValue, watch , setError, clearErrors } = useFormContext();
-    const [profilePicture, setProfilePicture] = useState<string | null>(null);
-    const [dimensionError, setDimensionError] = useState<string | null>(null);
-    const formValue = watch(name);
+export default function ImageInput({ name }: ImageInputProps) {
+	const { setValue, watch, setError, clearErrors } = useFormContext();
+	const formValue = watch(name);
 
-    // Validate image dimensions, size, and format
-    const validateImage = useCallback((file: File): Promise<string | null> => {
-        return new Promise((resolve) => {
-            if (!ALLOWED_IMAGE_FORMATS.includes(file.type)) {
-                resolve(`Invalid file format. Only JPEG, PNG, or WebP image formats are allowed.`);
-                return;
-            }
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	const [dimensionError, setDimensionError] = useState<string | null>(null);
 
-            if (file.size > MAX_IMAGE_SIZE) {
-                resolve(`File size exceeds 1MB.`);
-                return;
-            }
+	const validateImage = useCallback((file: File): Promise<string | null> => {
+		return new Promise((resolve) => {
+			if (!ALLOWED_IMAGE_FORMATS.includes(file.type)) {
+				return resolve(`Invalid file format. Only JPEG, PNG, or WebP are allowed.`);
+			}
+			if (file.size > MAX_IMAGE_SIZE) {
+				return resolve(`File size exceeds 1MB.`);
+			}
+			const img = new Image();
+			const objectUrl = URL.createObjectURL(file);
+			img.onload = () => {
+				URL.revokeObjectURL(objectUrl);
+				const { width, height } = img;
+				if (width < COVER_IMAGE_MIN_DIMENSIONS.width || height < COVER_IMAGE_MIN_DIMENSIONS.height) {
+					resolve(
+						`Dimensions must be at least ${COVER_IMAGE_MIN_DIMENSIONS.width}x${COVER_IMAGE_MIN_DIMENSIONS.height}px.`
+					);
+				} else if (
+					width > COVER_IMAGE_MAX_DIMENSIONS.width ||
+					height > COVER_IMAGE_MAX_DIMENSIONS.height
+				) {
+					resolve(
+						`Dimensions must not exceed ${COVER_IMAGE_MAX_DIMENSIONS.width}x${COVER_IMAGE_MAX_DIMENSIONS.height}px.`
+					);
+				} else {
+					resolve(null);
+				}
+			};
+			img.onerror = () => {
+				URL.revokeObjectURL(objectUrl);
+				resolve(`Failed to load image.`);
+			};
+			img.src = objectUrl;
+		});
+	}, []);
 
-            const img = new Image();
-            const objectUrl = URL.createObjectURL(file);
+	useEffect(() => {
+		// Handle existing Supabase URL only
+		if (typeof formValue === "string" && formValue) {
+			setPreviewUrl(`${SUPABASE_IMAGE_BUCKET_PATH}/${formValue}`);
+			setDimensionError(null);
+			clearErrors(name);
+		}
+		// Do not clear previewUrl for File or null to avoid overriding handleDrop
+		return () => {
+			// Cleanup is handled in handleDrop and handleRemove
+		};
+	}, [formValue, name, clearErrors]);
 
-            img.onload = () => {
-                const { width, height } = img;
-                URL.revokeObjectURL(objectUrl);
+	const handleDrop = async (input_files: File[]) => {
+		if (input_files[0]) {
+			const file = input_files[0];
+			const error = await validateImage(file);
 
-                if (width < COVER_IMAGE_MIN_DIMENSIONS.width || height < COVER_IMAGE_MIN_DIMENSIONS.height) {
-                    resolve(
-                        `Image dimensions must be at least ${COVER_IMAGE_MIN_DIMENSIONS.width}x${COVER_IMAGE_MIN_DIMENSIONS.height}px.`
-                    );
-                } else if (
-                    width > COVER_IMAGE_MAX_DIMENSIONS.width ||
-                    height > COVER_IMAGE_MAX_DIMENSIONS.height
-                ) {
-                    resolve(
-                        `Image dimensions must not exceed ${COVER_IMAGE_MAX_DIMENSIONS.width}x${COVER_IMAGE_MAX_DIMENSIONS.height}px.`
-                    );
-                } else {
-                    resolve(null);
-                }
-            };
+			if (error) {
+				setError(name, { type: "manual", message: error });
+				setDimensionError(error);
+				setPreviewUrl(null);
+				setValue(name, null, { shouldValidate: true });
+			} else {
+				clearErrors(name);
+				setDimensionError(null);
+				const objectUrl = URL.createObjectURL(file);
+				setPreviewUrl(objectUrl);
+				setValue(name, file, { shouldValidate: true });
+			}
+		}
+	};
 
-            img.onerror = () => {
-                URL.revokeObjectURL(objectUrl);
-                resolve(`Failed to load image.`);
-            };
+	const handleRemove = useCallback(() => {
+		if (previewUrl && !previewUrl.startsWith(SUPABASE_IMAGE_BUCKET_PATH)) {
+			URL.revokeObjectURL(previewUrl);
+		}
+		setValue(name, null, { shouldValidate: true });
+		clearErrors(name);
+		setPreviewUrl(null);
+		setDimensionError(null);
+	}, [setValue, name, clearErrors, previewUrl]);
 
-            img.src = objectUrl;
-        });
-    }, []);
-
-    useEffect(() => {
-        if (typeof formValue === "string" && formValue) {
-            const imageUrl = `${SUPABASE_IMAGE_BUCKET_PATH}/${formValue}`;
-            setProfilePicture(imageUrl);
-            setDimensionError(null);
-        } else if (formValue instanceof File) {
-            validateImage(formValue).then((error) => {
-                if (error) {
-                    setError(name, { type: "manual", message: error });
-                    setProfilePicture(null);
-                } else {
-                    clearErrors(name);
-                    const imageUrl = URL.createObjectURL(formValue);
-                    setProfilePicture(imageUrl);
-                    // Cleanup preview URL on unmount or change
-                    return () => URL.revokeObjectURL(imageUrl);
-                }
-            });
-        } else {
-            setProfilePicture(null);
-            setDimensionError(null);
-            clearErrors(name);
-        }
-
-        // Cleanup preview URL if it’s a blob
-        return () => {
-            if (profilePicture && profilePicture.startsWith("blob:")) {
-                URL.revokeObjectURL(profilePicture);
-            }
-        };
-    }, [formValue, setError, clearErrors, name, validateImage, profilePicture]);
-
-    const handleDrop = (acceptedFiles: File[]) => {
-        const file = acceptedFiles[0];
-        if (file) {
-            const imageUrl = URL.createObjectURL(file);
-            setProfilePicture(imageUrl);
-            setValue(name, file, { shouldValidate: true });
-        }
-    };
-
-    const handleRemove = useCallback(() => {
-        setValue(name, null, { shouldValidate: true });
-        setProfilePicture(null);
-        setDimensionError(null);
-        clearErrors(name);
-        console.log(dimensionError);
-        
-    }, [setValue, name, clearErrors]);
-
-    return (
-		<div className="w-full *:max-w-[300px]">
-			{profilePicture && !dimensionError ? (
-				<ImagePreview url={profilePicture} onRemove={handleRemove} />
+	return (
+		<div className="w-full max-w-[300px]">
+			{previewUrl && !dimensionError ? (
+				<ImagePreview url={previewUrl} onRemove={handleRemove} />
 			) : (
 				<Dropzone
 					onDrop={handleDrop}
-					accept={{
-						"image/*": [".png", ".jpeg", ".webp"],
-					}}
+					accept={{ "image/*": [".png", ".jpeg", ".webp"] }}
 					maxFiles={1}
 					maxSize={MAX_IMAGE_SIZE}
 				>
@@ -152,24 +137,24 @@ export default function ImageInput({ name, register }: ImageInputProps) {
 								}
 							)}
 						>
-							<input {...getInputProps()} {...register} id={name} />
+							<input {...getInputProps()} id={name} />
 							<div className="flex flex-col items-center gap-2">
 								<ImageIcon className="h-16 w-16" strokeWidth={0.85} />
-								<span className="text-sm text-muted-foreground">
-									Drag and drop or click to upload
-								</span>
-								<span className="text-xs text-muted-foreground">
-									{ALLOWED_IMAGE_FORMATS.map(
-										(format) => `.${format.split("/")[1].toUpperCase()}`
-									).join(", ")}
-								</span>
-								<span className="text-xs text-muted-foreground">MAX 1MB Supported</span>
-								<span className="text-xs text-muted-foreground">
-									600x600 to 1200x1200px, MAX 1MB
-								</span>
-								{dimensionError && (
-									<span className="text-xs text-destructive">{dimensionError}</span>
-								)}
+								<div className="px-2 flex flex-col gap-1 justify-center items-center">
+									<span className="text-sm text-muted-foreground">
+										Drag n drop or click to upload
+									</span>
+									<span className="text-xs text-muted-foreground">
+										{ALLOWED_IMAGE_FORMATS.map(
+											(fmt) => `.${fmt.split("/")[1].toUpperCase()}`
+										).join(", ")}
+									</span>
+									<span className="text-xs text-muted-foreground">MAX 1MB Supported</span>
+									<span className="text-xs text-muted-foreground">600×600 to 1200×1200px</span>
+									{dimensionError && (
+										<span className="text-xs text-destructive">{dimensionError}</span>
+									)}
+								</div>
 							</div>
 						</div>
 					)}

@@ -1,7 +1,7 @@
 import { Await, Form, Link, LoaderFunctionArgs, Outlet, useFetcher, useLoaderData, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { Route } from "./+types/product-attributes-values";
 import { Button } from "~/components/ui/button";
-import { Badge, CirclePlus, Copy, Filter, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { Badge, CirclePlus, Copy, Dot, Filter, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, Row, useReactTable } from "@tanstack/react-table";
@@ -45,14 +45,8 @@ export default function ProductAttributeValuesPage({
     const navigation = useNavigation();
     const location = useLocation();
 
-    const navigate = useNavigate();
-
     const isFetchingThisRoute =
         navigation.state === "loading" && navigation.location?.pathname === location.pathname;
-
-    function handleUpdateNaviateClick(id: string) {
-        return navigate(`${id}/update`);
-    }
 
     const tableColumns: ColumnDef<ProductAttribute, unknown>[] = [
         {
@@ -72,7 +66,17 @@ export default function ProductAttributeValuesPage({
 		{
 			id: "Attribute Value",
 			accessorKey: "value",
-			cell: (info: any) => info.row.original.value,
+			cell: (info: any) => {
+                const val = info.row.original.value;
+                const isColor = params.attributeType == "color";
+                
+                return (
+                    <div className="flex gap-2 items-center">
+                        {isColor && <Dot className={`text-[${val}]  rounded-full`} color={val} size={48} strokeWidth={7} />}
+                        <span>{val}</span>
+                    </div>
+                )
+            },
 			header: () => "Attribute Value",
 		},
         {
@@ -81,34 +85,30 @@ export default function ProductAttributeValuesPage({
                 const rowData: ProductAttribute = row.original;
 
                 return (
-                    <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                    onClick={() =>
-                                        handleUpdateNaviateClick(rowData.id)
-                                    }
-                                >
-                                    Update
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    variant="destructive"
-                                    // onClick={() =>
-                                    // 	handleDetailsClick(rowData)
-                                    // }
-                                >
-                                    Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </>
-                );
+					<>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+									<span className="sr-only">Open menu</span>
+									<MoreHorizontal className="h-4 w-4" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
+									<DropdownMenuItem>Update</DropdownMenuItem>
+								</Link>
+								<DropdownMenuItem
+									variant="destructive"
+									// onClick={() =>
+									// 	handleDetailsClick(rowData)
+									// }
+								>
+									Delete
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</>
+				);
             },
         },
     ];

@@ -12,7 +12,7 @@ export const compressImage = async (file: File) => {
 	try {
 		const compressedBuffer = await sharp(Buffer.from(buffer))
 			.resize({ width: 1024, height: 1024, fit: "inside" }) // Max 1024px
-			.webp({ quality: 80 }) // 80% quality
+			.webp({ quality: 90 }) // 90% quality
 			.toBuffer();
 		
 		return compressedBuffer;

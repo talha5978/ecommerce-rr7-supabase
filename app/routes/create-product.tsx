@@ -183,7 +183,8 @@ export default function CreateBasicProductPage({ loaderData : { data } } : Route
 		if (actionData) {
 			if (actionData.success) {
 				toast.success("Product created successfully");
-				navigate("/products");
+				toast.info("Now create atleast one variant for this product");
+				navigate(`/products`);
 			} else if (actionData.error) {
 				toast.error(actionData.error);
 			} else if (actionData.validationErrors) {
@@ -345,7 +346,7 @@ export default function CreateBasicProductPage({ loaderData : { data } } : Route
 											<FormItem>
 												<FormLabel>Cover Image</FormLabel>
 												<FormControl>
-													<ImageInput name="cover_image" register={register} />
+													<ImageInput name="cover_image" />
 												</FormControl>
 												<FormMessage />
 											</FormItem>

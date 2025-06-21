@@ -3,7 +3,7 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { AttributeType, AttributeUpdationPayload, GetAllProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/product-attributes";
+import type { AllProductAttributesResponse, AttributeType, AttributeUpdationPayload, GroupedProductAttributes, HighLevelProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/product-attributes";
 import { ProductAttributeActionData, ProductAttributesUpdateActionData } from "~/schemas/product-attributes.schema";
 
 export class ProductAttributesService {
@@ -16,10 +16,10 @@ export class ProductAttributesService {
 	}
 
 	/** Fetch product attributes types for index page */
-	async getAllProductAttributes(): Promise<GetAllProductAttributesResponse> {
+	async getHighLevelProductAttributes(): Promise<HighLevelProductAttributesResponse> {
 		try {
 			const { data, error: queryError } = await this.supabase.rpc("get_product_attribute_types");
-			console.log(data);
+			// console.log(data);
 
 			let error: null | ApiError = null;
 			if (queryError) {
@@ -34,6 +34,47 @@ export class ProductAttributesService {
 							values_count: Number(item.values_count) ?? 0,
 						};
 					}) ?? [],
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { product_attributes: [], error: err };
+			}
+			return {
+				product_attributes: [],
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
+	/** Fetch all product attributes for the variants mutations */
+	async getAllProductAttributes(): Promise<AllProductAttributesResponse> {
+		try {
+			const { data, error: queryError } = await this.supabase
+				.from(this.TABLE)
+				.select("*")
+				.order("attribute_type", { ascending: true })
+				.order("attribute_type", { ascending: true });
+			console.log(data);
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+			}
+
+			const groupedData : GroupedProductAttributes | null = data?.reduce((acc: {
+				[key in AttributeType]?: any[]
+			}, current) => {
+				const { attribute_type, ...rest } = current;
+				if (!acc[attribute_type]) {
+					acc[attribute_type] = [];
+				}
+				acc[attribute_type].push(rest);
+				return acc;
+			}, {}) || null;
+
+			return {
+				product_attributes: groupedData,
 				error,
 			};
 		} catch (err: any) {
@@ -106,7 +147,6 @@ export class ProductAttributesService {
 		}
 	}
 
-	
 	/** Fetch single product attribute row based on the id of attribute that we have selected! This is used for the updation processs*/
 	async getSinlgeProductAttribute(attribute_id: string): Promise<SingleProductAttributeResponse> {
 		try {

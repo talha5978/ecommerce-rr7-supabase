@@ -6,43 +6,43 @@ interface PaginationControlsReturnType {
 }
 
 interface PaginationControlsProps {
-    defaultPageSize: number
+    defaultPage: number
 }
 
 class GetPaginationControlsController {
 	private readonly navigate: NavigateFunction;
 	private readonly searchParams: URLSearchParams;
-	private readonly defaultPageSize: number;
+	private readonly defaultPage: number;
 
 	/**
 	 * @description Returns the control functions for page and page size changes
 	 */
 
-	constructor({ defaultPageSize }: PaginationControlsProps) {
+	constructor({ defaultPage }: PaginationControlsProps) {
 		const navigate = useNavigate();
 		this.navigate = navigate;
-		const [searchParams] = useSearchParams();
+		const [searchParams] = useSearchParams()
 		this.searchParams = searchParams;
-		this.defaultPageSize = defaultPageSize;
+		this.defaultPage = defaultPage;
 	}
 
-	onPageChange(newPageIndex: number) {
+	onPageChange = (newPageIndex: number) => {
 		this.searchParams.set("page", (newPageIndex + 1).toString());
 		this.navigate({ search: this.searchParams.toString() });
 	}
 
-	onPageSizeChange(newPageSize: number) {
+	onPageSizeChange = (newPageSize: number) => {
 		this.searchParams.set("size", newPageSize.toString());
-		this.searchParams.set("page", String(this.defaultPageSize));
+		this.searchParams.set("page", String(this.defaultPage));
 		this.navigate({ search: this.searchParams.toString() });
 	}
 }
 
 export function GetPaginationControls({
-	defaultPageSize,
+	defaultPage
 }: PaginationControlsProps): PaginationControlsReturnType {
 	const GetPaginationControls = new GetPaginationControlsController({
-		defaultPageSize: defaultPageSize ?? 10,
+		defaultPage: defaultPage ?? 1
 	});
 
 	return GetPaginationControls;
