@@ -16,7 +16,7 @@ import BackButton from "~/components/Nav/BackButton";
 import TableId from "~/components/Table/TableId";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { productAttributesByTypeQuery } from "~/queries/product-attributes.q";
-import { AttributeType, ProductAttribute } from "~/types/product-attributes";
+import type { AttributeType, ProductAttribute } from "~/types/attributes";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const attributeType = (params.attributeType as AttributeType);
@@ -121,48 +121,45 @@ export default function ProductAttributeValuesPage({
     });
     
     return (
-        <>
-            <MetaDetails
-                metaTitle="Product Attribute | Admin Panel"
-                metaDescription="Manage your product attributes here."
-                metaKeywords="Product Attributes, Attributes"
-            />
-            <div className="flex flex-1 flex-col gap-6">
-                <div>
-                    <div className="flex justify-between gap-3 flex-wrap">
-                        <div className="flex gap-4 items-center">
-                            <BackButton href={"/product-attributes"} />
-                            <h1 className="text-2xl font-semibold">{params.attributeType?.toUpperCase()}</h1>
-                        </div>
-                        <Link to="create" viewTransition className="ml-auto">
-                            <Button size={"sm"} className="ml-auto">
-                                <PlusCircle width={18} />
-                                <span>Add Attribute</span>
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-                <div className="rounded-md flex flex-col gap-4">
-                    <DataTableViewOptions table={table} disabled={isFetchingThisRoute} />
-                    {isFetchingThisRoute ? (
-                        <DataTableSkeleton noOfSkeletons={8} columns={tableColumns} />
-                    ) : (
-                        <DataTable
-                            table={table}
-                            total={data.total ?? 0}
-                        />
-                    )}
-                </div>
-            </div>
-            <Outlet />
-        </>
-    );
+		<>
+			<MetaDetails
+				metaTitle="Product Attribute | Admin Panel"
+				metaDescription="Manage your product attributes here."
+				metaKeywords="Product Attributes, Attributes"
+			/>
+			<div className="flex flex-1 flex-col gap-6">
+				<div>
+					<div className="flex justify-between gap-3 flex-wrap">
+						<div className="flex gap-4 items-center">
+							<BackButton href={"/product-attributes"} />
+							<h1 className="text-2xl font-semibold">
+								{params.attributeType?.charAt(0).toUpperCase() +
+									String(params.attributeType).slice(1)}
+							</h1>
+						</div>
+						<Link to="create" viewTransition className="ml-auto">
+							<Button size={"sm"} className="ml-auto">
+								<PlusCircle width={18} />
+								<span>Add Attribute</span>
+							</Button>
+						</Link>
+					</div>
+				</div>
+				<div className="rounded-md flex flex-col gap-4">
+					<DataTableViewOptions table={table} disabled={isFetchingThisRoute} />
+					{isFetchingThisRoute ? (
+						<DataTableSkeleton noOfSkeletons={8} columns={tableColumns} />
+					) : (
+						<DataTable table={table} total={data.total ?? 0} />
+					)}
+				</div>
+			</div>
+			<Outlet />
+		</>
+	);
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<ProductAttribute>) {
-    const [searchParams] = useSearchParams();
-    let currentQuery = searchParams.get("q") ?? "";
-    
     return (
         <div className="w-full flex justify-end">
             <DropdownMenu>

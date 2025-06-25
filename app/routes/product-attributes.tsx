@@ -1,4 +1,4 @@
-import { Link, LoaderFunctionArgs, Outlet, useLocation, useNavigate } from "react-router";
+import { Link, LoaderFunctionArgs, Outlet, useLocation } from "react-router";
 import { Route } from "./+types/product-attributes";
 import { Button } from "~/components/ui/button";
 import { ArrowRight, PlusCircle, Settings2 } from "lucide-react";
@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { useNavigation } from "react-router";
-import type { HighLevelProductAttribute } from "~/types/product-attributes.d";
+import type { HighLevelProductAttribute } from "~/types/attributes.d";
 import { queryClient } from "~/lib/queryClient";
 import { useEffect } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
@@ -50,7 +50,10 @@ export default function ProductsAttributesPage({
 			id: "Attribute Type",
 			enableHiding: false,
 			accessorKey: "attribute_type",
-			cell: (info: any) => info.row.original.attribute_type.toUpperCase(),
+			cell: (info: any) => {
+				const val = info.row.original.attribute_type;
+				return val.charAt(0).toUpperCase() + String(val).slice(1);
+			},
 			header: () => "Attribute Type",
 		},
 		{

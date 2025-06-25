@@ -1,9 +1,9 @@
 import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useNavigate, useSearchParams } from "react-router";
 import { Route } from "./+types/product-variants";
 import { Button } from "~/components/ui/button";
-import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { Copy, Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
@@ -14,11 +14,11 @@ import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { productVariantsQuery } from "~/queries/product-variants.q";
-import { ProductVariantRow } from "~/types/products";
+import type { ProductVariantRow } from "~/types/product-variants";
 import StatusBadge from "~/components/status-badge";
 import { Skeleton } from "~/components/ui/skeleton";
 import ImageViewer from "~/components/ImageViewer/image-viewer";
-import { bolleanToStringConverter, GetFormattedDate, stringToBooleanConverter } from "~/lib/utils";
+import { bolleanToStringConverter, GetFormattedDate } from "~/lib/utils";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -70,24 +70,25 @@ export default function ProductVariantsPage({
 		if (fetcher.data) {
 			if (fetcher.data.success) {
 				toast.success("Variant Duplicated successfully");
-				toast.info("This variant is not visible until it is approved by an admin and make sure to update the variant details.");
+				toast.warning("Variant is using the same images as the original variant, please change the images.");
 			} else if (fetcher.data.error) {
 				toast.error(fetcher.data.error);
+			} else {
+				toast.error("Something went wrong");
 			}
 		}
 	}, [fetcher.data, queryClient]);
 
 	const handleDuplicateClick = (input: ProductVariantRow) => {
-		toast.loading("Variant Duplication started.");
-
 		const formData = new FormData();
-		
+		toast.info("Duplicate variant in progress...");
+
 		input.images.forEach((image) => {
 			formData.append("images", image);
 		});
 
 		console.log(input);
-		const fieldsToExclue = ["id", "images", "createdAt", "status"];
+		const fieldsToExclue = ["images", "createdAt", "status"];
 
 		for (const key in input as Record<string, any>) {
 			const value = (input as Record<string, any>)[key];
@@ -97,7 +98,10 @@ export default function ProductVariantsPage({
 					formData.set(key, stringifiedVal);
 				}
 			} else {
-				formData.set(key, value.toString());
+				/* weight can be null thus if it is null, set it to "0"
+				we are passing all other remaining fields as strings
+				and then we are parsing number fields only in the action*/
+				formData.set(key, value === null ? "0" : value.toString());
 			}
 		}
 		
@@ -215,7 +219,20 @@ export default function ProductVariantsPage({
 									) : null}
 									Create Duplicate
 								</DropdownMenuItem>
-								<DropdownMenuItem>Update</DropdownMenuItem>
+								<Link to={`${rowData.id}/update`}>
+									<DropdownMenuItem>Update</DropdownMenuItem>
+								</Link>
+								{/* <DropdownMenuSub>
+									<DropdownMenuSubTrigger>
+										<Copy className="mr-1 h-4 w-4" />
+										Copy
+									</DropdownMenuSubTrigger>
+									<DropdownMenuSubContent>
+										<DropdownMenuItem>Copy name</DropdownMenuItem>
+										<DropdownMenuItem>Copy email</DropdownMenuItem>
+										<DropdownMenuItem>Copy link</DropdownMenuItem>
+									</DropdownMenuSubContent>
+								</DropdownMenuSub> */}
 								<DropdownMenuItem
 									variant="destructive"
 									// onClick={() =>

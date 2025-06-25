@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { CategoryService } from "~/services/category.service";
-import { GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse } from "~/types/category.d";
+import type { GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse } from "~/types/category.d";
 
 interface categoriesQueryArgs {
     request: Request;

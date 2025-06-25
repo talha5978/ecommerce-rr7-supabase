@@ -10,7 +10,7 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
-import { Loader2, MoreHorizontal, PlusCircle, RefreshCcw, Settings2 } from "lucide-react";
+import { Loader2, PlusCircle, RefreshCcw } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import {
 	TagsInput,
@@ -19,13 +19,13 @@ import {
 	TagsInputItem,
 	TagsInputList,
 } from "~/components/ui/tags-input";
-import { defaults, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
+import { defaults, OPTIONAL_PRODUCT_ATTRIBS } from "~/constants";
 import { toast } from "sonner";
 import { ApiError } from "~/utils/ApiError";
 import { ActionResponse } from "~/types/action-data";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
-import { ProductActionData, ProductActionDataSchema, ProductFormValues, ProductInputSchema, ProductUpdateActionData, ProductUpdateActionDataSchema, ProductUpdateFormValues, ProductUpdateInputSchema } from "~/schemas/product.schema";
+import { ProductFormValues, ProductUpdateActionData, ProductUpdateActionDataSchema, ProductUpdateFormValues, ProductUpdateInputSchema } from "~/schemas/product.schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { categoriesQuery } from "~/queries/categories.q";
 import { Route } from "./+types/update-product";
@@ -33,6 +33,21 @@ import ImageInput from "~/components/Custom-Inputs/image-input";
 import { ProductsService } from "~/services/products.service";
 import { getFullSingleProductQuery } from "~/queries/products.q";
 import { getSanitizedMetaDetailsForAction, getSanitizedMetaDetailsForForm } from "~/utils/getSanitizedMetaDetails";
+import { AllProductAttributesQuery } from "~/queries/product-attributes.q";
+import { AttributeType, ProductAttribute, ProductAttributeRow } from "~/types/attributes";
+import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
+
+function getSimpleFields() {
+	return [
+		"name",
+		"description",
+		"cover_image",
+		"free_shipping",
+		"is_featured",
+		"status",
+		"sub_category",
+	] as const;
+}
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -45,9 +60,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const data: Partial<ProductUpdateActionData> = {};
 
-	const productFields = ["name", "description", "cover_image", "free_shipping", "is_featured", "status", "sub_category"] as const;
+	const simpleFields = getSimpleFields();
 
-	for (const field of productFields) {
+	for (const field of simpleFields) {
 		if (formData.has(field)) {
 			if (field === "cover_image") {
 				data.cover_image = formData.get("cover_image") as File;
@@ -59,7 +74,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	// Parse meta_details fields
 	getSanitizedMetaDetailsForAction({ formData, data });
-	// console.log(data);
+	
+	// Extract new attributes (array of strings)
+	if (formData.has("added_attributes")) {
+		data.added_attributes = formData.getAll("added_attributes").map((value) => String(value));
+	}
+
+	// Extract attributes that are removed (array of strings)
+	if (formData.has("removed_attributes")) {
+		data.removed_attributes = formData.getAll("removed_attributes").map((value) => String(value));
+	}
 	
 	const parseResult = ProductUpdateActionDataSchema.safeParse(data);
 	console.log("Parse result: ", parseResult?.error);
@@ -71,7 +95,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		});
 	}
 
-	console.log("Data in the action: ", parseResult.data);
+	// console.log("Data in the action: ", parseResult.data);
 
 	const productService = new ProductsService(request);
 	// return;
@@ -85,7 +109,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	} catch (error: any) {
 		console.error("Error in action:", error);
 		const errorMessage =
-			error instanceof ApiError ? error.message : error.message || "Failed to create product";
+			error instanceof ApiError ? error.message : error.message || "Failed to update product";
 
 		if (error instanceof ApiError && error.details.length) {
 			console.error("ApiError details:", error.details);
@@ -110,18 +134,24 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const categories = await queryClient.fetchQuery(categoriesQuery({
 		request, pageIndex : 0, pageSize: 50, q: "" 
 	}));
+
+	const attribs_for_product = await queryClient.fetchQuery(AllProductAttributesQuery({
+		request,
+		input: "for-product"
+	}));
 	
 	return {
 		data: {
 			productResp: product,
 			categoriesResp: categories,
+			optional_attributes: attribs_for_product
 		}
 	};
 };
 
 export default function UpdateProductPage({
 	loaderData: {
-		data: { productResp, categoriesResp },
+		data: { productResp, categoriesResp, optional_attributes },
 	},
 }: Route.ComponentProps) {
 	const navigate = useNavigate();
@@ -132,7 +162,6 @@ export default function UpdateProductPage({
 			navigate("/products");
 		}
 	}, [productResp?.error]);
-	console.log("Re rendered");
 	
 	useEffect(() => {
 		if (categoriesResp?.error) {
@@ -140,6 +169,13 @@ export default function UpdateProductPage({
 			navigate("/products");
 		}
 	}, [categoriesResp?.error]);
+	
+	useEffect(() => {
+		if (optional_attributes?.error) {
+			toast.error(optional_attributes?.error?.message);
+			navigate("/products");
+		}
+	}, [optional_attributes?.error]);
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
@@ -154,7 +190,20 @@ export default function UpdateProductPage({
 		});
 	}, [categoriesResp, productResp]);
 
-	
+	const attributeKeys = Object.keys(optional_attributes.product_attributes || {});
+
+	function getdefaultOptionalAttributes() : (string | null)[] {
+		const attribs = optional_attributes?.product_attributes;
+		return attribs
+			? attributeKeys
+				.map((key) => {
+					const attr = productResp?.product.attributes.find((a: ProductAttributeRow) => a.attribute_type === key);
+					return attr ? attr.id : null; 
+					// Yahan pr alternative null use kr rhy hain takay empty values fill ho jaien
+				})
+			: Array(OPTIONAL_PRODUCT_ATTRIBS.length).fill(null);
+	}
+
 	const form = useForm<ProductUpdateFormValues>({
 		resolver: zodResolver(ProductUpdateInputSchema),
 		mode: "onSubmit",
@@ -176,10 +225,11 @@ export default function UpdateProductPage({
 						? []
 						: productResp.product?.meta_details?.meta_keywords?.split(",") || [],
 			},
+			optional_attributes: getdefaultOptionalAttributes()
 		},
 	});
 	
-	const { handleSubmit, setError, control, resetField, register, getValues } = form;
+	const { handleSubmit, setError, control, resetField, getValues } = form;
 	
     const selectedCategory = useWatch({ control, name: "category" });
 
@@ -196,7 +246,9 @@ export default function UpdateProductPage({
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
 	async function onFormSubmit(values: ProductUpdateFormValues) {
-		const productFields = ["name", "description", "cover_image", "free_shipping", "is_featured", "status", "sub_category"] as const;
+		// console.log(values);
+
+		const simpleFields = getSimpleFields();
 		
 		const formData = new FormData();
 		let hasChanges = false;
@@ -219,10 +271,11 @@ export default function UpdateProductPage({
 						.filter(Boolean)
 					: []
 			},
+			optional_attributes: values.optional_attributes,
 		}
 		// console.log(normalizedValues);
 		
-		for (const field of productFields) {
+		for (const field of simpleFields) {
 			if (normalizedValues[field] !== String(productResp?.product[field])) {
 				formData.set(field, normalizedValues[field]);
 				hasChanges = true;
@@ -238,10 +291,41 @@ export default function UpdateProductPage({
 
 		hasChanges = hasChanges || hasMetaChanges;
 
+		const originalAttributeIds = (productResp?.product?.attributes || []).map((attr: ProductAttributeRow) => attr.id).sort();
+		const formAttributeIds: string[] = normalizedValues.optional_attributes
+			.filter((attr) => attr !== null && attr !== "")
+			.sort() as string[];
+
+		// Calculate removed attributes (in original but not in form)
+		const removedAttributes = originalAttributeIds.filter((id: string) => !formAttributeIds.includes(id));
+
+		// Calculate added attributes (in form but not in original)
+		const addedAttributes = formAttributeIds.filter((id: string) => !originalAttributeIds.includes(id));
+
+		// Append removed attributes to FormData
+		if (removedAttributes.length > 0) {
+			removedAttributes.forEach((attributeId: string) => {
+				formData.append("removed_attributes", attributeId);
+			});
+			hasChanges = true;
+		}
+
+		// Append added attributes to FormData
+		if (addedAttributes.length > 0) {
+			addedAttributes.forEach((attributeId: string) => {
+				formData.append("added_attributes", attributeId);
+			});
+			hasChanges = true;
+		}
+
+		// console.log("Added Attributes: ", addedAttributes);
+		// console.log("Removed Attributes: ", removedAttributes);
+
 		if (!hasChanges) {
 			toast.info("No changes to save");
 			return;
 		}
+		toast.info("Updating product...");
 
 		submit(formData, {
 			method: "POST",
@@ -254,6 +338,7 @@ export default function UpdateProductPage({
 		if (actionData) {
 			if (actionData.success) {
 				toast.success("Product updated successfully");
+				navigate("/products");
 			} else if (actionData.error) {
 				toast.error(actionData.error);
 			} else if (actionData.validationErrors) {
@@ -274,10 +359,10 @@ export default function UpdateProductPage({
 					<h1 className="text-2xl font-semibold">Update Product</h1>
 				</div>
 
-				<form className="grid grid-cols-1 md:grid-cols-3 gap-4" onSubmit={handleSubmit(onFormSubmit)}>
+				<form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit(onFormSubmit)}>
 					<Form {...form}>
 						{/* Left Side: Basic Details and Meta Details */}
-						<div className="md:col-span-2 space-y-4">
+						<div className="space-y-4">
 							{/* Basic Details Card */}
 							<Card>
 								<CardHeader>
@@ -550,109 +635,163 @@ export default function UpdateProductPage({
 							</Card>
 						</div>
 
-						{/* Right Side: Visibility and Shipping Card */}
-						<Card className="md:col-span-1 h-fit">
-							<CardHeader>
-								<CardTitle className="text-lg">Visibility & Shipping</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								{/* Status */}
-								<FormField
-									control={control}
-									name="status"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Status</FormLabel>
-											<FormControl>
-												<div className="space-y-2">
+						{/* Right Side: Visibility and Shipping Card and OPTIONAL ATTRIBUTES */}
+						<div className="space-y-4">
+							<Card>
+								<CardHeader>
+									<CardTitle className="text-lg">Visibility & Shipping</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-4">
+									{/* Status */}
+									<FormField
+										control={control}
+										name="status"
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Status</FormLabel>
+												<FormControl>
+													<div className="space-y-2">
+														<RadioGroup
+															onValueChange={field.onChange}
+															value={field.value}
+														>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem value="true" id="status-active" />
+																<Label htmlFor="status-active">Active</Label>
+															</div>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem
+																	value="false"
+																	id="status-inactive"
+																/>
+																<Label htmlFor="status-inactive">Inactive</Label>
+															</div>
+														</RadioGroup>
+														<span className="text-muted-foreground text-sm">
+															If inactive, the product will not be visible in the
+															store
+														</span>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<Separator />
+									{/* Is Featured */}
+									<FormField
+										control={control}
+										name="is_featured"
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Featured</FormLabel>
+												<FormControl>
+													<div className="space-y-2">
+														<RadioGroup
+															onValueChange={field.onChange}
+															value={field.value}
+														>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem value="true" id="featured-yes" />
+																<Label htmlFor="featured-yes">Yes</Label>
+															</div>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem value="false" id="featured-no" />
+																<Label htmlFor="featured-no">No</Label>
+															</div>
+														</RadioGroup>
+														<span className="text-muted-foreground text-sm">
+															If "Yes" is selected then this product will be
+															featured on the home page
+														</span>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<Separator />
+									{/* Free Shipping */}
+									<FormField
+										control={control}
+										name="free_shipping"
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Free Shipping</FormLabel>
+												<FormControl>
 													<RadioGroup
 														onValueChange={field.onChange}
 														value={field.value}
 													>
 														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem value="true" id="status-active" />
-															<Label htmlFor="status-active">Active</Label>
+															<RadioGroupItem value="true" id="shipping-yes" />
+															<Label htmlFor="shipping-yes">Yes</Label>
 														</div>
 														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem
-																value="false"
-																id="status-inactive"
-															/>
-															<Label htmlFor="status-inactive">Inactive</Label>
+															<RadioGroupItem value="false" id="shipping-no" />
+															<Label htmlFor="shipping-no">No</Label>
 														</div>
 													</RadioGroup>
-													<span className="text-muted-foreground text-sm">
-														If inactive, the product will not be visible in the
-														store
-													</span>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<Separator />
-								{/* Is Featured */}
-								<FormField
-									control={control}
-									name="is_featured"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Featured</FormLabel>
-											<FormControl>
-												<div className="space-y-2">
-													<RadioGroup
-														onValueChange={field.onChange}
-														value={field.value}
-													>
-														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem value="true" id="featured-yes" />
-															<Label htmlFor="featured-yes">Yes</Label>
-														</div>
-														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem value="false" id="featured-no" />
-															<Label htmlFor="featured-no">No</Label>
-														</div>
-													</RadioGroup>
-													<span className="text-muted-foreground text-sm">
-														If "Yes" is selected then this product will be
-														featured on the home page
-													</span>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<Separator />
-								{/* Free Shipping */}
-								<FormField
-									control={control}
-									name="free_shipping"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Free Shipping</FormLabel>
-											<FormControl>
-												<RadioGroup
-													onValueChange={field.onChange}
-													value={field.value}
-												>
-													<div className="flex items-center gap-3 *:cursor-pointer">
-														<RadioGroupItem value="true" id="shipping-yes" />
-														<Label htmlFor="shipping-yes">Yes</Label>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</CardContent>
+							</Card>
+							{/* Optional Attributes */}
+							<Card>
+								<CardHeader>
+									<CardTitle className="text-lg flex gap-2 items-center">
+										<span>Attributes</span>
+										<span className="text-muted-foreground text-sm">
+											(Optional)
+										</span>
+									</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<FormField
+										control={control}
+										name="optional_attributes"
+										render={() => (
+											<FormItem>
+												<FormControl>
+													<div className="space-y-4">
+														{attributeKeys.map((key, index) => (
+															<div
+																key={key}
+																className="grid grid-cols-1"
+															>
+																<FormItem>
+																	<FormControl>
+																		<AttributeSelect
+																			name={`optional_attributes.${index}`}
+																			attributeKey={key as AttributeType}
+																			options={
+																				//@ts-ignore
+																				optional_attributes.product_attributes != null ? optional_attributes.product_attributes[key]?.map(
+																					(opt: ProductAttribute) => ({
+																						id: opt.id,
+																						value: opt.value,
+																						name: opt.name
+																					})
+																				) : []
+																			}
+																			disabled={!optional_attributes}
+																		/>
+																	</FormControl>
+																</FormItem>
+															</div>
+														))}
 													</div>
-													<div className="flex items-center gap-3 *:cursor-pointer">
-														<RadioGroupItem value="false" id="shipping-no" />
-														<Label htmlFor="shipping-no">No</Label>
-													</div>
-												</RadioGroup>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</CardContent>
-						</Card>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</CardContent>
+							</Card>
+						</div>
 
 						{/* Submit Button */}
 						<div className="flex justify-end md:col-span-3">

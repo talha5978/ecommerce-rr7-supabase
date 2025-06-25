@@ -3,12 +3,14 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { AllProductAttributesResponse, AttributeType, AttributeUpdationPayload, GroupedProductAttributes, HighLevelProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/product-attributes";
+import type { AllProductAttributesResponse, AttributeType, AttributeUpdationPayload, GroupedProductAttributes, HighLevelProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/attributes.d";
 import { ProductAttributeActionData, ProductAttributesUpdateActionData } from "~/schemas/product-attributes.schema";
+import { OPTIONAL_PRODUCT_ATTRIBS, REQUIRED_VARIANT_ATTRIBS, TABLE_NAMES } from "~/constants";
+import { GetAllProductAttribsInput } from "~/types/attributes.d";
 
 export class ProductAttributesService {
 	private supabase: SupabaseClient<Database>;
-	private readonly TABLE = "product_attributes";
+	private readonly TABLE = "attributes";
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
@@ -48,13 +50,28 @@ export class ProductAttributesService {
 	}
 
 	/** Fetch all product attributes for the variants mutations */
-	async getAllProductAttributes(): Promise<AllProductAttributesResponse> {
+	async getAllProductAttributes(
+		input: GetAllProductAttribsInput = "all"
+	): Promise<AllProductAttributesResponse> {
+		if (!["all", "for-variant", "for-product"].includes(input)) {
+			throw new ApiError("Invalid input", 400, []);
+		}
+
 		try {
-			const { data, error: queryError } = await this.supabase
+			let query = this.supabase
 				.from(this.TABLE)
 				.select("*")
-				.order("attribute_type", { ascending: true })
 				.order("attribute_type", { ascending: true });
+			
+			if (input !== "all") {
+				if (input === "for-variant") {
+					query = query.in("attribute_type", REQUIRED_VARIANT_ATTRIBS as AttributeType[]);
+				} else if (input === "for-product") {
+					query = query.in("attribute_type", OPTIONAL_PRODUCT_ATTRIBS as AttributeType[]);
+				}
+			}
+
+			const { data, error: queryError } = await query;
 			console.log(data);
 
 			let error: null | ApiError = null;

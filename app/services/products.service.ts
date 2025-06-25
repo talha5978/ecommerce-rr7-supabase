@@ -2,12 +2,14 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { FullProduct, GetAllProductsResponse, GetSingleProductResponse, ProductUpdationPayload } from "~/types/products";
-import { defaults } from "~/constants";
-import { ProductActionData, ProductUpdateActionData } from "~/schemas/product.schema";
+import type { FullProduct, GetAllProductsResponse, GetSingleProductResponse, ProductUpdationPayload } from "~/types/products";
+import { defaults, TABLE_NAMES } from "~/constants";
+import type { ProductActionData, ProductUpdateActionData } from "~/schemas/product.schema";
 import { MetaDetailsService } from "~/services/meta-details.service";
 import { MediaService } from "~/services/media.service";
 import { stringToBooleanConverter } from "~/lib/utils";
+import { ProductRAttributesService } from "./product-r-attributes.service";
+import { ProductAttributeRow } from "~/types/attributes";
 
 export class ProductsService {
 	private supabase: SupabaseClient<Database>;
@@ -15,20 +17,13 @@ export class ProductsService {
 	private readonly PRODUCT_TABLE = "product";
 	private readonly VARIANT_TABLE = "product_variant";
 	private readonly CATEGORIES_TABLE = "category";
+	private readonly PRODUCT_ATTRIBUTES_TABLE = "product_attributes";
+	private readonly ATTRIBUTES_TABLE = "attributes";
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
 		this.supabase = supabase;
 		this.request = request;
-	}
-
-	/** Returns true only if input is "true" otherwise false */
-	stringToBooleanConverter(s: string) : boolean {
-		if (s !== "true" && s !== "false") {
-			throw new ApiError(`Invalid boolean value: ${s}`, 400, []);
-		}
-
-		return s === "true";
 	}
 
 	/** Fetch products types for index page */
@@ -88,8 +83,16 @@ export class ProductsService {
 		}
 	}
 
+	/** DELETE A PRODUCT FOR ROLLBACK!! */
+	async delProdcutForRollback(productId: string) {
+		return await this.supabase
+			.from(this.PRODUCT_TABLE)
+			.delete()
+			.eq("id", productId);
+	}
+
 	/** Create Product Row and its meta details */
-	async createProductWithMeta(input: ProductActionData): Promise<void> {
+	async createProduct(input: ProductActionData): Promise<void> {
 		const {
 			cover_image,
 			description,
@@ -99,8 +102,9 @@ export class ProductsService {
 			is_featured,
 			status,
 			sub_category,
+			optional_attributes
 		} = input;
-
+		
 		const metaDetailsService = new MetaDetailsService(this.request);
 		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
@@ -117,30 +121,63 @@ export class ProductsService {
 			}
 		}
 
-		const { error: prodError } = await this.supabase.from(this.PRODUCT_TABLE).insert({
-			cover_image: cover_public_url,
-			description,
-			name,
-			meta_details: metaDetailsId,
-			free_shipping: stringToBooleanConverter(free_shipping),
-			is_featured: stringToBooleanConverter(is_featured),
-			status: stringToBooleanConverter(status),
-			sub_category: sub_category,
-		});
 
-		if (prodError) {
+		const { error: prodError, data } = await this.supabase
+			.from(this.PRODUCT_TABLE)
+			.insert({
+				cover_image: cover_public_url,
+				description,
+				name,
+				meta_details: metaDetailsId,
+				free_shipping: stringToBooleanConverter(free_shipping),
+				is_featured: stringToBooleanConverter(is_featured),
+				status: stringToBooleanConverter(status),
+				sub_category: sub_category,
+			})
+			.select("id")
+			.single();
+
+		async function rollback() {
 			await metaDetailsService.deleteMetaDetails(metaDetailsId);
 			await mediaSvc.deleteImage(cover_public_url);
-			throw new ApiError(`Failed to create category: ${prodError.message}`, 500, [prodError.details]);
+		}
+
+		if (prodError) {
+			rollback();
+			throw new ApiError(`Failed to create product: ${prodError.message}`, 500, [prodError.details]);
+		}
+
+		if (optional_attributes && Array.isArray(optional_attributes) && optional_attributes.length > 0) {
+			const productsRattribsSvc = new ProductRAttributesService(this.request);
+	
+			const finalAttributes = optional_attributes.map((attribute_id) => {
+				return {
+					attribute_id: attribute_id,
+					product_id: data.id
+				}
+			});
+	
+			const { error: attribInsertError } = await productsRattribsSvc
+				.createBulkProductAttributes(finalAttributes);
+
+			if (attribInsertError) {
+				rollback();
+				await this.delProdcutForRollback(data.id);
+				throw new ApiError(`Failed to create product attributes: ${attribInsertError.message}`, 500, [attribInsertError.details]);
+			}
 		}
 	}
 
-	/** Get full single product details including its meta details and variants */
+	/** Get full single product details including its meta details */
 	async getFullSingleProduct(productId: string): Promise<GetSingleProductResponse> {
 		try {
-			const { data, error: queryError } = await this.supabase
+			let { data, error: queryError } = await this.supabase
 				.from(this.PRODUCT_TABLE)
-				.select(`*, meta_details(*), ${this.VARIANT_TABLE}(*)`)
+				.select(`
+					*,
+					meta_details(*),
+					${this.PRODUCT_ATTRIBUTES_TABLE}(${this.ATTRIBUTES_TABLE}(*))	
+				`)
 				.eq("id", productId)
 				.single();
 
@@ -149,8 +186,25 @@ export class ProductsService {
 				error = new ApiError(queryError.message, 500, [queryError.details]);
 			}
 
+			let extracted_attributes: ProductAttributeRow[] = [];
+			const attributes = data?.[this.PRODUCT_ATTRIBUTES_TABLE] || [];
+
+			attributes.map((variant_attrib_row) => {
+				let i = variant_attrib_row.attributes;
+
+				return extracted_attributes.push({
+					attribute_type: i.attribute_type,
+					value: i.value,
+					id: i.id,
+					name: i.name
+				})
+			});
+
 			return {
-				product: (data as FullProduct | null) ?? null,
+				product: {
+					...{ ...data, product_attributes: undefined },
+					attributes: extracted_attributes,
+				} as FullProduct | null,
 				error,
 			};
 		} catch (err: any) {
@@ -175,6 +229,8 @@ export class ProductsService {
 			is_featured,
 			status,
 			sub_category,
+			added_attributes,
+			removed_attributes
 		} = input;
 
 		const { data: prodData, error: fetchError } = await this.supabase
@@ -186,6 +242,39 @@ export class ProductsService {
 		const metaDetailsId = prodData?.meta_details;
 		if (fetchError || !prodData || !metaDetailsId) {
 			throw new ApiError(`Product not found`, 404, []);
+		}
+
+		const variantAttributesSvc = new ProductRAttributesService(this.request);
+
+		// Delete removed attributes
+		if (
+			Array.isArray(removed_attributes) && removed_attributes.length > 0
+		) {
+			await variantAttributesSvc.deleteBulkProductRAttributes({
+				product_id: productId,
+				attributes_ids: removed_attributes
+			})
+		}
+		
+		// Insert added attributes
+		if (
+			Array.isArray(added_attributes) && added_attributes.length > 0
+		) {
+			const finalAttributes_toAdd = added_attributes.map((attribute_id) => {
+				return {
+					product_id: productId,
+					attribute_id: attribute_id
+				}
+			});
+
+			const { error: prodVarAttributeError } = await variantAttributesSvc
+				.createBulkProductAttributes(finalAttributes_toAdd);
+
+			if (prodVarAttributeError) {
+				throw new ApiError(`Failed to update product: ${prodVarAttributeError.message}`, 500, [
+					prodVarAttributeError.details,
+				]);
+			}
 		}
 
 		const currentStoredImg = prodData.cover_image;

@@ -1,6 +1,6 @@
 import { createServerClient, parseCookieHeader, serializeCookieHeader } from "@supabase/ssr";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "~/types/supabase";
+import type { Database } from "~/types/supabase";
 
 function createSupabaseServerClient(request: Request) {
 	const headers = new Headers();

@@ -28,6 +28,27 @@ export type Database = {
 	};
 	public: {
 		Tables: {
+			attributes: {
+				Row: {
+					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
+					id: string;
+					name: string;
+					value: string;
+				};
+				Insert: {
+					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
+					id?: string;
+					name: string;
+					value: string;
+				};
+				Update: {
+					attribute_type?: Database["public"]["Enums"]["attribute_type_enum"];
+					id?: string;
+					name?: string;
+					value?: string;
+				};
+				Relationships: [];
+			};
 			category: {
 				Row: {
 					category_name: string;
@@ -146,24 +167,39 @@ export type Database = {
 			};
 			product_attributes: {
 				Row: {
-					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
-					id: string;
-					name: string;
-					value: string;
+					attribute_id: string;
+					created_at: string;
+					id: number;
+					product_id: string;
 				};
 				Insert: {
-					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
-					id?: string;
-					name: string;
-					value: string;
+					attribute_id: string;
+					created_at?: string;
+					id?: number;
+					product_id: string;
 				};
 				Update: {
-					attribute_type?: Database["public"]["Enums"]["attribute_type_enum"];
-					id?: string;
-					name?: string;
-					value?: string;
+					attribute_id?: string;
+					created_at?: string;
+					id?: number;
+					product_id?: string;
 				};
-				Relationships: [];
+				Relationships: [
+					{
+						foreignKeyName: "product_attributes_attribute_id_fkey";
+						columns: ["attribute_id"];
+						isOneToOne: false;
+						referencedRelation: "attributes";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "product_attributes_product_id_fkey";
+						columns: ["product_id"];
+						isOneToOne: false;
+						referencedRelation: "product";
+						referencedColumns: ["id"];
+					}
+				];
 			};
 			product_variant: {
 				Row: {
@@ -308,16 +344,19 @@ export type Database = {
 			variant_attributes: {
 				Row: {
 					attribute_id: string;
+					created_at: string;
 					id: string;
 					variant_id: string;
 				};
 				Insert: {
 					attribute_id: string;
+					created_at?: string;
 					id?: string;
 					variant_id: string;
 				};
 				Update: {
 					attribute_id?: string;
+					created_at?: string;
 					id?: string;
 					variant_id?: string;
 				};
@@ -326,7 +365,7 @@ export type Database = {
 						foreignKeyName: "variant_attributes_attribute_id_fkey";
 						columns: ["attribute_id"];
 						isOneToOne: false;
-						referencedRelation: "product_attributes";
+						referencedRelation: "attributes";
 						referencedColumns: ["id"];
 					},
 					{

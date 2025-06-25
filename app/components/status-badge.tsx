@@ -14,7 +14,7 @@ const StatusIcon = ({ className, iconType = "dot" }: { className?: string, iconT
 	if (iconType === "tick") {
 		return <Check strokeWidth={4} className="!size-3"/>;
 	} else if (iconType === "dot") {
-		return <Dot className={`mr-2 rounded-full !size-2 ${className}`}/>;
+		return <Dot className={`mr-2 rounded-full !size-[7px] ${className}`}/>;
 	} else {
 		return <X strokeWidth={4} className="!size-3"/>;
 	}

@@ -1,3 +1,4 @@
+import { Label } from "~/components/ui/label";
 import ImageInput from "./image-input";
 import { cn } from "~/lib/utils";
 
@@ -12,8 +13,8 @@ export default function MultipleImagesInput({ name }: { name: string }) {
 							"flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm"
 						)}
 					>
-						<label className="text-sm font-medium text-foreground">Image {index + 1}</label>
-						<ImageInput name={`${name}[${index}]`} />
+						<Label htmlFor={`${name}[${index}]`}>Image {index + 1}</Label>
+						<ImageInput name={`${name}[${index}]`} key={`${name}[${index}]`}/>
 					</div>
 				))}
 			</div>

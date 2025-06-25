@@ -1,19 +1,24 @@
 import { useFormContext, Controller } from "react-hook-form";
 import { FormControl, FormItem } from "~/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { ProductAttribute } from "~/types/product-attributes";
+import type { AttributeType, ProductAttribute } from "~/types/attributes";
 import { Button } from "../ui/button";
 
 interface AttributeSelectProps {
 	name: string;
-	attributeKey: string;
+	attributeKey: AttributeType;
 	options: ProductAttribute[];
 	disabled?: boolean;
 }
 
-export default function AttributeSelect({ name, attributeKey, options, disabled }: AttributeSelectProps) {
+export default function AttributeSelect({
+	name,
+	attributeKey,
+	options,
+	disabled,
+}: AttributeSelectProps) {
 	const { control } = useFormContext();
-
+	
 	return (
 		<FormItem className="flex gap-2">
 			<FormControl>
@@ -21,12 +26,14 @@ export default function AttributeSelect({ name, attributeKey, options, disabled 
 					control={control}
 					name={name}
 					render={({ field, fieldState }) => (
-						<div className="flex flex-col gap-1 *:w-full w-full">
+						<div className="flex flex-col gap-2 *:w-full w-full">
 							<div className="flex items-start gap-2">
 								<div className="w-fit">
 									<Button
 										variant="outline"
-										className={`uppercase pointer-events-none ${fieldState.error ? "text-destructive" : ""}`}
+										className={`capitalize pointer-events-none ${
+											fieldState.error ? "text-destructive" : ""
+										}`}
 										tabIndex={-1}
 									>
 										{attributeKey}
@@ -34,7 +41,12 @@ export default function AttributeSelect({ name, attributeKey, options, disabled 
 								</div>
 								<div className="flex-1">
 									<Select
-										onValueChange={field.onChange}
+										onValueChange={(value) => {
+											if (value === "null") {
+												return field.onChange("");
+											}
+											return field.onChange(value);
+										}}
 										value={field.value || ""}
 										disabled={disabled}
 									>
@@ -42,8 +54,15 @@ export default function AttributeSelect({ name, attributeKey, options, disabled 
 											<SelectValue placeholder={`Select ${attributeKey}`} />
 										</SelectTrigger>
 										<SelectContent>
+											<SelectItem value="null" className="w-full text-muted-foreground">
+												Select {attributeKey}
+											</SelectItem>
 											{options.map((option) => (
-												<SelectItem key={option.id} value={option.id} className="w-full">
+												<SelectItem
+													key={option.id}
+													value={option.id}
+													className="w-full"
+												>
 													{option.name} - {option.value}
 												</SelectItem>
 											))}

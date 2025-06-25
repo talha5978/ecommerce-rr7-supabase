@@ -1,9 +1,11 @@
 import type { ApiError } from "~/utils/ApiError";
 import type { Database } from "~/types/supabase"
 
-export type AttributeUpdationPayload =  Database["public"]["Tables"]["product_attributes"]["Update"];
+export type ProductAttributeRow =  Database["public"]["Tables"]["attributes"]["Row"];
 
-type AttributeType = Database["public"]["Enums"]["attribute_type_enum"];
+export type AttributeUpdationPayload =  Database["public"]["Tables"]["attributes"]["Update"];
+
+export type AttributeType = Database["public"]["Enums"]["attribute_type_enum"];
 
 export interface HighLevelProductAttribute {
     attribute_type: string;
@@ -40,3 +42,5 @@ export interface SingleProductAttributeResponse {
     product_attribute: ProductAttribute | null;
     error: ApiError | null;
 }
+
+export type GetAllProductAttribsInput = "all" | "for-variant" | "for-product";

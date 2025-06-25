@@ -1,11 +1,10 @@
 import type { ApiError } from "~/utils/ApiError";
 import type { Database } from "~/types/supabase"
 import type { MetaDetailsRow } from "~/types/meta_details";
-import { FullSubCategoryRow } from "./category";
+import type { FullSubCategoryRow } from "./category";
+import type { ProductAttributeRow } from "./attributes";
 
 export type ProductRow =  Database["public"]["Tables"]["product"]["Row"];
-
-export type AttributeUpdationPayload =  Database["public"]["Tables"]["product_attributes"]["Update"];
 
 export interface HighLevelProduct {
     id: string;
@@ -25,12 +24,10 @@ export interface GetAllProductsResponse {
     error: ApiError | null;
 }
 
-export type ProductVariantRow =  Database["public"]["Tables"]["product_variant"]["Row"];
-
 export type FullProduct = Omit<ProductRow & {
     meta_details: MetaDetailsRow | null;
     sub_category: FullSubCategoryRow;
-    product_variants: ProductVariantRow[];
+    attributes: ProductAttributeRow[]
 }>;
 
 export interface GetSingleProductResponse {

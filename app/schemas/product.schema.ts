@@ -38,6 +38,8 @@ export const ProductInputSchema = z.object({
 	sub_category: z
 		.string({ required_error: "Sub category is required." })
 		.min(1, "Sub category is required."),
+
+	optional_attributes: z.array(z.string().nullable().optional()),
 });
 
 export type ProductFormValues = z.input<typeof ProductInputSchema>;
@@ -56,6 +58,7 @@ export const ProductActionDataSchema = z.object({
 	name: z.string(),
 	status: z.string(),
 	sub_category: z.string(),
+	optional_attributes: z.array(z.string()),
 });
 
 export type ProductActionData = z.infer<typeof ProductActionDataSchema>;
@@ -88,6 +91,8 @@ export const ProductUpdateInputSchema = z.object({
     sub_category: z
         .string({ required_error: "Sub category is required." })
         .min(1, "Sub category is required."),
+
+	optional_attributes: z.array(z.string().nullable()),
 });
 
 export type ProductUpdateFormValues = z.input<typeof ProductUpdateInputSchema>;
@@ -108,6 +113,8 @@ export const ProductUpdateActionDataSchema = z.object({
 	name: z.string().optional(),
 	status: z.string().optional(),
 	sub_category: z.string().optional(),
+	added_attributes: z.array(z.string()).optional(),
+	removed_attributes: z.array(z.string()).optional(),
 });
 
 export type ProductUpdateActionData = z.infer<typeof ProductUpdateActionDataSchema>;

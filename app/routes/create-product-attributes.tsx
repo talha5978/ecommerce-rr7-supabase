@@ -13,8 +13,8 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect } from "react";
-import { ActionResponse } from "~/types/action-data";
-import { ProductAttributesService } from "~/services/product-attributes.service";
+import type { ActionResponse } from "~/types/action-data";
+import { ProductAttributesService } from "~/services/attributes.service";
 import { queryClient } from "~/lib/queryClient";
 import { ApiError } from "~/utils/ApiError";
 
@@ -144,7 +144,7 @@ export default function CreateProductAttributes({ params }: Route.ComponentProps
 												<SelectContent>
 													{product_attributes_enum.map((item) => (
 														<SelectItem key={item} value={item}>
-															{item.toUpperCase()}
+															{item.charAt(0).toUpperCase() + String(item).slice(1)}
 														</SelectItem>
 													))}
 												</SelectContent>

@@ -15,7 +15,7 @@ import { productsQuery } from "~/queries/products.q";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { defaults, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
-import { HighLevelProduct } from "~/types/products";
+import type { HighLevelProduct } from "~/types/products";
 import { GetFormattedDate } from "~/lib/utils";
 import StatusBadge from "~/components/status-badge";
 import { Skeleton } from "~/components/ui/skeleton";

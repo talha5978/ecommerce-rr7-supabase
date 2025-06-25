@@ -1,10 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
-import { ProductAttributesService } from "~/services/product-attributes.service";
-import { AllProductAttributesResponse, AttributeType, HighLevelProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/product-attributes";
+import { ProductAttributesService } from "~/services/attributes.service";
+import type { AllProductAttributesResponse, AttributeType, GetAllProductAttribsInput, HighLevelProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/attributes";
 
 type getProductAttributesByTypeArgs = { request: Request, attribute_type: AttributeType }
 
 type getSingleProductAttributeByTypeArgs = { request: Request, attribute_id: string }
+
+type getAllProductAttributesArgs = { request: Request, input?: GetAllProductAttribsInput };
 
 export const highLevelProductAttributesQuery = ({ request }: { request: Request }) => {
 	return queryOptions<HighLevelProductAttributesResponse>({
@@ -17,12 +19,12 @@ export const highLevelProductAttributesQuery = ({ request }: { request: Request 
 	});
 };
 
-export const AllProductAttributesQuery = ({ request }: { request: Request }) => {
+export const AllProductAttributesQuery = ({ request, input }: getAllProductAttributesArgs) => {
 	return queryOptions<AllProductAttributesResponse>({
-		queryKey: ["all_productAttributes"],
+		queryKey: ["all_productAttributes", input],
 		queryFn: async () => {
 			const attributesServ = new ProductAttributesService(request);
-			const result = await attributesServ.getAllProductAttributes();
+			const result = await attributesServ.getAllProductAttributes(input as GetAllProductAttribsInput);
 			return result;
 		},
 	});

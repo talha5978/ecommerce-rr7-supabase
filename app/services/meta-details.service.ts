@@ -3,8 +3,9 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { MetaUpdationPayload } from "~/types/meta_details.d";
+import type { MetaUpdationPayload } from "~/types/meta_details.d";
 import { MetaDetailsActionData } from "~/schemas/meta-details.schema";
+import { TABLE_NAMES } from "~/constants";
 
 export class MetaDetailsService {
 	private supabase: SupabaseClient<Database>;

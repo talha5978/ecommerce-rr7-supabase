@@ -6,9 +6,7 @@ import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { defaults } from "~/constants";
 import type { CategoryActionData, CategoryUpdateActionData, SubCategoryActionData, SubCategoryUpdateActionData } from "~/schemas/category.schema";
-import { MetaUpdationPayload } from "~/types/meta_details.d";
 import { MetaDetailsService } from "~/services/meta-details.service";
-
 
 export class CategoryService {
 	private supabase: SupabaseClient<Database>;

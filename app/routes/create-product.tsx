@@ -11,7 +11,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
 import { Loader2, PlusCircle, RefreshCcw } from "lucide-react";
-import { useEffect } from "react";
+import { use, useEffect } from "react";
 import {
 	TagsInput,
 	TagsInputClear,
@@ -22,7 +22,7 @@ import {
 import { defaults } from "~/constants";
 import { toast } from "sonner";
 import { ApiError } from "~/utils/ApiError";
-import { ActionResponse } from "~/types/action-data";
+import type { ActionResponse } from "~/types/action-data";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import { ProductActionDataSchema, ProductFormValues, ProductInputSchema } from "~/schemas/product.schema";
@@ -31,10 +31,13 @@ import { categoriesQuery } from "~/queries/categories.q";
 import { Route } from "./+types/create-product";
 import ImageInput from "~/components/Custom-Inputs/image-input";
 import { ProductsService } from "~/services/products.service";
+import { AllProductAttributesQuery } from "~/queries/product-attributes.q";
+import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
+import { AttributeType, ProductAttribute } from "~/types/attributes";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
-	// console.log("Form data: ", formData);
+	console.log("Form data: ", formData);
 
 	const data = {
 		name: formData.get("name") as string,
@@ -50,6 +53,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			url_key: formData.get("meta_details.url_key") as string,
 			meta_keywords: formData.get("meta_details.meta_keywords"),
 		},
+		// optional_attributes: will always be an array of ids or empty array if no attributes is selected
+		optional_attributes: formData.getAll("optional_attributes") as string[],
 	};
 
 	const parseResult = ProductActionDataSchema.safeParse(data);
@@ -68,7 +73,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	// return;
 	try {
 		
-		await productService.createProductWithMeta(parseResult.data);
+		await productService.createProduct(parseResult.data);
 
 		queryClient.invalidateQueries({ queryKey: ["products"] });
 
@@ -89,28 +94,41 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const data = await queryClient.fetchQuery(categoriesQuery({
+	const categories = await queryClient.fetchQuery(categoriesQuery({
 		request, pageIndex : 0, pageSize: 50, q: "" 
 	}));
-	// console.log(data);
+
+	const optional_attributes = await queryClient.fetchQuery(AllProductAttributesQuery({
+		request,
+		input: "for-product"
+	}));
 	
-	return { data };
+	return { categories, optional_attributes };
 };
 
-export default function CreateBasicProductPage({ loaderData : { data } } : Route.ComponentProps) {
+export default function CreateBasicProductPage({ loaderData : { categories: loaderCategories, optional_attributes } } : Route.ComponentProps) {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (data.error) {
-			toast.error(data.error.message);
+		if (loaderCategories.error) {
+			toast.error(loaderCategories.error.message);
 			navigate("/products");
 		}
-	}, [data.error]);
+	}, [loaderCategories.error]);
+
+	useEffect(() => {
+		if (optional_attributes.error) {
+			toast.error(optional_attributes.error.message);
+			navigate("/products");
+		}
+	}, [optional_attributes.error]);
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
 
 	const actionData: ActionResponse = useActionData();
+
+	const attributeKeys = Object.keys(optional_attributes.product_attributes || {});
 
 	const form = useForm<ProductFormValues>({
 		resolver: zodResolver(ProductInputSchema),
@@ -130,10 +148,11 @@ export default function CreateBasicProductPage({ loaderData : { data } } : Route
 				url_key: "",
 				meta_keywords: [],
 			},
+			optional_attributes: Array(attributeKeys.length).fill(null),
 		},
 	});
 
-	const { handleSubmit, setError, control, resetField, register } = form;
+	const { handleSubmit, setError, control, resetField } = form;
 
 	// Watch the category field
 	const selectedCategory = useWatch({
@@ -147,14 +166,16 @@ export default function CreateBasicProductPage({ loaderData : { data } } : Route
 	}, [selectedCategory, resetField]);
 
 	// Filter subcategories based on selected category
-	const categories = data?.categories || [];
+	const categories = loaderCategories?.categories || [];
 	const subCategories = categories.find((cat) => cat.id === selectedCategory)?.sub_category || [];
 
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
 	async function onFormSubmit(values: ProductFormValues) {
+		toast.info("Creating product...");
+		// console.log(values);
+	
 		const formData = new FormData();
-		
 		formData.set("name", values.name.trim());
 		formData.set("description", values.description.trim());
 		formData.set("cover_image", values.cover_image);
@@ -171,6 +192,11 @@ export default function CreateBasicProductPage({ loaderData : { data } } : Route
 				.join(",");
 			formData.set("meta_details.meta_keywords", stringifiedKeywords);
 		}
+
+		const finalAttributes = values.optional_attributes.filter((attr) => attr !== null) as string[];
+		finalAttributes.forEach((opt_attribute_id) => {
+			formData.append("optional_attributes", opt_attribute_id);
+		});
 		
 		submit(formData, {
 			method: "POST",
@@ -205,10 +231,10 @@ export default function CreateBasicProductPage({ loaderData : { data } } : Route
 					<h1 className="text-2xl font-semibold">Create Product</h1>
 				</div>
 
-				<form className="grid grid-cols-1 md:grid-cols-3 gap-4" onSubmit={handleSubmit(onFormSubmit)}>
+				<form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit(onFormSubmit)}>
 					<Form {...form}>
 						{/* Left Side: Basic Details and Meta Details */}
-						<div className="md:col-span-2 space-y-4">
+						<div className="space-y-4">
 							{/* Basic Details Card */}
 							<Card>
 								<CardHeader>
@@ -465,109 +491,163 @@ export default function CreateBasicProductPage({ loaderData : { data } } : Route
 							</Card>
 						</div>
 
-						{/* Right Side: Visibility and Shipping Card */}
-						<Card className="md:col-span-1 h-fit">
-							<CardHeader>
-								<CardTitle className="text-lg">Visibility & Shipping</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								{/* Status */}
-								<FormField
-									control={control}
-									name="status"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Status</FormLabel>
-											<FormControl>
-												<div className="space-y-2">
+						{/* Right Side: Visibility and Shipping Card and attributes */}
+						<div className="space-y-4">
+							<Card>
+								<CardHeader>
+									<CardTitle className="text-lg">Visibility & Shipping</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-4">
+									{/* Status */}
+									<FormField
+										control={control}
+										name="status"
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Status</FormLabel>
+												<FormControl>
+													<div className="space-y-2">
+														<RadioGroup
+															onValueChange={field.onChange}
+															value={field.value}
+														>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem value="true" id="status-active" />
+																<Label htmlFor="status-active">Active</Label>
+															</div>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem
+																	value="false"
+																	id="status-inactive"
+																/>
+																<Label htmlFor="status-inactive">Inactive</Label>
+															</div>
+														</RadioGroup>
+														<span className="text-muted-foreground text-sm">
+															If inactive, the product will not be visible in the
+															store
+														</span>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<Separator />
+									{/* Is Featured */}
+									<FormField
+										control={control}
+										name="is_featured"
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Featured</FormLabel>
+												<FormControl>
+													<div className="space-y-2">
+														<RadioGroup
+															onValueChange={field.onChange}
+															value={field.value}
+														>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem value="true" id="featured-yes" />
+																<Label htmlFor="featured-yes">Yes</Label>
+															</div>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem value="false" id="featured-no" />
+																<Label htmlFor="featured-no">No</Label>
+															</div>
+														</RadioGroup>
+														<span className="text-muted-foreground text-sm">
+															If "Yes" is selected then this product will be
+															featured on the home page
+														</span>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<Separator />
+									{/* Free Shipping */}
+									<FormField
+										control={control}
+										name="free_shipping"
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Free Shipping</FormLabel>
+												<FormControl>
 													<RadioGroup
 														onValueChange={field.onChange}
 														value={field.value}
 													>
 														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem value="true" id="status-active" />
-															<Label htmlFor="status-active">Active</Label>
+															<RadioGroupItem value="true" id="shipping-yes" />
+															<Label htmlFor="shipping-yes">Yes</Label>
 														</div>
 														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem
-																value="false"
-																id="status-inactive"
-															/>
-															<Label htmlFor="status-inactive">Inactive</Label>
+															<RadioGroupItem value="false" id="shipping-no" />
+															<Label htmlFor="shipping-no">No</Label>
 														</div>
 													</RadioGroup>
-													<span className="text-muted-foreground text-sm">
-														If inactive, the product will not be visible in the
-														store
-													</span>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<Separator />
-								{/* Is Featured */}
-								<FormField
-									control={control}
-									name="is_featured"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Featured</FormLabel>
-											<FormControl>
-												<div className="space-y-2">
-													<RadioGroup
-														onValueChange={field.onChange}
-														value={field.value}
-													>
-														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem value="true" id="featured-yes" />
-															<Label htmlFor="featured-yes">Yes</Label>
-														</div>
-														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem value="false" id="featured-no" />
-															<Label htmlFor="featured-no">No</Label>
-														</div>
-													</RadioGroup>
-													<span className="text-muted-foreground text-sm">
-														If "Yes" is selected then this product will be
-														featured on the home page
-													</span>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<Separator />
-								{/* Free Shipping */}
-								<FormField
-									control={control}
-									name="free_shipping"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Free Shipping</FormLabel>
-											<FormControl>
-												<RadioGroup
-													onValueChange={field.onChange}
-													value={field.value}
-												>
-													<div className="flex items-center gap-3 *:cursor-pointer">
-														<RadioGroupItem value="true" id="shipping-yes" />
-														<Label htmlFor="shipping-yes">Yes</Label>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</CardContent>
+							</Card>
+							{/* Optional Attributes */}
+							<Card>
+								<CardHeader>
+									<CardTitle className="text-lg flex gap-2 items-center">
+										<span>Attributes</span>
+										<span className="text-muted-foreground text-sm">
+											(Optional)
+										</span>
+									</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<FormField
+										control={control}
+										name="optional_attributes"
+										render={() => (
+											<FormItem>
+												<FormControl>
+													<div className="space-y-4">
+														{attributeKeys.map((key, index) => (
+															<div
+																key={key}
+																className="grid grid-cols-1"
+															>
+																<FormItem>
+																	<FormControl>
+																		<AttributeSelect
+																			name={`optional_attributes.${index}`}
+																			attributeKey={key as AttributeType}
+																			options={
+																				//@ts-ignore
+																				optional_attributes.product_attributes != null ? optional_attributes.product_attributes[key]?.map(
+																					(opt: ProductAttribute) => ({
+																						id: opt.id,
+																						value: opt.value,
+																						name: opt.name
+																					})
+																				) : []
+																			}
+																			disabled={!optional_attributes}
+																		/>
+																	</FormControl>
+																</FormItem>
+															</div>
+														))}
 													</div>
-													<div className="flex items-center gap-3 *:cursor-pointer">
-														<RadioGroupItem value="false" id="shipping-no" />
-														<Label htmlFor="shipping-no">No</Label>
-													</div>
-												</RadioGroup>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</CardContent>
-						</Card>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</CardContent>
+							</Card>
+						</div>
 
 						{/* Submit Button */}
 						<div className="flex justify-end md:col-span-3">

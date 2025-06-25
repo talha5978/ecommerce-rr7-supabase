@@ -1,6 +1,3 @@
-import { ApiError } from "~/utils/ApiError";
-
-
 export interface MediaData {
     id: string;
     path: string;

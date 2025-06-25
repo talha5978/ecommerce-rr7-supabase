@@ -1,7 +1,7 @@
 import slugify from "slugify";
 import { v4 as uuidv4 } from "uuid";
 
-const generateSlug = (fileName: string) => {
+const generateFileSlug = (fileName: string) => {
 	const fileSlug = slugify(fileName, {
 		lower: true,
 		strict: true,
@@ -13,10 +13,11 @@ const generateSlug = (fileName: string) => {
 };
 
 const generateFilePath = (file: File) => {
-	const fileSlug = generateSlug(file.name);
+	const fileSlug = generateFileSlug(file.name);
 	const fileExtension = file.name.split(".").slice(-1)[0];
 	const filePath = `${uuidv4()}-${fileSlug}.${fileExtension}`;
 	return filePath;
 };
 
-export { generateSlug, generateFilePath };
+
+export { generateFilePath };

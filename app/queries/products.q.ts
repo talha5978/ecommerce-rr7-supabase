@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { ProductsService } from "~/services/products.service";
-import { GetAllProductsResponse,  GetSingleProductResponse } from "~/types/products";
+import type { GetAllProductsResponse,  GetSingleProductResponse } from "~/types/products";
 
 interface productsQueryArgs {
     request: Request;
