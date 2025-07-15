@@ -1,5 +1,5 @@
 .env
-.env.*    # if you use .env.development or .env.local
+.env.*
 npm-debug.log*
 
 .DS_Store
