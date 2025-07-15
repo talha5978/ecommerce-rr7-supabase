@@ -47,6 +47,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		const productVariantSvc = new ProductVariantsService(request);
 		await productVariantSvc.createProductVaraintDuplicate(data);
 		await queryClient.invalidateQueries({ queryKey: ["productVariants", data.product_id] });
+		await queryClient.invalidateQueries({ queryKey: ["allProductUnits"] });
+		await queryClient.invalidateQueries({ queryKey: ["products"] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", data.product_id] });
 		
 		return { success: true };

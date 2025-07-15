@@ -2,20 +2,23 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { GetAllProductVariants, PrevVaraintOptAttribs, ProductVariantUpdationPayload, SingleProductVariantResponse, VariantConstraintsData } from "~/types/product-variants";
-import { defaults, REQUIRED_VARIANT_ATTRIBS, TABLE_NAMES } from "~/constants";
+import type { GetAllProductVariants, ProductVariantUpdationPayload, SingleProductVariantResponse, VariantConstraintsData } from "~/types/product-variants";
+import { defaults, FilterOp, REQUIRED_VARIANT_ATTRIBS, TABLE_NAMES } from "~/constants";
 import { MediaService } from "~/services/media.service";
 import { DuplicateVariantActionData, ProductVariantActionData, ProductVariantUpdateActionData } from "~/schemas/product-variants.schema";
 import { bolleanToStringConverter, stringToBooleanConverter } from "~/lib/utils";
 import { VariantsAttributesService } from "./variant-attributes.service";
 import type { VariantAttributeInput } from "~/types/variant-attributes";
-import type { AttributeType, ProductAttributeRow } from "~/types/attributes.d";
+import type { ProductAttributeRow } from "~/types/attributes.d";
+import { ProductsService } from "~/services/products.service";
+import { defaultOp, ProductVariantsFilters } from "~/schemas/product-variants-filter.schema";
+import { applyFilterOps } from "~/utils/applyFilterOps";
 
 export class ProductVariantsService {
 	private supabase: SupabaseClient<Database>;
-	private readonly VARIANTS_TABLE = "product_variant";
-	private readonly VARIANT_ATTRIBUTES_TABLE = "variant_attributes";
-	private readonly ATTRIBUTES_TABLE = "attributes";
+	private readonly VARIANTS_TABLE = TABLE_NAMES.product_variant;
+	private readonly VARIANT_ATTRIBUTES_TABLE = TABLE_NAMES.variant_attributes;
+	private readonly ATTRIBUTES_TABLE = TABLE_NAMES.attributes;
 	private readonly request: Request;
 
 	constructor(request: Request) {
@@ -25,11 +28,94 @@ export class ProductVariantsService {
 	}
 
 	/** Fetch products variants for a product */
-	async getAllProductVariants(
+	async getProductVariants(
 		q = "",
 		pageIndex = 0,
 		pageSize = defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE,
-		productId: string
+		productId: string,
+		filters: ProductVariantsFilters = {}
+	): Promise<GetAllProductVariants> {
+		try {
+			const from = pageIndex * pageSize;
+			const to = from + pageSize - 1;
+
+			let query = this.supabase
+				.from(this.VARIANTS_TABLE)
+				.select("*", { count: "exact" })
+				.eq("product_id", productId)
+				.order(
+					filters.sortBy || defaults.defaultProductVaraintsSortByFilter,
+					{ ascending: filters.sortType === "asc" }
+				);
+
+			// DRY numeric ops
+			const numericFields: Array<[keyof ProductVariantsFilters, keyof ProductVariantsFilters]> = [
+				["original_price", "original_price_op"],
+				["sale_price", "sale_price_op"],
+				["reorder_level", "reorder_level_op"],
+			];
+			
+			for (const [colKey, opKey] of numericFields) {
+				const columnName = colKey as string;
+				const op = ((filters as ProductVariantsFilters)[opKey] as FilterOp)|| defaultOp;
+				const value = (filters as ProductVariantsFilters)[colKey] as number | undefined;
+				query = applyFilterOps(query, columnName, op, value);
+			}
+
+			if (filters.stock && filters.stock.length > 0) {
+				if (filters.stock[0] !== 0) {
+					query = query.gte("stock", filters.stock[0]);
+				}
+				if (filters.stock[1] !== defaults.MAX_STOCK_FILTER_DEFAULT_VAL) {
+					query = query.lte("stock", filters.stock[1]);
+				}
+			}
+
+			if (filters.status != undefined) {
+				query = query.eq("status", filters.status);
+			}
+
+			if (filters.createdAt) {
+				query = query
+					.gte("createdAt", filters.createdAt.from.toISOString())
+					.lte("createdAt", filters.createdAt.to.toISOString());
+			}
+
+			if (q.length > 0) {
+				query = query.ilike("name", `%${q}%`);
+			}
+
+			query = query.range(from, to);
+
+			const { data, error: queryError, count } = await query;
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+			}
+
+			return {
+				product_variants: data ?? [],
+				total: count ?? 0,
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { product_variants: [], total: 0, error: err };
+			}
+			return {
+				product_variants: [],
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
+	/** Fetch all product variant units for all units page! (Not based on a single product) */
+	async getAllProductUnits(
+		q = "",
+		pageIndex = 0,
+		pageSize = defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE,
 	): Promise<GetAllProductVariants> {
 		try {
 			const from = pageIndex * pageSize;
@@ -39,8 +125,7 @@ export class ProductVariantsService {
 				.from(this.VARIANTS_TABLE)
 				.select("*", { count: "exact" })
 				.order("createdAt", { ascending: false })
-				.range(from, to)
-				.eq("product_id", productId);
+				.range(from, to);
 
 			if (q.length > 0) {
 				query = query.ilike("name", `%${q}%`);
@@ -267,22 +352,30 @@ export class ProductVariantsService {
 	/** Get constraints like if we already have a variant which is set to default for variant creation page and updation page */
 	async getConstaintsForVariantMutations(product_id: string): Promise<VariantConstraintsData> {
 		try {
-			const { data: defaultVariant, error: defaultFetchError } = await this.supabase
+			const { data, error: defaultFetchError } = await this.supabase
 				.from(this.VARIANTS_TABLE)
-				.select("id")
+				.select(`id`)
 				.eq("product_id", product_id)
 				.eq("is_default", true)
 				.single();
 
 			let error: null | ApiError = null;
 
-			if (defaultFetchError || defaultVariant == null) {
+			if (defaultFetchError || data == null) {
 				error = new ApiError(defaultFetchError.message, 500, [defaultFetchError.details]);
 			}
 
+			const productSvc = new ProductsService(this.request);
+			const { productName, error: productNameError } = await productSvc.getProductName(product_id);
+
+			if (productNameError || productName == null) {
+				error = new ApiError(productNameError.message, 500, [productNameError.details]);
+			}
+
 			return {
-				is_default_variant_exists: defaultVariant == null ? false : true || false,
-				default_variant_id: defaultVariant == null ? null : defaultVariant.id,
+				is_default_variant_exists: data == null ? false : true || false,
+				default_variant_id: data == null ? null : data.id,
+				productName: productName == null ? null : productName,
 				error
 			}
 		} catch (err: any) {
@@ -290,12 +383,14 @@ export class ProductVariantsService {
 				return {
 					is_default_variant_exists: false,
 					default_variant_id: null,
+					productName: null,
 					error: err,
 				};
 			}
 			return {
 				is_default_variant_exists: false,
 				default_variant_id: null,
+				productName: null,
 				error: new ApiError("Unknown error", 500, [err]),
 			};
 		}

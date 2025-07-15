@@ -44,5 +44,6 @@ export type PrevVaraintOptAttribs = {
 export type VariantConstraintsData = {
     is_default_variant_exists: boolean;
     default_variant_id: string | null;
+    productName: string | null;
     error: ApiError | null;
 }

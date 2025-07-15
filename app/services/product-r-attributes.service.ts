@@ -2,12 +2,12 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { GetVariantAttributesResponse } from "~/types/variant-attributes";
 import type { ProductRAttributeCreateResponse, ProductRAttributeInput } from "~/types/product-r-attributes";
+import { TABLE_NAMES } from "~/constants";
 
 export class ProductRAttributesService {
 	private supabase: SupabaseClient<Database>;
-	private readonly TABLE = "product_attributes";
+	private readonly TABLE = TABLE_NAMES.product_attributes;
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
@@ -32,24 +32,6 @@ export class ProductRAttributesService {
 		return {
 			error,
 		};
-	}
-
-	/** Fetch variant attributes for a variant using variant id */
-	async getVariantAttributes(variant_id: string): Promise<GetVariantAttributesResponse> {
-		const { data, error: dbError } = await this.supabase
-			.from(this.TABLE)
-			.select("*")
-			.eq("variant_id", variant_id);
-
-		let error: null | ApiError = null;
-		if (dbError) {
-			error = new ApiError(dbError.message, 500, [dbError.details]);
-		}
-
-		return {
-			data: data ?? null,
-			error
-		}
 	}
 
 	/** Delete a row of variant attributes table*/

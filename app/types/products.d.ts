@@ -36,3 +36,16 @@ export interface GetSingleProductResponse {
 }
 
 export type ProductUpdationPayload = Database["public"]["Tables"]["product"]["Update"];
+
+export type ProductNameResponse = {
+    productName: string | null;
+    error: PostgrestError  | null;
+}
+
+export type ProductNameListRow = { id: string, name: string };
+
+export type ProductNamesListResponse = {
+    products: ProductNameListRow[] | null;
+    total: number;
+    error: ApiError | null;
+}

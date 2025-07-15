@@ -9,7 +9,7 @@ import { TABLE_NAMES } from "~/constants";
 
 export class MetaDetailsService {
 	private supabase: SupabaseClient<Database>;
-	private readonly TABLE = "meta_details";
+	private readonly META_TABLE = TABLE_NAMES.meta_details;
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
@@ -21,7 +21,7 @@ export class MetaDetailsService {
 		const { meta_description, meta_title, url_key, meta_keywords } = input;
 
 		const { data: metaData, error: metaError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.META_TABLE)
 			.insert({
 				meta_title,
 				meta_description,
@@ -58,7 +58,7 @@ export class MetaDetailsService {
 
 		if (Object.keys(metaUpdate).length > 0) {
 			const { error: metaError } = await this.supabase
-				.from(this.TABLE)
+				.from(this.META_TABLE)
 				.update(metaUpdate)
 				.eq("id", metaDetailsId);
 
@@ -70,7 +70,7 @@ export class MetaDetailsService {
 
 	async deleteMetaDetails(metaDetailsId: string): Promise<void> {
 		const { error: metaError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.META_TABLE)
 			.delete()
 			.eq("id", metaDetailsId);
 		

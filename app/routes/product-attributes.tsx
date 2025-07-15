@@ -1,17 +1,19 @@
 import { Link, LoaderFunctionArgs, Outlet, useLocation } from "react-router";
 import { Route } from "./+types/product-attributes";
 import { Button } from "~/components/ui/button";
-import { ArrowRight, PlusCircle, Settings2 } from "lucide-react";
+import { ArrowRight, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
-import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { ColumnDef, ColumnFiltersState, getCoreRowModel, getFilteredRowModel, useReactTable } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { useNavigation } from "react-router";
 import type { HighLevelProductAttribute } from "~/types/attributes.d";
 import { queryClient } from "~/lib/queryClient";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { highLevelProductAttributesQuery } from "~/queries/product-attributes.q";
+import { Input } from "~/components/ui/input";
+import { useForm } from "react-hook-form";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const data = await queryClient.fetchQuery(highLevelProductAttributesQuery({ request }));
@@ -30,6 +32,8 @@ export default function ProductsAttributesPage({
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
+	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
 	useEffect(() => {
 		if (data.error != null && data.error.message) {
 			console.log(data);
@@ -47,7 +51,7 @@ export default function ProductsAttributesPage({
 			header: () => "Sr. No.",
 		},
 		{
-			id: "Attribute Type",
+			id: "attribute_type",
 			enableHiding: false,
 			accessorKey: "attribute_type",
 			cell: (info: any) => {
@@ -71,12 +75,14 @@ export default function ProductsAttributesPage({
 				const rowData: HighLevelProductAttribute = row.original;
 
 				return (
-					<Link to={`${rowData.attribute_type}/values`}>
-						<Button variant="outline" className=" cursor-pointer">
-							<span>View Values</span>
-							<ArrowRight className="h-4 w-4" />
-						</Button>
-					</Link>
+					<div className="flex items-center justify-center">
+						<Link to={`${rowData.attribute_type}/values`}>
+							<Button variant="outline" className=" cursor-pointer">
+								<span>View Values</span>
+								<ArrowRight className="h-4 w-4" />
+							</Button>
+						</Link>
+					</div>
 				);
 			},
 		},
@@ -86,34 +92,43 @@ export default function ProductsAttributesPage({
 		data: (data.product_attributes as HighLevelProductAttribute[]) ?? [],
 		columns: tableColumns,
 		getCoreRowModel: getCoreRowModel(),
+		onColumnFiltersChange: setColumnFilters,
+		getFilteredRowModel: getFilteredRowModel(),
+		state: {
+			columnFilters,
+		},
 	});
 	
 	return (
 		<>
 			<MetaDetails
-                metaTitle="Product Attribute | Admin Panel"
-                metaDescription="Manage your product attributes here."
-                metaKeywords="Product Attributes, Attributes"
-            />
+				metaTitle="Product Attribute | Admin Panel"
+				metaDescription="Manage your product attributes here."
+				metaKeywords="Product Attributes, Attributes"
+			/>
 			<section className="flex flex-1 flex-col gap-6">
-				<div className="flex justify-between gap-3 flex-wrap">
-					<h1 className="text-2xl font-semibold">Product Attributes</h1>
-					<Link to="create" viewTransition className="ml-auto">
-						<Button size="sm" className="ml-auto">
-							<PlusCircle width={18} />
-							<span>Add Attribute</span>
-						</Button>
-					</Link>
+				<div>
+					<div className="flex justify-between gap-3 flex-wrap">
+						<h1 className="text-2xl font-semibold">Product Attributes</h1>
+						<Link to="create" viewTransition className="ml-auto">
+							<Button size="sm" className="ml-auto">
+								<PlusCircle width={18} />
+								<span>Add Attribute</span>
+							</Button>
+						</Link>
+					</div>
+					{columnFilters[0] && (
+						<div className="mt-3">
+							<p>Showing records for "{(columnFilters[0]?.value as string)?.trim()}"</p>
+						</div>
+					)}
 				</div>
 				<div className="rounded-md flex flex-col gap-4">
 					<DataTableViewOptions table={table} disabled={isFetchingThisRoute} />
 					{isFetchingThisRoute ? (
 						<DataTableSkeleton noOfSkeletons={4} columns={tableColumns} />
 					) : (
-						<DataTable
-							table={table}
-							total={data.product_attributes?.length ?? 0}
-						/>
+						<DataTable table={table} total={data.product_attributes?.length ?? 0} />
 					)}
 				</div>
 			</section>
@@ -123,8 +138,35 @@ export default function ProductsAttributesPage({
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelProductAttribute>) {
+	const { register, handleSubmit } = useForm({
+		defaultValues: {
+			attribute_type: (table.getColumn("attribute_type")?.getFilterValue() as string) ?? "",
+		},
+	});
+
+	function onSubmit(data: { attribute_type: string }) {
+		table.getColumn("attribute_type")?.setFilterValue(data.attribute_type);
+	}
+
     return (
-        <div className="w-full flex justify-end">
+		<div className="w-full flex justify-between gap-4">
+			<div>
+				<form onSubmit={handleSubmit(onSubmit)}>
+					<div className="relative">
+						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
+						<Input
+							placeholder="Search attributes"
+							className="w-full pl-8"
+							id="search"
+							disabled={disabled}
+							{...register("attribute_type")}
+						/>
+					</div>
+					<Button type="submit" className="hidden">
+						Search
+					</Button>
+				</form>
+			</div>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button

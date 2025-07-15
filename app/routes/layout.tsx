@@ -3,36 +3,45 @@ import { LoaderFunctionArgs, Outlet, redirect, useNavigation } from "react-route
 import SidebarLayout from "~/components/Nav/nav-layout";
 import { getCurrentUserFromRequest } from "~/hooks/useGetServerUser";
 import { queryClient } from "~/lib/queryClient";
-import ErrorPage from "~/components/Error/ErrorPage";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import LoadingBar, { LoadingBarRef } from "react-top-loading-bar";
+
 export async function loader({ request }: LoaderFunctionArgs) {
 	const { user } = await getCurrentUserFromRequest(request);
-	
+
 	if (!user && request.url !== "/login") {
 		return redirect("/login");
 	}
 
 	return { user };
 }
-
-export function ErrorBoundary() {
-	return <ErrorPage />;
-}
-
+// TODO: Write functionality where we show the checkboxes in each row of products table and variants table! and we can share them and export urls if we want to.
+// TODO: Create separate roles like EMPLOYEE, CUSTOMER, ADMIN!!
+// TODO: ALLOW THE COUPONS AND DISCOUNTS ON THE BASIS OF USER ROLES!
 export default function Layout() {
 	const navigation = useNavigation();
 	const loadingBarRef = useRef<null | LoadingBarRef>(null);
-
+	const [isLoadingBarStarted, setIsLoadingBarStarted] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (loadingBarRef.current != null && navigation.state === "loading") {
-			loadingBarRef.current.continuousStart();
-		} else if (loadingBarRef.current != null && navigation.state === "idle") {
-			loadingBarRef.current.complete();
+		if (loadingBarRef.current != null) {
+			if (navigation.state === "loading") {
+				if (!navigation.location?.state?.suppressLoadingBar) {
+					// Start the loading bar for non-suppressed navigations
+					loadingBarRef.current.continuousStart();
+					setIsLoadingBarStarted(true);
+				} else {
+					// Ensure suppressed navigations don't start the bar
+					setIsLoadingBarStarted(false);
+				}
+			} else if (navigation.state === "idle" && isLoadingBarStarted) {
+				// Only complete the bar if it was started
+				loadingBarRef.current.complete();
+				setIsLoadingBarStarted(false);
+			}
 		}
-	}, [navigation.state]);
-	
+	}, [navigation.state, navigation.location, isLoadingBarStarted]);
+
 	return (
 		<>
 			<LoadingBar color="var(--color-primary)" ref={loadingBarRef} />

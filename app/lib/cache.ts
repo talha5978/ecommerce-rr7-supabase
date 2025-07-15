@@ -6,8 +6,8 @@ type CacheValue<T = any> = {
 
 const cache = new Map<string, CacheValue>();
 
-// Default TTL = 1 minute
-const DEFAULT_TTL = 60 * 1000;
+// Default TTL = 60 minutes
+const DEFAULT_TTL = 60 * 60 * 1000;
 
 /**
  * Set a cache value for a key with optional TTL (in ms)

@@ -15,14 +15,46 @@ export type FullCategoryRow = Omit<CategoryRow, "meta_details"> & {
     meta_details: MetaDetailsRow | null;
 }
 
-export interface GetAllCategoriesResponse {
-    categories: FullCategoryRow[] | null;
+export type HighLevelCategory = {
+    id: string;
+    category_name: string;
+    sub_category_count: number;
+    createdAt: string;
+    url_key: string | null;
+}
+
+export interface GetHighLevelCategoriesResponse {
+    categories: HighLevelCategory[] | null;
     total: number;
     error: ApiError | null;
 }
 
-export interface GetSubCategoriesResponse {
-    subCategories: FullSubCategoryRow[] | null;
+export interface CategoryListRow {
+    id: string;
+    category_name: string;
+    sub_category: {
+        id: string;
+        sub_category_name: string;
+        parent_id: string;
+    }[];
+}
+
+export interface GetAllCategoriesResponse {
+    categories: CategoryListRow[] | null;
+    total: number;
+    error: ApiError | null;
+}
+
+export type HighLevelSubCategory = {
+    id: string;
+    sub_category_name: string;
+    description: string;
+    createdAt: string;
+    url_key: string | null;
+}
+
+export interface GetHighLevelSubCategoriesResponse {
+    subCategories: HighLevelSubCategory[] | null;
     total: number;
     error: ApiError | null;
 }

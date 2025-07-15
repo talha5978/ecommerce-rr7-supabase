@@ -84,6 +84,77 @@ export type Database = {
 					}
 				];
 			};
+			collection_products: {
+				Row: {
+					collection_id: string;
+					product_id: string;
+				};
+				Insert: {
+					collection_id: string;
+					product_id: string;
+				};
+				Update: {
+					collection_id?: string;
+					product_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "collection_products_collection_id_fkey";
+						columns: ["collection_id"];
+						isOneToOne: false;
+						referencedRelation: "collections";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "collection_products_product_id_fkey";
+						columns: ["product_id"];
+						isOneToOne: false;
+						referencedRelation: "product";
+						referencedColumns: ["id"];
+					}
+				];
+			};
+			collections: {
+				Row: {
+					createdAt: string;
+					description: string;
+					id: string;
+					image_url: string;
+					meta_details: string;
+					name: string;
+					sort_order: number;
+					status: boolean;
+				};
+				Insert: {
+					createdAt?: string;
+					description: string;
+					id?: string;
+					image_url: string;
+					meta_details: string;
+					name: string;
+					sort_order?: number;
+					status?: boolean;
+				};
+				Update: {
+					createdAt?: string;
+					description?: string;
+					id?: string;
+					image_url?: string;
+					meta_details?: string;
+					name?: string;
+					sort_order?: number;
+					status?: boolean;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "collections_meta_details_fkey";
+						columns: ["meta_details"];
+						isOneToOne: false;
+						referencedRelation: "meta_details";
+						referencedColumns: ["id"];
+					}
+				];
+			};
 			meta_details: {
 				Row: {
 					createdAt: string;

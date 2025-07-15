@@ -118,3 +118,12 @@ export const ProductUpdateActionDataSchema = z.object({
 });
 
 export type ProductUpdateActionData = z.infer<typeof ProductUpdateActionDataSchema>;
+
+
+// SCHEMA FOR UPDATION OF STATUS
+export const ProductStatusUpdateInputSchema = z.object({
+    is_featured: z.enum(["true", "false"]).default("false"),
+    status: z.enum(["true", "false"]).default("true"),
+});
+
+export type ProductStatusUpdateFormValues = z.input<typeof ProductStatusUpdateInputSchema>;

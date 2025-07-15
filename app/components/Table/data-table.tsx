@@ -10,7 +10,7 @@ import {
 	flexRender,
 	getCoreRowModel,
 	Row,
-	Table,
+	type Table,
 	useReactTable,
 } from "@tanstack/react-table";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
@@ -36,22 +36,13 @@ import { Separator } from "~/components/ui/separator";
 import { Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Skeleton } from "~/components/ui/skeleton";
 
-export const schema = z.object({
-	id: z.number(),
-	header: z.string(),
-	type: z.string(),
-	status: z.string(),
-	target: z.string(),
-	limit: z.string(),
-	reviewer: z.string(),
-});
-
 interface DataTableProps<T> {
 	table: Table<T>;
 	onPageChange?: (page: number) => void;
 	onPageSizeChange?: (pageSize: number) => void;
 	pageSize?: number;
-	total: number;
+	total?: number;
+	customEmptyMessage?: string;
 }
 
 export interface DataTableViewOptionsProps<T> {
@@ -69,7 +60,8 @@ export function DataTable<T>({
 	onPageChange,
 	onPageSizeChange,
 	pageSize,
-	total
+	total,
+	customEmptyMessage
 }: DataTableProps<T>) {
 	if (!table) {
 		return (
@@ -81,12 +73,17 @@ export function DataTable<T>({
 		);
 	}
 
+	const PAGE_VALUES = [10, 20, 30, 40, 50];
+
 	return (
 		<section>
 			<TableComponent>
-				<TableHeader className="bg-muted sticky top-0 z-10">
+				<TableHeader className={`bg-muted sticky top-0 z-10`}>
 					{table.getHeaderGroups().map((headerGroup) => (
-						<TableRow key={headerGroup.id}>
+						<TableRow
+							key={headerGroup.id}
+							className="[&>*]:whitespace-nowrap sticky top-0 bg-background after:content-[''] after:inset-x-0 after:h-px after:bg-border after:absolute after:bottom-0"
+						>
 							{headerGroup.headers.map((header) => {
 								return (
 									<TableHead key={header.id} className="bg-muted">
@@ -114,23 +111,25 @@ export function DataTable<T>({
 						<TableRow>
 							<TableCell
 								colSpan={table.getAllColumns().length}
-								className="h-24 text-center select-none text-muted-foreground"
+								className="h-36 text-center select-none text-muted-foreground"
 							>
-								No results found
+								<p className="text-sm">{customEmptyMessage ?? "No results found"}</p>
 							</TableCell>
 						</TableRow>
 					)}
 				</TableBody>
 			</TableComponent>
 			<div className="mt-4">
-				<div className="px-4">
-					<p>
-						({total}) record{total ? (total === 1 ? "" : "s") : "s"} found
-					</p>
-				</div>
+				{total && (
+					<div className="px-4">
+						<p>
+							({total}) record{total ? (total === 1 ? "" : "s") : "s"} found
+						</p>
+					</div>
+				)}
 				{onPageSizeChange && onPageChange && pageSize ? (
 					<div className="mt-4 flex w-full items-center gap-8 justify-between px-4">
-						<div className="hidden items-center gap-2 lg:flex">
+						<div className="hidden items-center gap-2 sm:flex">
 							<Label htmlFor="rows-per-page" className="text-sm font-medium">
 								Rows per page
 							</Label>
@@ -142,7 +141,7 @@ export function DataTable<T>({
 									<SelectValue placeholder={table.getState().pagination.pageSize} />
 								</SelectTrigger>
 								<SelectContent side="top" defaultValue={`${pageSize}`}>
-									{[10, 20, 30, 40, 50].map((size) => (
+									{PAGE_VALUES.map((size) => (
 										<SelectItem key={size} value={`${size}`}>
 											{size}
 										</SelectItem>
@@ -153,10 +152,10 @@ export function DataTable<T>({
 						<div className="flex w-fit items-center justify-center text-sm font-medium">
 							Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
 						</div>
-						<div className="ml-auto flex items-center gap-2 lg:ml-0">
+						<div className="ml-auto flex items-center gap-2 sm:ml-0">
 							<Button
 								variant="outline"
-								className="hidden h-8 w-8 p-0 lg:flex"
+								className="hidden h-8 w-8 p-0 sm:flex"
 								onClick={() => onPageChange(0)}
 								disabled={!table.getCanPreviousPage()}
 							>
@@ -185,7 +184,7 @@ export function DataTable<T>({
 							</Button>
 							<Button
 								variant="outline"
-								className="hidden size-8 lg:flex"
+								className="hidden size-8 sm:flex"
 								size="icon"
 								onClick={() => onPageChange(table.getPageCount() - 1)}
 								disabled={!table.getCanNextPage()}
@@ -240,170 +239,5 @@ export function DataTableSkeleton({ noOfSkeletons = 8, columns } : DataTableSkel
 				))}
 			</TableBody>
 		</TableComponent>
-	);
-}
-
-const chartData = [
-	{ month: "January", desktop: 186, mobile: 80 },
-	{ month: "February", desktop: 305, mobile: 200 },
-	{ month: "March", desktop: 237, mobile: 120 },
-	{ month: "April", desktop: 73, mobile: 190 },
-	{ month: "May", desktop: 209, mobile: 130 },
-	{ month: "June", desktop: 214, mobile: 140 },
-];
-
-const chartConfig = {
-	desktop: {
-		label: "Desktop",
-		color: "var(--primary)",
-	},
-	mobile: {
-		label: "Mobile",
-		color: "var(--primary)",
-	},
-} satisfies ChartConfig;
-
-function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
-	const isMobile = useIsMobile();
-
-	return (
-		<Drawer direction={isMobile ? "bottom" : "right"}>
-			<DrawerTrigger asChild>
-				<Button variant="link" className="text-foreground w-fit px-0 text-left">
-					{item.header}
-				</Button>
-			</DrawerTrigger>
-			<DrawerContent>
-				<DrawerHeader className="gap-1">
-					<DrawerTitle>{item.header}</DrawerTitle>
-					<DrawerDescription>Showing total visitors for the last 6 months</DrawerDescription>
-				</DrawerHeader>
-				<div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-					{!isMobile && (
-						<>
-							<ChartContainer config={chartConfig}>
-								<AreaChart
-									accessibilityLayer
-									data={chartData}
-									margin={{
-										left: 0,
-										right: 10,
-									}}
-								>
-									<CartesianGrid vertical={false} />
-									<XAxis
-										dataKey="month"
-										tickLine={false}
-										axisLine={false}
-										tickMargin={8}
-										tickFormatter={(value) => value.slice(0, 3)}
-										hide
-									/>
-									<ChartTooltip
-										cursor={false}
-										content={<ChartTooltipContent indicator="dot" />}
-									/>
-									<Area
-										dataKey="mobile"
-										type="natural"
-										fill="var(--color-mobile)"
-										fillOpacity={0.6}
-										stroke="var(--color-mobile)"
-										stackId="a"
-									/>
-									<Area
-										dataKey="desktop"
-										type="natural"
-										fill="var(--color-desktop)"
-										fillOpacity={0.4}
-										stroke="var(--color-desktop)"
-										stackId="a"
-									/>
-								</AreaChart>
-							</ChartContainer>
-							<Separator />
-							<div className="grid gap-2">
-								<div className="flex gap-2 leading-none font-medium">
-									Trending up by 5.2% this month <IconTrendingUp className="size-4" />
-								</div>
-								<div className="text-muted-foreground">
-									Showing total visitors for the last 6 months. This is just some random
-									text to test the layout. It spans multiple lines and should wrap around.
-								</div>
-							</div>
-							<Separator />
-						</>
-					)}
-					<form className="flex flex-col gap-4">
-						<div className="flex flex-col gap-3">
-							<Label htmlFor="header">Header</Label>
-							<Input id="header" defaultValue={item.header} />
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="type">Type</Label>
-								<Select defaultValue={item.type}>
-									<SelectTrigger id="type" className="w-full">
-										<SelectValue placeholder="Select a type" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="Table of Contents">Table of Contents</SelectItem>
-										<SelectItem value="Executive Summary">Executive Summary</SelectItem>
-										<SelectItem value="Technical Approach">Technical Approach</SelectItem>
-										<SelectItem value="Design">Design</SelectItem>
-										<SelectItem value="Capabilities">Capabilities</SelectItem>
-										<SelectItem value="Focus Documents">Focus Documents</SelectItem>
-										<SelectItem value="Narrative">Narrative</SelectItem>
-										<SelectItem value="Cover Page">Cover Page</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="status">Status</Label>
-								<Select defaultValue={item.status}>
-									<SelectTrigger id="status" className="w-full">
-										<SelectValue placeholder="Select a status" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="Done">Done</SelectItem>
-										<SelectItem value="In Progress">In Progress</SelectItem>
-										<SelectItem value="Not Started">Not Started</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="target">Target</Label>
-								<Input id="target" defaultValue={item.target} />
-							</div>
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="limit">Limit</Label>
-								<Input id="limit" defaultValue={item.limit} />
-							</div>
-						</div>
-						<div className="flex flex-col gap-3">
-							<Label htmlFor="reviewer">Reviewer</Label>
-							<Select defaultValue={item.reviewer}>
-								<SelectTrigger id="reviewer" className="w-full">
-									<SelectValue placeholder="Select a reviewer" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-									<SelectItem value="Jamik Tashpulatov">Jamik Tashpulatov</SelectItem>
-									<SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</form>
-				</div>
-				<DrawerFooter>
-					<Button>Submit</Button>
-					<DrawerClose asChild>
-						<Button variant="outline">Done</Button>
-					</DrawerClose>
-				</DrawerFooter>
-			</DrawerContent>
-		</Drawer>
 	);
 }

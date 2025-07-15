@@ -9,7 +9,7 @@ import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
 import { GetFormattedDate } from "~/lib/utils";
 import { subCategoriesQuery } from "~/queries/categories.q";
-import type { FullSubCategoryRow } from "~/types/category.d";
+import type { HighLevelSubCategory } from "~/types/category.d";
 import { queryClient } from "~/lib/queryClient";
 import { defaults } from "~/constants";
 import BackButton from "~/components/Nav/BackButton";
@@ -59,11 +59,11 @@ export default function SubCategoriesPage({
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
-	const tableColumns: ColumnDef<FullSubCategoryRow, unknown>[] = [
+	const tableColumns: ColumnDef<HighLevelSubCategory, unknown>[] = [
 		{
 			accessorKey: "ID",
 			header: "ID",
-			cell: (info: any) => <TableId id={info.row.original.id} />,
+			cell: (info: any) => <TableId id={info.row.original.id} message="Sub category ID copied"/>,
 		},
 		{
 			id: "Name",
@@ -75,7 +75,7 @@ export default function SubCategoriesPage({
 		{
 			id: "Url Key",
 			accessorKey: "url_key",
-			cell: (info: any) => "/" + info.row.original.meta_details.url_key,
+			cell: (info: any) => "/" + info.row.original.url_key,
 			header: () => "Url Key"
 		},
 		{
@@ -95,7 +95,7 @@ export default function SubCategoriesPage({
 		{
 			id: "actions",
 			cell: ({ row }) => {
-				const rowData: FullSubCategoryRow = row.original;
+				const rowData: HighLevelSubCategory = row.original;
 
 				return (
 					<>
@@ -131,7 +131,7 @@ export default function SubCategoriesPage({
 	});
 
 	const table = useReactTable({
-		data: (data.subCategories as FullSubCategoryRow[]) ?? [],
+		data: (data.subCategories as HighLevelSubCategory[]) ?? [],
 		columns: tableColumns,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: true,
@@ -161,7 +161,7 @@ export default function SubCategoriesPage({
 						<Link to={`/categories/${categoryId}/sub-categories/create`} viewTransition className="ml-auto">
 							<Button size={"sm"} className="ml-auto">
 								<PlusCircle width={18} />
-								<span>Add New</span>
+								<span>Create New</span>
 							</Button>
 						</Link>
 					</div>
@@ -190,7 +190,7 @@ export default function SubCategoriesPage({
 	);
 }
 
-function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<FullSubCategoryRow>) {
+function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelSubCategory>) {
     const [searchParams] = useSearchParams();
     let currentQuery = searchParams.get("q") ?? "";
 	
@@ -199,9 +199,9 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Ful
 			<div>
 				<Form method="get">
 					<div className="relative">
-						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2" width={18} />
+						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
 						<Input
-							placeholder="Search"
+							placeholder="Search sub categories"
 							name="q"
 							className="w-full pl-8"
 							id="search"

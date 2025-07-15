@@ -37,7 +37,7 @@ import { AttributeType, ProductAttribute } from "~/types/attributes";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
-	console.log("Form data: ", formData);
+	// console.log("Form data: ", formData);
 
 	const data = {
 		name: formData.get("name") as string,
@@ -75,7 +75,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		
 		await productService.createProduct(parseResult.data);
 
-		queryClient.invalidateQueries({ queryKey: ["products"] });
+		await queryClient.invalidateQueries({ queryKey: ["products"] });
+		await queryClient.invalidateQueries({ queryKey: ["productNames"] });
+		await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });
 
 		return { success: true };
 	} catch (error: any) {
@@ -94,9 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const categories = await queryClient.fetchQuery(categoriesQuery({
-		request, pageIndex : 0, pageSize: 50, q: "" 
-	}));
+	const categories = await queryClient.fetchQuery(categoriesQuery({ request }));
 
 	const optional_attributes = await queryClient.fetchQuery(AllProductAttributesQuery({
 		request,
@@ -445,12 +445,12 @@ export default function CreateBasicProductPage({ loaderData : { categories: load
 																			>
 																				{item}
 																			</TagsInputItem>
-																	  ))
+																	))
 																	: null}
 																<TagsInputInput placeholder="Add meta keywords..." />
 															</TagsInputList>
 															<TagsInputClear className="sm:w-fit w-full">
-																<div className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointer border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 size-9 max-sm:w-full">
+																<div className="tags-input-clear-container">
 																	<RefreshCcw className="h-4 w-4" />
 																	<span className="sm:hidden inline">
 																		Clear
@@ -540,7 +540,7 @@ export default function CreateBasicProductPage({ loaderData : { categories: load
 										name="is_featured"
 										render={({ field }) => (
 											<FormItem className="space-y-1">
-												<FormLabel>Featured</FormLabel>
+												<FormLabel>Featured Status</FormLabel>
 												<FormControl>
 													<div className="space-y-2">
 														<RadioGroup
@@ -549,15 +549,15 @@ export default function CreateBasicProductPage({ loaderData : { categories: load
 														>
 															<div className="flex items-center gap-3 *:cursor-pointer">
 																<RadioGroupItem value="true" id="featured-yes" />
-																<Label htmlFor="featured-yes">Yes</Label>
+																<Label htmlFor="featured-yes">Active</Label>
 															</div>
 															<div className="flex items-center gap-3 *:cursor-pointer">
 																<RadioGroupItem value="false" id="featured-no" />
-																<Label htmlFor="featured-no">No</Label>
+																<Label htmlFor="featured-no">Inactive</Label>
 															</div>
 														</RadioGroup>
 														<span className="text-muted-foreground text-sm">
-															If "Yes" is selected then this product will be
+															If "Active" is selected then this product will be
 															featured on the home page
 														</span>
 													</div>

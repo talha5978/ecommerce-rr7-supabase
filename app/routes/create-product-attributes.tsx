@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Route } from "./+types/create-product-attributes";
 import { Button } from "~/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductAttributesFormValues, ProductAttributesInputSchema } from "~/schemas/product-attributes.schema";
 import { Input } from "~/components/ui/input";
@@ -17,6 +17,7 @@ import type { ActionResponse } from "~/types/action-data";
 import { ProductAttributesService } from "~/services/attributes.service";
 import { queryClient } from "~/lib/queryClient";
 import { ApiError } from "~/utils/ApiError";
+import { ColorPicker } from "~/components/Custom-Inputs/color-picker";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -87,6 +88,7 @@ export default function CreateProductAttributes({ params }: Route.ComponentProps
 
 	const { setError, control, handleSubmit } = form;
 	const submit = useSubmit();
+	const watchedAttributeType = useWatch({ control, name: "attribute_type" });
 
 	const onFormSubmit = (data: ProductAttributesFormValues) => {
 		const formData = new FormData();
@@ -175,7 +177,14 @@ export default function CreateProductAttributes({ params }: Route.ComponentProps
 								<FormItem>
 									<FormLabel>Attribute Value</FormLabel>
 									<FormControl>
-										<Input placeholder="S" {...field} />
+										{watchedAttributeType !== "color" ? (
+											<Input placeholder="S" {...field} />
+										) : (
+											<span className="flex gap-2">
+												<Input placeholder="#FFFFFF" {...field}/>
+												<ColorPicker {...field}  />
+											</span>
+										)}
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -186,9 +195,9 @@ export default function CreateProductAttributes({ params }: Route.ComponentProps
 								<Info />
 								<AlertTitle>Recommendation</AlertTitle>
 								<AlertDescription>
-									The recommended way for attribute's name is "Abccc" and value is "
-									{form.getValues().attribute_type != "color" &&
-									form.getValues().attribute_type != "size"
+									The recommendd way for attribute's name is "Abccc" and value is "
+									{watchedAttributeType != "color" &&
+									watchedAttributeType != "size"
 										? "abcdef"
 										: "S"}
 									".

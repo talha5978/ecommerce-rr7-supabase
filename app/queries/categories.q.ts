@@ -1,8 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { CategoryService } from "~/services/category.service";
-import type { GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse } from "~/types/category.d";
+import type { GetAllCategoriesResponse, GetCategoryResponse, GetHighLevelCategoriesResponse, GetHighLevelSubCategoriesResponse, GetSubCategoryResponse } from "~/types/category.d";
 
-interface categoriesQueryArgs {
+interface highLevelCategoriesQueryArgs {
     request: Request;
     q: string;
     pageIndex?: number;
@@ -27,12 +27,29 @@ interface singleSubCategoryQueryArgs {
 	subCategoryId: string;
 }
 
-export const categoriesQuery = ({ request, q, pageIndex, pageSize }: categoriesQueryArgs) => {
-	return queryOptions<GetAllCategoriesResponse>({
-		queryKey: ["categories", q, pageIndex, pageSize],
+export const highLevelCategoriesQuery = ({ request, q, pageIndex, pageSize }: highLevelCategoriesQueryArgs) => {
+	return queryOptions<GetHighLevelCategoriesResponse>({
+		queryKey: ["highLevelCategories", q, pageIndex, pageSize],
 		queryFn: async () => {
 			const categoryService = new CategoryService(request);
-			const result = await categoryService.getAllCategories(q, pageIndex, pageSize);
+			const result = await categoryService.gethighLevelCategories(q, pageIndex, pageSize);
+			return result;
+		},
+	});
+};
+
+export const categoriesQuery = ({
+	request,
+	pageIndex
+}: {
+	request: Request;
+	pageIndex?: number;
+}) => {
+	return queryOptions<GetAllCategoriesResponse>({
+		queryKey: ["categories", pageIndex],
+		queryFn: async () => {
+			const categoryService = new CategoryService(request);
+			const result = await categoryService.getAllCategories(pageIndex);
 			return result;
 		},
 	});
@@ -45,7 +62,7 @@ export const subCategoriesQuery = ({
 	pageIndex,
 	pageSize,
 }: subCategoriesQueryArgs) => {
-	return queryOptions<GetSubCategoriesResponse>({
+	return queryOptions<GetHighLevelSubCategoriesResponse>({
 		queryKey: ["subCategories", categoryId, q, pageIndex, pageSize],
 		queryFn: async () => {
 			const categoryService = new CategoryService(request);

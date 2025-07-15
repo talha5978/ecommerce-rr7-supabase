@@ -1,13 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ActionFunctionArgs, Link, LoaderFunctionArgs, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
+import { LoaderFunctionArgs, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { queryClient } from "~/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
-import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -65,11 +64,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	try {
 		await variantService.createProductVaraint(productId, parseResult.data);
 
-		queryClient.invalidateQueries({ queryKey: ["products"] });
-		queryClient.invalidateQueries({ queryKey: ["productVariants", productId] });
-		queryClient.invalidateQueries({ queryKey: ["fullProduct", productId] });
-		queryClient.invalidateQueries({ queryKey: ["variantConstraints", productId] });
-
+		await queryClient.invalidateQueries({ queryKey: ["products"] });
+		await queryClient.invalidateQueries({ queryKey: ["productVariants", productId] });
+		await queryClient.invalidateQueries({ queryKey: ["fullProduct", productId] });
+		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", productId] });
+		await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });
+		
 		return { success: true };
 	} catch (error: any) {
 		console.error("Error in action:", error);
@@ -106,7 +106,7 @@ export default function CreateProductVariantPage({
 	params,
 	loaderData: {
 		data: { product_attributes, error },
-		constraints: { is_default_variant_exists }
+		constraints: { is_default_variant_exists, productName }
 	}
 } : Route.ComponentProps) {
 	const navigate = useNavigate();
@@ -145,7 +145,8 @@ export default function CreateProductVariantPage({
 	});
 	
 	const { handleSubmit, setError, control } = form;
-
+	console.log(productName);
+	
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
 	async function onFormSubmit(values: ProductVariantFormValues) {
@@ -185,7 +186,7 @@ export default function CreateProductVariantPage({
 		if (actionData) {
 			if (actionData.success) {
 				toast.success("Product variant created successfully");
-				navigate(`/products/${productId}/variants/create`);
+				navigate(-1);
 			} else if (actionData.error) {
 				toast.error(actionData.error);
 			} else if (actionData.validationErrors) {
@@ -231,6 +232,19 @@ export default function CreateProductVariantPage({
 										</FormItem>
 									)}
 								/>
+								{/* Parent Product */}
+								{productName && (
+									<div className="space-y-2">
+										<Label htmlFor="parent_product">Parent Product</Label>
+										<Input
+											id="parent_product"
+											placeholder="e.g. Parent Product"
+											defaultValue={productName || ""}
+											disabled
+											readOnly
+										/>
+									</div>
+								)}
 								{/* Original Price */}
 								<FormField
 									control={control}
@@ -361,7 +375,10 @@ export default function CreateProductVariantPage({
 															value={field.value}
 														>
 															<div className="flex items-center gap-3 *:cursor-pointer">
-																<RadioGroupItem value="true" id="status-active" />
+																<RadioGroupItem
+																	value="true"
+																	id="status-active"
+																/>
 																<Label htmlFor="status-active">Active</Label>
 															</div>
 															<div className="flex items-center gap-3 *:cursor-pointer">
@@ -369,12 +386,14 @@ export default function CreateProductVariantPage({
 																	value="false"
 																	id="status-inactive"
 																/>
-																<Label htmlFor="status-inactive">Inactive</Label>
+																<Label htmlFor="status-inactive">
+																	Inactive
+																</Label>
 															</div>
 														</RadioGroup>
 														<span className="text-muted-foreground text-sm">
-															If inactive, then this variant will not be visible in
-															the store.
+															If inactive, then this variant will not be visible
+															in the store.
 														</span>
 													</div>
 												</FormControl>
@@ -382,7 +401,7 @@ export default function CreateProductVariantPage({
 											</FormItem>
 										)}
 									/>
-							
+
 									{/* Is default */}
 									<FormField
 										control={control}
@@ -412,12 +431,15 @@ export default function CreateProductVariantPage({
 																<Label htmlFor="default-val-no">No</Label>
 															</div>
 														</RadioGroup>
-														<span className={`text-muted-foreground text-sm ${is_default_variant_exists && "italic"}`}>
+														<span
+															className={`text-muted-foreground text-sm ${
+																is_default_variant_exists && "italic"
+															}`}
+														>
 															{is_default_variant_exists
 																? DISABLED_DEFAULT_VARIANT_MESSAGE
 																: `If "Yes" is selected then this variant will be auto
-																selected at first load in store front.`
-															}
+																selected at first load in store front.`}
 														</span>
 													</div>
 												</FormControl>
@@ -443,7 +465,7 @@ export default function CreateProductVariantPage({
 												<FormControl>
 													<Input
 														type="number"
-														min={1}
+														min={0}
 														minLength={1}
 														placeholder="e.g. 200"
 														{...field}
@@ -471,8 +493,8 @@ export default function CreateProductVariantPage({
 															{...field}
 														/>
 														<span className="text-muted-foreground text-sm">
-															On your set reorder level, admins will be notified by
-															email about the low stock.
+															On your set reorder level, admins will be notified
+															by email about the low stock.
 														</span>
 													</div>
 												</FormControl>
@@ -496,24 +518,30 @@ export default function CreateProductVariantPage({
 												<FormControl>
 													<div className="space-y-4">
 														{attributeKeys.map((key, index) => (
-															<div
-																key={key}
-																className="grid grid-cols-1"
-															>
+															<div key={key} className="grid grid-cols-1">
 																<FormItem>
 																	<FormControl>
 																		<AttributeSelect
 																			name={`required_attributes.${index}`}
-																			attributeKey={key as AttributeType}
+																			attributeKey={
+																				key as AttributeType
+																			}
 																			options={
 																				//@ts-ignore
-																				product_attributes != null ? product_attributes[key]?.map(
-																					(opt: ProductAttribute) => ({
-																						id: opt.id,
-																						value: opt.value,
-																						name: opt.name
-																					})
-																				) : []
+																				product_attributes != null
+																					//@ts-ignore
+																					? product_attributes[
+																						key
+																					]?.map(
+																							(
+																								opt: ProductAttribute
+																							) => ({
+																								id: opt.id,
+																								value: opt.value,
+																								name: opt.name,
+																							})
+																					)
+																					: []
 																			}
 																			disabled={!product_attributes}
 																		/>

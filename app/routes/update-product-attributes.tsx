@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Route } from "./+types/update-product-attributes";
 import { Button } from "~/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductAttributesFormValues, ProductAttributesInputSchema, ProductAttributesUpdateActionSchema } from "~/schemas/product-attributes.schema";
 import { Input } from "~/components/ui/input";
@@ -18,6 +18,7 @@ import { ProductAttributesService } from "~/services/attributes.service";
 import { queryClient } from "~/lib/queryClient";
 import { ApiError } from "~/utils/ApiError";
 import { singleProductAttributeByIdQuery } from "~/queries/product-attributes.q";
+import { ColorPicker } from "~/components/Custom-Inputs/color-picker";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -113,6 +114,7 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 	});
 
 	const { setError, control, handleSubmit } = form;
+	const watchedAttributeType = useWatch({ control, name: "attribute_type" });
 	const submit = useSubmit();
 
 	const onFormSubmit = (data: ProductAttributesFormValues) => {
@@ -159,22 +161,24 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 								<FormItem>
 									<FormLabel>Attribute Type</FormLabel>
 									<FormControl>
-										<Select
-												onValueChange={field.onChange}
-												value={field.value}
-												disabled={AttributeParam != null}
-											>
-												<SelectTrigger>
-													<SelectValue placeholder="Select Attribute Type" />
-												</SelectTrigger>
-												<SelectContent>
-													{product_attributes_enum.map((item) => (
-														<SelectItem key={item} value={item}>
-															{item.charAt(0).toUpperCase() + String(item).slice(1)}
-														</SelectItem>
-													))}
-												</SelectContent>
-										</Select>
+										<div className="*:w-full grid gap-2">
+											<Select
+													onValueChange={field.onChange}
+													value={field.value}
+													disabled={AttributeParam != null}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Select Attribute Type" />
+													</SelectTrigger>
+													<SelectContent>
+														{product_attributes_enum.map((item) => (
+															<SelectItem key={item} value={item}>
+																{item.charAt(0).toUpperCase() + String(item).slice(1)}
+															</SelectItem>
+														))}
+													</SelectContent>
+											</Select>
+										</div>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -200,7 +204,14 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 								<FormItem>
 									<FormLabel>Attribute Value</FormLabel>
 									<FormControl>
-										<Input placeholder="S" {...field} />
+										{watchedAttributeType !== "color" ? (
+											<Input placeholder="S" {...field} />
+										) : (
+											<span className="flex gap-2">
+												<Input placeholder="#FFFFFF" {...field}/>
+												<ColorPicker {...field}  />
+											</span>
+										)}
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -212,8 +223,8 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 								<AlertTitle>Recommendation</AlertTitle>
 								<AlertDescription>
 									The recommended way for attribute's name is "Abccc" and value is "
-									{form.getValues().attribute_type != "color" &&
-									form.getValues().attribute_type != "size"
+									{watchedAttributeType != "color" &&
+									watchedAttributeType != "size"
 										? "abcdef"
 										: "S"}
 									".

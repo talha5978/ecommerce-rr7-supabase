@@ -10,7 +10,7 @@ import { GetAllProductAttribsInput } from "~/types/attributes.d";
 
 export class ProductAttributesService {
 	private supabase: SupabaseClient<Database>;
-	private readonly TABLE = "attributes";
+	private readonly ATTRIBUTES_TABLE = TABLE_NAMES.attributes;
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
@@ -59,7 +59,7 @@ export class ProductAttributesService {
 
 		try {
 			let query = this.supabase
-				.from(this.TABLE)
+				.from(this.ATTRIBUTES_TABLE)
 				.select("*")
 				.order("attribute_type", { ascending: true });
 			
@@ -113,7 +113,7 @@ export class ProductAttributesService {
 				error: queryError,
 				count,
 			} = await this.supabase
-				.from(this.TABLE)
+				.from(this.ATTRIBUTES_TABLE)
 				.select("name, value, id", { count: "exact" })
 				.eq("attribute_type", attribute_type);
 
@@ -144,7 +144,7 @@ export class ProductAttributesService {
 		const { attribute_type, name, value } = input;
 
 		const { data, error: attribError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.ATTRIBUTES_TABLE)
 			.insert(
 				{
 					attribute_type: attribute_type as AttributeType,
@@ -171,7 +171,7 @@ export class ProductAttributesService {
 				data,
 				error: queryError
 			} = await this.supabase
-				.from(this.TABLE)
+				.from(this.ATTRIBUTES_TABLE)
 				.select("name, value, id")
 				.eq("id", attribute_id)
 				.single();
@@ -208,7 +208,7 @@ export class ProductAttributesService {
 
 		if (Object.keys(attribToUpdate).length > 0) {
 			const { error } = await this.supabase
-				.from(this.TABLE)
+				.from(this.ATTRIBUTES_TABLE)
 				.update(attribToUpdate)
 				.eq("id", attribute_id);
 

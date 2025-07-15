@@ -1,22 +1,20 @@
-import { Await, Form, Link, LoaderFunctionArgs, Outlet, useFetcher, useLoaderData, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, LoaderFunctionArgs, Outlet, useLocation } from "react-router";
 import { Route } from "./+types/product-attributes-values";
 import { Button } from "~/components/ui/button";
-import { Badge, CirclePlus, Copy, Dot, Filter, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { Dot, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
-import { ColumnDef, getCoreRowModel, Row, useReactTable } from "@tanstack/react-table";
-import { toast } from "sonner";
-import { Input } from "~/components/ui/input";
+import { ColumnDef, ColumnFiltersState, getCoreRowModel, getFilteredRowModel, useReactTable } from "@tanstack/react-table";
 import { useNavigation } from "react-router";
-import { GetFormattedDate } from "~/lib/utils";
-import { subCategoriesQuery } from "~/queries/categories.q";
 import { queryClient } from "~/lib/queryClient";
-import { defaults } from "~/constants";
 import BackButton from "~/components/Nav/BackButton";
 import TableId from "~/components/Table/TableId";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { productAttributesByTypeQuery } from "~/queries/product-attributes.q";
 import type { AttributeType, ProductAttribute } from "~/types/attributes";
+import { useForm } from "react-hook-form";
+import { Input } from "~/components/ui/input";
+import { useState } from "react";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const attributeType = (params.attributeType as AttributeType);
@@ -48,16 +46,18 @@ export default function ProductAttributeValuesPage({
     const isFetchingThisRoute =
         navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
     const tableColumns: ColumnDef<ProductAttribute, unknown>[] = [
         {
             id: "Attribute ID",
             enableHiding: false,
             accessorKey: "id",
-            cell: (info: any) => <TableId id={info.row.original.id} />,
+            cell: (info: any) => <TableId id={info.row.original.id} message="Attribute ID copied"/>,
             header: () => "Attribute ID",
         },
 		{
-			id: "Attribute Name",
+			id: "attribute_name",
 			enableHiding: false,
 			accessorKey: "name",
 			cell: (info: any) => info.row.original.name,
@@ -113,11 +113,15 @@ export default function ProductAttributeValuesPage({
         },
     ];
 
-
     const table = useReactTable({
         data: (data.product_attributes as ProductAttribute[]) ?? [],
         columns: tableColumns,
         getCoreRowModel: getCoreRowModel(),
+        onColumnFiltersChange: setColumnFilters,
+        getFilteredRowModel: getFilteredRowModel(),
+        state: {
+            columnFilters,
+        },
     });
     
     return (
@@ -144,6 +148,11 @@ export default function ProductAttributeValuesPage({
 							</Button>
 						</Link>
 					</div>
+                    {columnFilters[0] && (
+						<div className="mt-3">
+							<p>Showing records for "{(columnFilters[0]?.value as string)?.trim()}"</p>
+						</div>
+					)}
 				</div>
 				<div className="rounded-md flex flex-col gap-4">
 					<DataTableViewOptions table={table} disabled={isFetchingThisRoute} />
@@ -160,8 +169,34 @@ export default function ProductAttributeValuesPage({
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<ProductAttribute>) {
+    const { register, handleSubmit } = useForm({
+        defaultValues: {
+            attribute_name: (table.getColumn("attribute_name")?.getFilterValue() as string) ?? "",
+        },
+    });
+
+    function onSubmit(data: { attribute_name: string }) {
+        table.getColumn("attribute_name")?.setFilterValue(data.attribute_name);
+    }
     return (
-        <div className="w-full flex justify-end">
+        <div className="w-full flex justify-between gap-4">
+            <div>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
+                        <Input
+                            placeholder="Search attributes"
+                            className="w-full pl-8"
+                            id="search"
+                            disabled={disabled}
+                            {...register("attribute_name")}
+                        />
+                    </div>
+                    <Button type="submit" className="hidden">
+                        Search
+                    </Button>
+                </form>
+            </div>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button

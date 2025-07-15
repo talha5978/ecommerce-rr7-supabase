@@ -2,7 +2,7 @@ import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { FullProduct, GetAllProductsResponse, GetSingleProductResponse, ProductUpdationPayload } from "~/types/products";
+import type { FullProduct, GetAllProductsResponse, GetSingleProductResponse, ProductNameResponse, ProductNamesListResponse, ProductUpdationPayload } from "~/types/products";
 import { defaults, TABLE_NAMES } from "~/constants";
 import type { ProductActionData, ProductUpdateActionData } from "~/schemas/product.schema";
 import { MetaDetailsService } from "~/services/meta-details.service";
@@ -10,15 +10,16 @@ import { MediaService } from "~/services/media.service";
 import { stringToBooleanConverter } from "~/lib/utils";
 import { ProductRAttributesService } from "./product-r-attributes.service";
 import { ProductAttributeRow } from "~/types/attributes";
+import type { ProductFilters } from "~/schemas/products-filter.schema";
 
 export class ProductsService {
 	private supabase: SupabaseClient<Database>;
 	private readonly request: Request;
-	private readonly PRODUCT_TABLE = "product";
-	private readonly VARIANT_TABLE = "product_variant";
-	private readonly CATEGORIES_TABLE = "category";
-	private readonly PRODUCT_ATTRIBUTES_TABLE = "product_attributes";
-	private readonly ATTRIBUTES_TABLE = "attributes";
+	private readonly PRODUCT_TABLE = TABLE_NAMES.product;
+	private readonly VARIANT_TABLE = TABLE_NAMES.product_variant;
+	private readonly CATEGORIES_TABLE = TABLE_NAMES.category;
+	private readonly PRODUCT_ATTRIBUTES_TABLE = TABLE_NAMES.product_attributes;
+	private readonly ATTRIBUTES_TABLE = TABLE_NAMES.attributes;
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
@@ -26,11 +27,65 @@ export class ProductsService {
 		this.request = request;
 	}
 
+	/** Fetch product name to show on varaint creation and updation page as a disabled field! */
+	async getProductName(product_id:string): Promise<ProductNameResponse> {
+		const { data: fetchedProduct, error: productError } =
+			await this.supabase
+				.from(this.PRODUCT_TABLE)
+				.select(`name`)
+				.eq("id", product_id)
+				.single();
+
+		return {
+			productName: fetchedProduct?.name ?? null,
+			error: productError ?? null
+		};
+	}
+
+	/** Fetch product names list to show in the dialoge on all product units page */
+	async getProductNamesList() : Promise<ProductNamesListResponse> {
+		try {
+			const maxProductsAssumed = 100;
+
+			const { data, error: fetchError, count: ProductCount } =
+				await this.supabase
+					.from(this.PRODUCT_TABLE)
+					.select("id, name", { count: "exact" })
+					.limit(maxProductsAssumed);
+
+			let error: null | ApiError = null;
+			
+			if (fetchError || data == null) {
+				error = new ApiError(fetchError.message, 500, [fetchError.details]);
+			}
+			
+			return {
+				products: data ?? null,
+				total: ProductCount ?? 0,
+				error: error ?? null
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return {
+					products: null,
+					total: 0,
+					error: err,
+				};
+			}
+			return {
+				products: null,
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
 	/** Fetch products types for index page */
 	async getAllProducts(
 		q = "",
-		pageIndex = 0,
-		pageSize = defaults.DEFAULT_PRODUCTS_PAGE_SIZE
+		pageIndex = defaults.DEFAULT_PRODUCTS_PAGE - 1,
+		pageSize = defaults.DEFAULT_PRODUCTS_PAGE_SIZE,
+		filters: ProductFilters = {}
 	): Promise<GetAllProductsResponse> {
 		try {
 			const from = pageIndex * pageSize;
@@ -40,17 +95,44 @@ export class ProductsService {
 				.from(this.PRODUCT_TABLE)
 				.select(`
 					name, id, cover_image, is_featured, status, createdAt,
-					sub_category(
+					sub_category!inner(
 						sub_category_name, ${this.CATEGORIES_TABLE}(category_name)
 					),
 					${this.VARIANT_TABLE}(id)
 				`, { count: "exact" })
-				.order("createdAt", { ascending: false })
-				.range(from, to);
+				.order(
+					filters.sortBy || defaults.defaultProductSortByFilter,
+					{ ascending: filters.sortType === "asc" }
+				);
 
+			// Apply filters
+			if (filters.status != undefined) {
+				query = query.eq("status", filters.status);
+			}
+			if (filters.is_featured != undefined) {
+				query = query.eq("is_featured", filters.is_featured);
+			}
+			if (filters.free_shipping != undefined) {
+				query = query.eq("free_shipping", filters.free_shipping);
+			}
+			if (filters.category && filters.category.length > 0) {
+				query = query.in("sub_category.parent_id", filters.category);
+			}
+			if (filters.sub_category && filters.sub_category.length > 0) {
+				query = query.in("sub_category", filters.sub_category);
+			}
+			if (filters.createdAt) {
+				query = query
+					.gte("createdAt", filters.createdAt.from.toISOString())
+					.lte("createdAt", filters.createdAt.to.toISOString());
+			}
+
+			// Apply search
 			if (q.length > 0) {
 				query = query.ilike("name", `%${q}%`);
 			}
+
+			query = query.range(from, to);
 
 			const { data, error: queryError, count } = await query;
 

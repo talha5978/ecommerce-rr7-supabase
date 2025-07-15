@@ -129,7 +129,7 @@ export const ProductVariantUpdateInputSchema = z.object({
 
 	status: z.string().default("true"),
 
-	stock: z.string({ required_error: "Stock is required." }).min(1, "Stock is required."),
+	stock: z.string({ required_error: "Stock is required." }),
 
 	weight: z.string().default("0").optional(),
 
@@ -156,3 +156,11 @@ export const ProductVariantUpdateActionDataSchema = z.object({
 });
 
 export type ProductVariantUpdateActionData = z.infer<typeof ProductVariantUpdateActionDataSchema>;
+
+
+// SCHEMA FOR UPDATION OF STATUS
+export const VariantStatusUpdateInputSchema = z.object({
+	status: z.enum(["true", "false"]).default("true"),
+});
+
+export type VariantStatusUpdateFormValues = z.input<typeof VariantStatusUpdateInputSchema>;

@@ -10,7 +10,7 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  /* @apply bg-white dark:bg-gray-950; */
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
@@ -89,7 +89,7 @@ body {
   --secondary-foreground: oklch(0.8717 0.0093 258.3382);
   --muted: oklch(0.2795 0.0368 260.0310);
   --muted-foreground: oklch(0.7137 0.0192 261.3246);
-	--table-row-muted-button: oklch(0.95 0 0);
+  --table-row-muted-button: oklch(0.95 0 0);
   --accent: oklch(0.3729 0.0306 259.7328);
   --accent-foreground: oklch(0.8717 0.0093 258.3382);
   --destructive: oklch(0.6368 0.2078 25.3313);
@@ -209,38 +209,48 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
 }
 
+@layer components {
+  .filters-count {
+    @apply absolute top-0 right-0 px-1 min-w-4 translate-x-1/2 -translate-y-1/2 origin-center flex items-center justify-center rounded-sm text-xs bg-primary text-primary-foreground;
+  }
+
+  .tags-input-clear-container {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointer border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 size-9 max-sm:w-full
+  }
+}
+
 ::-webkit-scrollbar {
-	width: 8px;
-	height: 8px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-	background-color: var(--primary);
+  background-color: var(--primary);
 }
 
 ::-webkit-scrollbar-track {
-	background-color: var(--secondary);
+  background-color: var(--secondary);
 }
 
 table tr td {
-	padding-block: 1.3rem !important; 
+  padding-block: 1.3rem !important;
 }
 
-
 input[type=number] {
-	-moz-appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
-	-webkit-appearance: none;
-	margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 ::selection {

@@ -1,6 +1,15 @@
+.env
+.env.*    # if you use .env.development or .env.local
+npm-debug.log*
+
 .DS_Store
 /node_modules/
 
 # React Router
 /.react-router/
 /build/
+.vscode/
+
+logs/
+*.log
+

@@ -1,7 +1,7 @@
-import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useSearchParams } from "react-router";
 import { Route } from "./+types/categories";
 import { Button } from "~/components/ui/button";
-import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2, TriangleAlert } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
@@ -9,8 +9,8 @@ import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
 import { GetFormattedDate } from "~/lib/utils";
-import { categoriesQuery } from "~/queries/categories.q";
-import type { FullCategoryRow } from "~/types/category.d";
+import { highLevelCategoriesQuery } from "~/queries/categories.q";
+import type { HighLevelCategory } from "~/types/category.d";
 import { queryClient } from "~/lib/queryClient";
 import { defaults } from "~/constants";
 import { useEffect } from "react";
@@ -26,7 +26,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		defaultPageSize: defaults.DEFAULT_CATEGORY_PAGE_SIZE,
 	});
 
-	const data = await queryClient.fetchQuery(categoriesQuery({request, q, pageIndex, pageSize}));
+	const data = await queryClient.fetchQuery(highLevelCategoriesQuery({
+		request, q, pageIndex, pageSize
+	}));
 
 	return {
 		data, // { categories: [...], total, error: null }
@@ -80,11 +82,11 @@ export default function CategoriesPage({
 		});
 	};
 
-	const tableColumns: ColumnDef<FullCategoryRow, unknown>[] = [
+	const tableColumns: ColumnDef<HighLevelCategory, unknown>[] = [
 		{
 			accessorKey: "ID",
 			header: "ID",
-			cell: (info: any) => <TableId id={info.row.original.id} />,
+			cell: (info) => <TableId id={info.row.original.id} message="Category ID Copied"/>,
 		},
 		{
 			id: "Name",
@@ -96,7 +98,7 @@ export default function CategoriesPage({
 		{
 			id: "Url Key",
 			accessorKey: "url_key",
-			cell: (info: any) => "/" + info.row.original.meta_details.url_key,
+			cell: (info: any) => "/" + info.row.original.url_key,
 			header: () => "Url Key"
 		},
 		{
@@ -104,14 +106,18 @@ export default function CategoriesPage({
 			enableHiding: false,
 			accessorKey: "sub_category",
 			cell: (info: any) => {
-				const len = info.row.original.sub_category?.length ?? 0;
+				const len = info.row.original.sub_category_count ?? 0;
+				const isZeroLen = len === 0;
 				return (
-					<span className={`${len == 0 ? "text-destructive" : ""}`}>
-						{len}
-					</span>
+					<div className={`${isZeroLen ? "flex gap-2 items-center" : ""}`}>
+						<p className={`${isZeroLen ? "text-destructive" : ""}`}>
+							{len}
+						</p>
+						{isZeroLen && <TriangleAlert className="w-4 h-4 text-destructive" />}
+					</div>
 				);
 			},
-			header: () => "Sub Categories",
+			header: () => "No. of Sub Categories",
 		},
 		{
 			id: "Created At",
@@ -122,7 +128,7 @@ export default function CategoriesPage({
 		{
 			id: "actions",
 			cell: ({ row }) => {
-				const rowData: FullCategoryRow = row.original;
+				const rowData: HighLevelCategory = row.original;
 
 				return (
 					<>
@@ -136,6 +142,9 @@ export default function CategoriesPage({
 							<DropdownMenuContent align="end">
 								<Link to={`${rowData.id}/sub-categories`} viewTransition prefetch="intent">
 									<DropdownMenuItem>View Sub Categories</DropdownMenuItem>
+								</Link>
+								<Link to={`${rowData.id}/sub-categories/create`} viewTransition prefetch="intent">
+									<DropdownMenuItem>Create Sub Category</DropdownMenuItem>
 								</Link>
 								<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 									<DropdownMenuItem>Update</DropdownMenuItem>
@@ -163,7 +172,7 @@ export default function CategoriesPage({
 	});
 
 	const table = useReactTable({
-		data: (data.categories as FullCategoryRow[]) ?? [],
+		data: (data.categories as HighLevelCategory[]) ?? [],
 		columns: tableColumns,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: true,
@@ -190,7 +199,7 @@ export default function CategoriesPage({
 						<Link to="/categories/create" viewTransition className="ml-auto">
 							<Button size="sm" className="ml-auto">
 								<PlusCircle width={18} />
-								<span>Add Category</span>
+								<span>Create Category</span>
 							</Button>
 						</Link>
 					</div>
@@ -219,7 +228,7 @@ export default function CategoriesPage({
 	);
 }
 
-function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<FullCategoryRow>) {
+function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelCategory>) {
     const [searchParams] = useSearchParams();
     let currentQuery = searchParams.get("q") ?? "";
 
@@ -228,9 +237,9 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Ful
 			<div>
 				<Form method="get" action="/categories">
 					<div className="relative">
-						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2" width={18} />
+						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
 						<Input
-							placeholder="Search"
+							placeholder="Search categories"
 							name="q"
 							className="w-full pl-8"
 							id="search"

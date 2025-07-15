@@ -1,12 +1,10 @@
+import { LoaderFunctionArgs } from "react-router";
+import { Route } from "./+types/dashboard";
 
 
-export const handle = {
-	title: "Dashboard"
-};
-
-export const meta = [
-    { title: "Dashboard", description: "Dashboard" },
-]
+export async function loader ({ request }: Route.LoaderArgs) {
+    return {};
+}
 
 export default function Dashboard() {
     return (

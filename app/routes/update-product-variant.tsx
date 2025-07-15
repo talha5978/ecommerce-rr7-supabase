@@ -109,6 +109,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		await queryClient.invalidateQueries({ queryKey: ["productVariants", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", productId] });
 
+		if (formData.has("status")) {
+			await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });
+		}
+
 		return { success: true };
 	} catch (error: any) {
 		console.error("Error in action:", error);
@@ -156,7 +160,7 @@ export default function UpdateProductVariantPage({
 	loaderData: {
 		variantData: { variant, error: variantError },
 		attributesData: { product_attributes, error: attributesError },
-		constraints: { is_default_variant_exists, default_variant_id }
+		constraints: { is_default_variant_exists, default_variant_id, productName }
 	},
 } : Route.ComponentProps) {
 	
@@ -354,7 +358,7 @@ export default function UpdateProductVariantPage({
 		if (actionData) {
 			if (actionData.success) {
 				toast.success("Product variant updated successfully");
-				// navigate(`/products/${productId}/variants`);
+				navigate(-1);
 			} else if (actionData.error) {
 				toast.error(actionData.error);
 			} else if (actionData.validationErrors) {
@@ -400,6 +404,19 @@ export default function UpdateProductVariantPage({
 										</FormItem>
 									)}
 								/>
+								{/* Parent Product */}
+								{productName && (
+									<div className="space-y-2">
+										<Label htmlFor="parent_product">Parent Product</Label>
+										<Input
+											id="parent_product"
+											placeholder="e.g. Parent Product"
+											defaultValue={productName || ""}
+											disabled
+											readOnly
+										/>
+									</div>
+								)}
 								{/* Original Price */}
 								<FormField
 									control={control}
@@ -612,7 +629,7 @@ export default function UpdateProductVariantPage({
 												<FormControl>
 													<Input
 														type="number"
-														min={1}
+														min={0}
 														minLength={1}
 														placeholder="e.g. 200"
 														{...field}

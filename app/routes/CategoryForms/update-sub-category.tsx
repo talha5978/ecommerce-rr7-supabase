@@ -81,6 +81,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
 		await queryClient.invalidateQueries({ queryKey: ["subCategories", parentCategoryId] });
 		await queryClient.invalidateQueries({ queryKey: ["subCategory", subCategoryId] });
+		await queryClient.invalidateQueries({ queryKey: ["categories"] });
 		return { success: true };
 	} catch (error: any) {
 		console.error("Error in update action:", error);

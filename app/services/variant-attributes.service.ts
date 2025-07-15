@@ -3,10 +3,11 @@ import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { GetVariantAttributesResponse, VariantAttributeCreateResponse, VariantAttributeInput } from "~/types/variant-attributes";
+import { TABLE_NAMES } from "~/constants";
 
 export class VariantsAttributesService {
 	private supabase: SupabaseClient<Database>;
-	private readonly TABLE = "variant_attributes";
+	private readonly TABLE = TABLE_NAMES.variant_attributes;
 
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);

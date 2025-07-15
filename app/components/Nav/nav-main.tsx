@@ -1,6 +1,4 @@
-import { JSX } from "react";
 import { NavLink, useLocation, useResolvedPath } from "react-router";
-
 import {
 	SidebarGroup,
 	SidebarGroupContent,
@@ -10,17 +8,7 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubItem,
 } from "~/components/ui/sidebar";
-
-interface NavSubItem {
-	title: string;
-	url: string;
-	icon: JSX.Element;
-}
-
-export interface NavItem {
-	title: string;
-	items: NavSubItem[];
-}
+import { NavItem, NavSubItem } from "~/types/nav";
 
 function SubItem({ url, icon, title }: NavSubItem) {
 	const location = useLocation();

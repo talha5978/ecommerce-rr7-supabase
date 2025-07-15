@@ -1,19 +1,19 @@
 
-import type { CategoryUpdationPayload, FullCategoryRow, FullSubCategoryRow, GetAllCategoriesResponse, GetCategoryResponse, GetSubCategoriesResponse, GetSubCategoryResponse,  SubCategoryUpdationPayload } from "~/types/category.d";
+import type { CategoryUpdationPayload, FullCategoryRow, FullSubCategoryRow, GetAllCategoriesResponse, GetCategoryResponse, GetHighLevelCategoriesResponse, GetHighLevelSubCategoriesResponse, GetSubCategoryResponse,  HighLevelCategory,  SubCategoryUpdationPayload } from "~/types/category.d";
 import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { defaults } from "~/constants";
+import { defaults, TABLE_NAMES } from "~/constants";
 import type { CategoryActionData, CategoryUpdateActionData, SubCategoryActionData, SubCategoryUpdateActionData } from "~/schemas/category.schema";
 import { MetaDetailsService } from "~/services/meta-details.service";
 
 export class CategoryService {
 	private supabase: SupabaseClient<Database>;
 	private readonly request: Request;
-	private readonly TABLE = "category";
-	private readonly SUB_TABLE = "sub_category";
-	private readonly META_TABLE = "meta_details";
+	private readonly CATEGORY_TABLE = TABLE_NAMES.category;
+	private readonly SUB_CATEGORY_TABLE = TABLE_NAMES.sub_category;
+	private readonly META_TABLE = TABLE_NAMES.meta_details;
 	
 	constructor(request: Request) {
 		const { supabase } = createSupabaseServerClient(request);
@@ -21,23 +21,84 @@ export class CategoryService {
 		this.request = request;
 	}
 
-	/** Fetch and search from all categories. with the given pageIndex and pageSize plus total count */
-	async getAllCategories(
+	/** Fetch categoreies list where each category has at least one sub category (to be used for mutations and other tasks like in product creation page, updation page, theri filters and more...) */
+	async getAllCategories(pageIndex?: number): Promise<GetAllCategoriesResponse> {
+		try {
+			let query = this
+				.supabase
+				.from(this.CATEGORY_TABLE)
+				.select(`
+					id, category_name,
+					${this.SUB_CATEGORY_TABLE}!inner(
+						id, sub_category_name, parent_id
+					)
+				`,
+					{ count: "exact" }
+				)
+				.order("createdAt", { ascending: false });
+
+			if (pageIndex && pageIndex != undefined) {
+				// fetch 5 categories at a time in each operation!
+				const smallPageSize = 5;
+				const from = pageIndex * smallPageSize;
+				const to = from + smallPageSize - 1;
+				query = query.range(from, to);
+			} else if (!pageIndex) {
+				query = query.range(0, 50);
+			}
+
+			const { data: categoriesList, error: queryError, count } = await query;
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+			}
+
+			return {
+				categories: categoriesList?.map((category) => {
+					return {
+						id: category.id,
+						category_name: category.category_name,
+						sub_category: category.sub_category.map((subCategory) => {
+							return {
+								id: subCategory.id,
+								sub_category_name: subCategory.sub_category_name,
+								parent_id: subCategory.parent_id ?? category.id
+							}
+						}),
+					}
+				}) ?? [],
+				total: count ?? 0,
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { categories: [], total: 0, error: err };
+			}
+			return {
+				categories: [],
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
+	/** Fetch and search from all high level categories on the index page of categories. with the given pageIndex and pageSize plus total count */
+	async gethighLevelCategories(
 		q = "",
 		pageIndex = 0,
 		pageSize = defaults.DEFAULT_CATEGORY_PAGE_SIZE
-	): Promise<GetAllCategoriesResponse> {
+	): Promise<GetHighLevelCategoriesResponse> {
 		try {
 			const from = pageIndex * pageSize;
 			const to = from + pageSize - 1;
 
-			let query: any = this.supabase
-				.from(this.TABLE)
-				.select(
-					`
-					*, 
-					sub_category:${this.SUB_TABLE}(*),
-					meta_details:${this.META_TABLE}(*)
+			let query = this.supabase
+				.from(this.CATEGORY_TABLE)
+				.select(`
+					id, category_name, createdAt,
+					${this.SUB_CATEGORY_TABLE}(count),
+					${this.META_TABLE}(url_key)
 				`,
 					{ count: "exact" }
 				)
@@ -47,16 +108,24 @@ export class CategoryService {
 			if (q.length > 0) {
 				query = query.ilike("category_name", `%${q}%`);
 			}
-
+			
 			const { data: rawCategories, error: queryError, count } = await query;
 
 			let error: null | ApiError = null;
 			if (queryError) {
 				error = new ApiError(queryError.message, 500, [queryError.details]);
 			}
-
+			
 			return {
-				categories: rawCategories ?? [],
+				categories: rawCategories?.map((category) => {
+					return {
+						id: category.id,
+						category_name: category.category_name,
+						sub_category_count: category.sub_category[0].count ?? 0,
+						createdAt: category.createdAt,
+						url_key: category.meta_details?.url_key
+					} as HighLevelCategory
+				}) ?? [],
 				total: count ?? 0,
 				error,
 			};
@@ -78,16 +147,16 @@ export class CategoryService {
 		q = "",
 		pageIndex = 0,
 		pageSize = 10
-	): Promise<GetSubCategoriesResponse> {
+	): Promise<GetHighLevelSubCategoriesResponse> {
 		try {
 			const from = pageIndex * pageSize;
 			const to = from + pageSize - 1;
 
 			let query = this.supabase
-				.from(this.SUB_TABLE)
-				.select(
-					`
-					*, ${this.META_TABLE}:meta_details(*)
+				.from(this.SUB_CATEGORY_TABLE)
+				.select(`
+					id, sub_category_name, description, createdAt,
+					${this.META_TABLE}(url_key)
 				`,
 					{ count: "exact" }
 				)
@@ -106,7 +175,15 @@ export class CategoryService {
 			}
 
 			return {
-				subCategories: subCategories ?? [],
+				subCategories: subCategories?.map((subCategory) => {
+					return {
+						id: subCategory.id,
+						sub_category_name: subCategory.sub_category_name,
+						url_key: subCategory.meta_details?.url_key,
+						description: subCategory.description,
+						createdAt: subCategory.createdAt
+					}
+				}) ?? [],
 				total: count ?? 0,
 				error: null,
 			};
@@ -129,7 +206,7 @@ export class CategoryService {
 		const metaDetailsService = new MetaDetailsService(this.request);
 		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
-		const { error: categoryError } = await this.supabase.from(this.TABLE).insert({
+		const { error: categoryError } = await this.supabase.from(this.CATEGORY_TABLE).insert({
 			category_name,
 			description,
 			sort_order: sort_order,
@@ -151,7 +228,7 @@ export class CategoryService {
 		const metaDetailsService = new MetaDetailsService(this.request);
 		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
-		const { error: subCategoryError } = await this.supabase.from(this.SUB_TABLE).insert({
+		const { error: subCategoryError } = await this.supabase.from(this.SUB_CATEGORY_TABLE).insert({
 			sub_category_name,
 			description,
 			sort_order: sort_order,
@@ -171,11 +248,11 @@ export class CategoryService {
 	async getCategoryById(categoryId: string): Promise<GetCategoryResponse> {
 		try {
 			const { data: categoryData, error: queryError } = await this.supabase
-				.from(this.TABLE)
+				.from(this.CATEGORY_TABLE)
 				.select(
 					`
 					*, 
-					${this.SUB_TABLE}:sub_category(*),
+					${this.SUB_CATEGORY_TABLE}:sub_category(*),
 					${this.META_TABLE}:meta_details(*)
 				`
 				)
@@ -211,7 +288,7 @@ export class CategoryService {
 		const { category_name, description, sort_order, meta_details } = input;
 		// Fetch meta_details ID
 		const { data: categoryData, error: fetchError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.CATEGORY_TABLE)
 			.select("meta_details")
 			.eq("id", categoryId)
 			.single();
@@ -231,7 +308,7 @@ export class CategoryService {
 		// Update category if any fields provided
 		if (Object.keys(categoryUpdate).length > 0) {
 			const { error: categoryError } = await this.supabase
-				.from(this.TABLE)
+				.from(this.CATEGORY_TABLE)
 				.update(categoryUpdate)
 				.eq("id", categoryId);
 
@@ -250,7 +327,7 @@ export class CategoryService {
 	async getSubCategoryById(sub_category_id: string): Promise<GetSubCategoryResponse> {
 		try {
 			const { data: subCategoryData, error: queryError } = await this.supabase
-				.from(this.SUB_TABLE)
+				.from(this.SUB_CATEGORY_TABLE)
 				.select(`
 					*,
 					${this.META_TABLE}:meta_details(*)
@@ -287,7 +364,7 @@ export class CategoryService {
 		const { sub_category_name, description, sort_order, meta_details } = input;
 		// Fetch meta_details ID
 		const { data: categoryData, error: fetchError } = await this.supabase
-			.from(this.SUB_TABLE)
+			.from(this.SUB_CATEGORY_TABLE)
 			.select("meta_details")
 			.eq("id", sub_category_id)
 			.single();
@@ -307,7 +384,7 @@ export class CategoryService {
 		// Update sub category if any fields provided
 		if (Object.keys(subCategoryUpdate).length > 0) {
 			const { error: categoryError } = await this.supabase
-				.from(this.SUB_TABLE)
+				.from(this.SUB_CATEGORY_TABLE)
 				.update(subCategoryUpdate)
 				.eq("id", sub_category_id);
 
@@ -321,52 +398,4 @@ export class CategoryService {
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
-
-	/** Delete a category (Do this later!!!!) */
-	// async deleteCategory(categoryId: string): Promise<void> {
-	// 	// Check for subcategories
-	// 	const { count, error: subCountError } = await this.supabase
-	// 		.from(this.SUB_TABLE)
-	// 		.select("id", { count: "exact", head: true })
-	// 		.eq("parent_id", categoryId);
-
-	// 	if (subCountError) {
-	// 		throw new ApiError(`Failed to check subcategories: ${subCountError.message}`, 500, [
-	// 			subCountError.details,
-	// 		]);
-	// 	}
-
-	// 	if (count && count > 0) {
-	// 		throw new ApiError(`Cannot delete category with ${count} subcategor${count > 1 ? "ies" : "y"}. Please delete all sub categories first.`, 400, [
-	// 			{ subcategories_count: count },
-	// 		]);
-	// 	}
-
-	// 	// Fetch the meta_details ID
-	// 	const { data: categoryData, error: fetchError } = await this.supabase
-	// 		.from(this.TABLE)
-	// 		.select("meta_details")
-	// 		.eq("id", categoryId)
-	// 		.single();
-
-	// 	if (fetchError || !categoryData) {
-	// 		throw new ApiError(`Category not found: ${fetchError?.message || "Unknown error"}`, 404, [
-	// 			fetchError?.details,
-	// 		]);
-	// 	}
-
-	// 	const metaDetailsId = categoryData.meta_details;
-
-	// 	// Delete the meta_details row (triggers CASCADE to delete category)
-	// 	const { error: metaError } = await this.supabase
-	// 		.from(this.META_TABLE)
-	// 		.delete()
-	// 		.eq("id", metaDetailsId);
-
-	// 	if (metaError) {
-	// 		throw new ApiError(`Failed to delete meta details: ${metaError.message}`, 500, [
-	// 			metaError.details,
-	// 		]);
-	// 	}
-	// }
 }

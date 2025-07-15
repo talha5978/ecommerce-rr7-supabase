@@ -1,4 +1,4 @@
-import { type RouteConfig, route, index, prefix } from "@react-router/dev/routes";
+import { type RouteConfig, route, index, prefix, layout } from "@react-router/dev/routes";
 
 export default [
 	...prefix("/login", [
@@ -20,7 +20,7 @@ export default [
 				// route("delete", "./routes/_actions/delete-category.tsx"),
 
 				...prefix("sub-categories", [
-					route("", "./routes/sub-categories.tsx"),
+					index("./routes/sub-categories.tsx"),
 					route("create", "./routes/CategoryForms/create-sub-category.tsx"),
 					route(":subCategoryId/update", "./routes/CategoryForms/update-sub-category.tsx"),
 				]),
@@ -39,19 +39,28 @@ export default [
 		]),
 		
 		...prefix("/products", [
-			route("", "./routes/products.tsx"),
+			index("./routes/products.tsx"),
 			route("create", "./routes/create-product.tsx"),
 			...prefix(":productId", [
 				route("update", "./routes/update-product.tsx"),
 				// route("delete", "./routes/_actions/delete-product.tsx"),
 
 				...prefix("variants", [
-					route("", "./routes/product-variants.tsx"),
+					index("./routes/product-variants.tsx"),
 					route("create", "./routes/create-product-variant.tsx"),
 					route("duplicate", "./routes/_actions/create-product-variant-duplicate.tsx"),
 					route(":variantId/update", "./routes/update-product-variant.tsx"),
 				])
 			]),
+		]),
+
+		route("/all-product-units", "./routes/all-product-units.tsx"),
+
+		...prefix("/collections", [
+			index("./routes/collections.tsx"),
+			route("create", "./routes/create-collection.tsx"),
+			// route(":collectionId/update", "./routes/update-collection.tsx"),
+			
 		]),
 	]),
 ] satisfies RouteConfig;
