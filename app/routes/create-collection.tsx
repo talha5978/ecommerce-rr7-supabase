@@ -29,7 +29,7 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { memo, Suspense, useEffect, useMemo, useState } from "react";
 import {
 	TagsInput,
 	TagsInputClear,
@@ -37,7 +37,7 @@ import {
 	TagsInputItem,
 	TagsInputList,
 } from "~/components/ui/tags-input";
-import { defaults } from "~/constants";
+import { COLLECTION_IMG_DIMENSIONS, defaults } from "~/constants";
 import { toast } from "sonner";
 import { ApiError } from "~/utils/ApiError";
 import type { ActionResponse } from "~/types/action-data";
@@ -45,8 +45,7 @@ import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import type { Route } from "./+types/create-collection";
 import ImageInput from "~/components/Custom-Inputs/image-input";
-import { ProductsService } from "~/services/products.service";
-import { CollectionFormValues, CollectionInputSchema } from "~/schemas/collections.schema";
+import { CollectionActionDataSchema, CollectionFormValues, CollectionInputSchema } from "~/schemas/collections.schema";
 import { DataTable } from "~/components/Table/data-table";
 import { type ColumnDef, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import {
@@ -70,51 +69,50 @@ import { useSearchParams } from "react-router";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import { collectionDataItemsQuery } from "~/queries/collections.q";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { Skeleton } from "~/components/ui/skeleton";
+import { cn } from "~/lib/utils";
+import { CollectionsService } from "~/services/collections.service";
 
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
 
-	// const data = {
-	// 	name: formData.get("name") as string,
-	// 	description: formData.get("description") as string,
-	// 	cover_image: formData.get("cover_image") as File,
-	// 	sub_category: formData.get("sub_category") as string,
-	// 	status: formData.get("status") as string,
-	// 	free_shipping: formData.get("free_shipping") as string,
-	// 	is_featured: formData.get("is_featured") as string,
-	// 	meta_details: {
-	// 		meta_title: formData.get("meta_details.meta_title") as string,
-	// 		meta_description: formData.get("meta_details.meta_description") as string,
-	// 		url_key: formData.get("meta_details.url_key") as string,
-	// 		meta_keywords: formData.get("meta_details.meta_keywords"),
-	// 	},
-	// 	// optional_attributes: will always be an array of ids or empty array if no attributes is selected
-	// 	optional_attributes: formData.getAll("optional_attributes") as string[],
-	// };
+	const data = {
+		name: formData.get("name") as string,
+		description: formData.get("description") as string,
+		image: formData.get("image") as File,
+		sort_order: formData.get("sort_order") as string,
+		status: formData.get("status") as string,
+		meta_details: {
+			meta_title: formData.get("meta_details.meta_title") as string,
+			meta_description: formData.get("meta_details.meta_description") as string,
+			url_key: formData.get("meta_details.url_key") as string,
+			meta_keywords: formData.get("meta_details.meta_keywords"),
+		},
+		product_ids: formData.getAll("product_ids") as string[],
+	};
 
-	// const parseResult = ProductActionDataSchema.safeParse(data);
+	const parseResult = CollectionActionDataSchema.safeParse(data);
 	// console.log("Parse result: ", parseResult?.error);
 
-	// if (!parseResult.success) {
-	// 	return new Response(JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }), {
-	// 		status: 400,
-	// 		headers: { "Content-Type": "application/json" },
-	// 	});
-	// }
+	if (!parseResult.success) {
+		return new Response(JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
 
 	// console.log("Data in the action: ", parseResult.data);
 
-	const productService = new ProductsService(request);
+	const collectionSvc = new CollectionsService(request);
 	// return;
 	try {
-		// await productService.createProduct(parseResult.data);
-		// await queryClient.invalidateQueries({ queryKey: ["products"] });
-		// await queryClient.invalidateQueries({ queryKey: ["productNames"] });
-		// return { success: true };
+		await collectionSvc.createCollection(parseResult.data);
+		await queryClient.invalidateQueries({ queryKey: ["highLvlCollections"] });
+		return { success: true };
 	} catch (error: any) {
-		console.error("Error in action:", error);
+		// console.error("Error in action:", error);
 		const errorMessage =
 			error instanceof ApiError ? error.message : error.message || "Failed to create collection";
 
@@ -133,7 +131,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const categoryPageParam = Number(searchParams.get("catPage"));
 	const productPageParam = Number(searchParams.get("prodPage"));
 	const productSearchQuery = searchParams.get("prodSearch") || "";
-	console.log(Math.max(0, categoryPageParam - 1), Math.max(0, productPageParam - 1));
+	// console.log(Math.max(0, categoryPageParam - 1), Math.max(0, productPageParam - 1));
 	
 	const collectionsDataItems = queryClient.fetchQuery(
 		collectionDataItemsQuery({
@@ -177,7 +175,6 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 	const {
 		handleSubmit,
 		setError,
-		getValues,
 		control,
 		setValue,
 		formState: { errors },
@@ -185,40 +182,6 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 	const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-
-	async function onFormSubmit(values: CollectionFormValues) {
-		toast.info("Creating collection...");
-		console.log(values);
-
-		// const formData = new FormData();
-		// formData.set("name", values.name.trim());
-		// formData.set("description", values.description.trim());
-		// formData.set("cover_image", values.cover_image);
-		// formData.set("free_shipping", values.free_shipping ?? "false");
-		// formData.set("is_featured", values.is_featured ?? "false");
-		// formData.set("status", values.status ?? "true");
-		// formData.set("sub_category", values.sub_category);
-		// formData.set("meta_details.meta_title", values.meta_details.meta_title.trim());
-		// formData.set("meta_details.meta_description", values.meta_details.meta_description.trim());
-		// formData.set("meta_details.url_key", values.meta_details.url_key.trim().toLowerCase());
-		// if (values.meta_details.meta_keywords) {
-		// 	const stringifiedKeywords = values.meta_details.meta_keywords
-		// 		.map((keyword) => keyword.trim())
-		// 		.join(",");
-		// 	formData.set("meta_details.meta_keywords", stringifiedKeywords);
-		// }
-
-		// const finalAttributes = values.optional_attributes.filter((attr) => attr !== null) as string[];
-		// finalAttributes.forEach((opt_attribute_id) => {
-		// 	formData.append("optional_attributes", opt_attribute_id);
-		// });
-
-		// submit(formData, {
-		// 	method: "POST",
-		// 	action: "/products/create",
-		// 	encType: "multipart/form-data",
-		// });
-	}
 
 	useEffect(() => {
 		if (actionData) {
@@ -346,7 +309,48 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 			pagination,
 		},
 	});
-	console.log("fsfdjsakd");
+	
+
+	async function onFormSubmit(values: CollectionFormValues) {
+		// toast.info("Creating collection...");
+		console.log("Form values: ",values);
+
+		if (values.selections.length === 0) {
+			toast.error("Please select at least one product.");
+			return;
+		}
+
+		if (!values.image) {
+			toast.error("Please upload an image.");
+			return;
+		}
+
+		const formData = new FormData();
+		formData.set("name", values.name.trim());
+		formData.set("description", values.description.trim());
+		formData.set("image", values.image);
+		formData.set("status", values.status ?? "true");
+		formData.set("sort_order", values.sort_order ?? "1");
+		formData.set("meta_details.meta_title", values.meta_details.meta_title.trim());
+		formData.set("meta_details.meta_description", values.meta_details.meta_description.trim());
+		formData.set("meta_details.url_key", values.meta_details.url_key.trim().toLowerCase());
+		if (values.meta_details.meta_keywords) {
+			const stringifiedKeywords = values.meta_details.meta_keywords
+				.map((keyword) => keyword.trim())
+				.join(",");
+			formData.set("meta_details.meta_keywords", stringifiedKeywords);
+		}
+
+		values.selections.forEach((product) => {
+			formData.append("product_ids", product.id.toString());
+		});
+
+		submit(formData, {
+			method: "POST",
+			action: "/collections/create",
+			encType: "multipart/form-data",
+		});
+	}
 	
 	return (
 		<>
@@ -362,12 +366,12 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 
 				<form className="space-y-4" onSubmit={handleSubmit(onFormSubmit)}>
 					<Form {...form}>
-						{/* Left Side: Basic Details and Meta Details */}
+						{/* Left Side: General and Meta Details */}
 						<div className="grid grid-cols-3 gap-4">
-							{/* Basic Details Card */}
+							{/* General Card */}
 							<Card className="md:col-span-2 col-span-3">
 								<CardHeader>
-									<CardTitle className="text-lg">Basic Details</CardTitle>
+									<CardTitle className="text-lg">General</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-4">
 									{/* Product Name */}
@@ -379,7 +383,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 												<FormLabel>Product Name</FormLabel>
 												<FormControl>
 													<Input
-														placeholder="e.g. Striped Polo T-Shirt"
+														placeholder="e.g. New Arrivals"
 														{...field}
 													/>
 												</FormControl>
@@ -413,7 +417,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 											<FormItem>
 												<FormLabel>Image</FormLabel>
 												<FormControl>
-													<ImageInput name="image" />
+													<ImageInput name="image" dimensions={COLLECTION_IMG_DIMENSIONS}/>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -423,7 +427,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 							</Card>
 
 							{/* Right Side: Visibility SORT ORDER */}
-							<div className="md:col-span-1 col-span-3">
+							<div className="md:col-span-1 col-span-3 h-full">
 								<Card>
 									<CardHeader>
 										<CardTitle className="text-lg">Visibility</CardTitle>
@@ -462,7 +466,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 																</div>
 															</RadioGroup>
 															<span className="text-muted-foreground text-sm">
-																If inactive, the product will not be visible
+																If inactive, the collection will not be visible
 																in the store
 															</span>
 														</div>
@@ -602,7 +606,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 										<FormItem>
 											<FormLabel>Meta Title</FormLabel>
 											<FormControl>
-												<Input placeholder="e.g. Striped Polo T-Shirt" {...field} />
+												<Input placeholder="e.g. New Arrivals" {...field} />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -649,7 +653,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 																		>
 																			{item}
 																		</TagsInputItem>
-																  ))
+																))
 																: null}
 															<TagsInputInput
 																placeholder="Add meta keywords..."
@@ -688,7 +692,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 												</span>
 											</div>
 											<FormControl>
-												<Input placeholder="e.g. women" {...field} />
+												<Input placeholder="e.g. new-arrivals" {...field} />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -732,6 +736,70 @@ type ProductSelectionDialogProps = {
 	selectedProducts: SelectedProduct[];
 };
 
+const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
+	main_skeletons = 3,
+	sub_skeletons = 2,
+	products = 3
+}: {
+	main_skeletons?: number;
+	sub_skeletons?: number;
+	products?: number;
+}) {
+	return (
+		<div>
+			{Array.from({ length: main_skeletons }, (_, idx) => (
+				<Accordion
+					key={idx}
+					transition={{ duration: 0.2, ease: "easeInOut" }}
+					className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50 mb-2"
+				>
+					<AccordionItem value={idx}>
+						<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
+							<div className="flex items-center justify-between">
+								<Label className="flex items-center px-2 py-2 cursor-pointer">
+									<Skeleton className="h-4 w-4 rounded-sm" />
+									<Skeleton className="h-4 min-w-[250px] rounded-sm" />
+
+								</Label>
+								<ChevronUp className="h-4 w-4 transition-transform duration-200 group-data-expanded:-rotate-180" />
+							</div>
+						</AccordionTrigger>
+						<AccordionContent className="px-4">
+							<div className="border-sidebar-border flex min-w-0 flex-col gap-0 border-l px-2.5 py-0.5">
+								{Array.from({ length: sub_skeletons }, (_, sub_idx) => sub_idx).map((sub) => (
+									<Accordion
+										key={sub}
+										transition={{ duration: 0.2, ease: "easeInOut" }}
+										className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50"
+									>
+										<AccordionItem value={sub}>
+											<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
+												<div className="flex items-center justify-between">
+													<Label className="flex items-center px-2 py-2 cursor-pointer">
+														<Skeleton className="h-4 w-4 rounded-sm" />
+														<Skeleton className="h-4 min-w-[250px] rounded-sm" />
+													</Label>
+												</div>
+											</AccordionTrigger>
+											<AccordionContent>
+												<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-2 border-l px-2.5 py-0.5">
+													{Array.from({ length: products }, (_, product_idx) => product_idx).map((product) => (
+														<Skeleton className="h-4 w-[min(250px,100%)] rounded-sm ml-2 last:mb-1" key={product}/>
+													))}
+												</div>
+											</AccordionContent>
+										</AccordionItem>
+									</Accordion>
+								))}
+							</div>
+						</AccordionContent>
+					</AccordionItem>
+				</Accordion>
+			))}
+		</div>
+	);
+});
+
 function ProductSelectionDialog({
 	open,
 	setOpen,
@@ -740,6 +808,7 @@ function ProductSelectionDialog({
 	selectedProducts,
 }: ProductSelectionDialogProps) {
 	const [tempSelected, setTempSelected] = useState<SelectedProduct[]>(selectedProducts);
+	
 	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const navigation = useNavigation();
@@ -748,11 +817,23 @@ function ProductSelectionDialog({
 	const currentCategoryPage = searchParams.get("catPage") ? Number(searchParams.get("catPage")) : 1;
 	const categories = data?.categories || [];
 	const categoryPageCount = Math.ceil(data.totalCategories / categoryPageSize);
+	const productsPageSize = defaults.DEFAULT_COLLECTIONS_PRODUCTS_PAGE_SIZE;
+	const [productsToShow, setProductsToShow] = useState<Record<string, number>>({});
 
 	useEffect(() => {
 		setTempSelected(selectedProducts);
 	}, [selectedProducts, open]);
-	//TODO: APPLY SEARCHING SKELETON
+
+	useEffect(() => {
+		const initial = categories.reduce((acc, cat) => {
+			cat.sub_categories.forEach((sub) => {
+				acc[sub.id] = Math.min(productsPageSize, sub.product_count);
+			});
+			return acc;
+		}, {} as Record<string, number>);
+		setProductsToShow(initial);
+	}, [categories]);
+
 	const isSearching = useMemo(
 		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
 		[navigation.state, navigation.location?.pathname, location.pathname]
@@ -891,10 +972,159 @@ function ProductSelectionDialog({
 			);
 		}
 	};
-
-	//TODO: Show a sheet where we display the information of product when we click on the name of product in the table list
-	// TODO: THEN FURTHER PROCEED TO CREATE A COLLECTION
 	
+	//TODO: Show a sheet where we display the information of product when we click on the name of product in the table list
+
+	const showMoreProducts = (subId: string) => {
+		setProductsToShow((prev) => {
+			const current = prev[subId] || productsPageSize;
+			const subCategory = categories
+				.flatMap((cat) => cat.sub_categories)
+				.find((sub) => sub.id === subId);
+			const total = subCategory ? subCategory.product_count : 0;
+			const next = Math.min(current + productsPageSize, total);
+			return { ...prev, [subId]: next };
+		});
+	};
+
+	const ProductsArea = () => {
+		if (isSearching) {
+			return <ProductSelectionDialogSkeleton />
+		} else {
+			return categories.length > 0 ? (
+				categories.map((cat) => (
+					<Accordion
+						key={cat.id}
+						transition={{ duration: 0.2, ease: "easeInOut" }}
+						className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50 mb-2"
+					>
+						<AccordionItem value={cat.id}>
+							<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
+								<div className="flex items-center justify-between">
+									<Label className="flex items-center px-2 py-2 cursor-pointer">
+										<Checkbox
+											checked={
+												getCategoryCheckboxState(cat).checked ||
+												(getCategoryCheckboxState(cat).indeterminate &&
+													"indeterminate")
+											}
+											onCheckedChange={() => handleCategoryToggle(cat)}
+											className="mr-2"
+											disabled={
+												cat.sub_categories.length === 0 ||
+												cat.sub_categories.every((sub) => sub.products.length === 0)
+											}
+										/>
+										{cat.category_name}
+									</Label>
+									<ChevronUp className="h-4 w-4 transition-transform duration-200 group-data-expanded:-rotate-180" />
+								</div>
+							</AccordionTrigger>
+							<AccordionContent className="px-4">
+								{cat.sub_categories.length > 0 ? (
+									<div className="border-sidebar-border flex min-w-0 flex-col gap-1 border-l px-2.5 py-0.5">
+										{cat.sub_categories.map((sub) => (
+											<Accordion
+												key={sub.id}
+												transition={{ duration: 0.2, ease: "easeInOut" }}
+												className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50"
+											>
+												<AccordionItem value={sub.id} >
+													<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
+														<div className="flex items-center justify-between">
+															<Label className="flex items-center px-2 py-1 cursor-pointer">
+																<Checkbox
+																	checked={
+																		getSubcategoryCheckboxState(sub)
+																			.checked ||
+																		(getSubcategoryCheckboxState(sub)
+																			.indeterminate &&
+																			"indeterminate")
+																	}
+																	onCheckedChange={() =>
+																		handleSubcategoryToggle(sub)
+																	}
+																	className="mr-2"
+																	disabled={sub.products.length === 0}
+																/>
+																{sub.sub_category_name}
+															</Label>
+														</div>
+													</AccordionTrigger>
+													<AccordionContent>
+														{sub.products.length > 0 ? (
+															<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5">
+																{sub.products
+																	.slice(0, productsToShow[sub.id] || 7)
+																	.map((product) => (
+																		<div
+																			key={product.id}
+																			className="hover:underline underline-offset-4"
+																		>
+																			<Label className="flex items-center px-2 py-1 cursor-pointer">
+																				<Checkbox
+																					checked={tempSelected.some(
+																						(p) =>
+																							p.id ===
+																							product.id
+																					)}
+																					onCheckedChange={() =>
+																						handleProductToggle(
+																							product
+																						)
+																					}
+																					className="mr-2"
+																				/>
+																				{product.name}
+																			</Label>
+																		</div>
+																	))}
+																{productsToShow[sub.id] <
+																	sub.product_count && (
+																	<Button
+																		variant="link"
+																		size="sm"
+																		onClick={() =>
+																			showMoreProducts(sub.id)
+																		}
+																		className={cn("m-0 p-0")}
+																	>
+																		<p className="text-muted-foreground text-sm">Show More</p>
+																	</Button>
+																)}
+															</div>
+														) : (
+															<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-1 border-l pl-6 mt-1">
+																<p className="text-muted-foreground text-sm">
+																	No products found for{" "}
+																	{sub.sub_category_name.toLowerCase()}
+																</p>
+															</div>
+														)}
+													</AccordionContent>
+												</AccordionItem>
+											</Accordion>
+										))}
+									</div>
+								) : (
+									<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-1 border-l pl-6 mt-1">
+										<p className="text-muted-foreground text-sm">
+											No sub-categories found for {cat.category_name.toLowerCase()}
+										</p>
+									</div>
+								)}
+							</AccordionContent>
+						</AccordionItem>
+					</Accordion>
+				))
+			) : (
+				<div className="my-2 p-4 pt-6">
+					<p className="text-muted-foreground w-fit text-sm mx-auto">No categories found</p>
+				</div>
+			);
+		}
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogContent
@@ -935,129 +1165,7 @@ function ProductSelectionDialog({
 						</button>
 					</RouterForm>
 					<div>
-						{categories.length > 0 ? (
-							categories.map((cat) => (
-								<Accordion
-									key={cat.id}
-									transition={{ duration: 0.2, ease: "easeInOut" }}
-									className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50 mb-2"
-								>
-									<AccordionItem value={cat.id}>
-										<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
-											<div className="flex items-center justify-between">
-												<Label className="flex items-center px-2 py-2 cursor-pointer">
-													<Checkbox
-														checked={
-															getCategoryCheckboxState(cat).checked ||
-															(getCategoryCheckboxState(cat).indeterminate &&
-																"indeterminate")
-														}
-														onCheckedChange={() => handleCategoryToggle(cat)}
-														className="mr-2"
-														disabled={
-															cat.sub_categories.length === 0 ||
-															cat.sub_categories.every(
-																(sub) => sub.products.length === 0
-															)
-														}
-													/>
-													{cat.category_name}
-												</Label>
-												<ChevronUp className="h-4 w-4 transition-transform duration-200 group-data-expanded:-rotate-180" />
-											</div>
-										</AccordionTrigger>
-										<AccordionContent className="px-4">
-											{cat.sub_categories.length > 0 ? (
-												<div className="border-sidebar-border flex min-w-0 flex-col gap-1 border-l px-2.5 py-0.5">
-													{cat.sub_categories.map((sub) => (
-														<Accordion
-															key={sub.id}
-															transition={{ duration: 0.2, ease: "easeInOut" }}
-															className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50"
-														>
-															<AccordionItem value={sub.id}>
-																<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
-																	<div className="flex items-center justify-between">
-																		<Label className="flex items-center px-2 py-1 cursor-pointer">
-																			<Checkbox
-																				checked={
-																					getSubcategoryCheckboxState(sub).checked ||
-																					(getSubcategoryCheckboxState(sub).indeterminate &&
-																						"indeterminate")
-																				}
-																				onCheckedChange={() =>
-																					handleSubcategoryToggle(
-																						sub
-																					)
-																				}
-																				className="mr-2"
-																				disabled={
-																					sub.products.length === 0
-																				}
-																			/>
-																			{sub.sub_category_name}
-																		</Label>
-																	</div>
-																</AccordionTrigger>
-																<AccordionContent>
-																	{sub.products.length > 0 ? (
-																		<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5">
-																			{sub.products.map((product) => (
-																				<div
-																					key={product.id}
-																					className="hover:underline underline-offset-4"
-																				>
-																					<Label className="flex items-center px-2 py-1 cursor-pointer">
-																						<Checkbox
-																							checked={tempSelected.some(
-																								(p) =>
-																									p.id ===
-																									product.id
-																							)}
-																							onCheckedChange={() =>
-																								handleProductToggle(
-																									product
-																								)
-																							}
-																							className="mr-2"
-																						/>
-																						{product.name}
-																					</Label>
-																				</div>
-																			))}
-																		</div>
-																	) : (
-																		<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-1 border-l pl-6 mt-1">
-																			<p className="text-muted-foreground text-sm">
-																				No products found for{" "}
-																				{sub.sub_category_name.toLowerCase()}
-																			</p>
-																		</div>
-																	)}
-																</AccordionContent>
-															</AccordionItem>
-														</Accordion>
-													))}
-												</div>
-											) : (
-												<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-1 border-l pl-6 mt-1">
-													<p className="text-muted-foreground text-sm">
-														No sub-categories found for{" "}
-														{cat.category_name.toLowerCase()}
-													</p>
-												</div>
-											)}
-										</AccordionContent>
-									</AccordionItem>
-								</Accordion>
-							))
-						) : (
-							<div className="my-2 p-4 pt-6">
-								<p className="text-muted-foreground w-fit text-sm mx-auto">
-									No categories found
-								</p>
-							</div>
-						)}
+						<ProductsArea />
 					</div>
 				</div>
 				<div className="flex gap-2 justify-between my-4 items-center">
@@ -1379,7 +1487,8 @@ function ProductSelectionDialog({
 // 					{Array.from({ length: 1 }, (_, i) => (
 // 						<span key={i} className="w-full flex gap-4 px-2 py-2">
 // 							<Skeleton className="h-4 w-4 rounded-sm" />
-// 							<Skeleton className="h-4 w-[min(250px,100%)] rounded-sm" />
+// 							<Skeleton className="h-4 min-w-[250px] rounded-sm" />
+
 // 						</span>
 // 					))}
 // 				</div>

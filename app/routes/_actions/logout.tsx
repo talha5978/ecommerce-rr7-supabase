@@ -1,25 +1,25 @@
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { useGetCurrentUser } from "~/hooks/useGetCurrentUser";
-import { clearCache } from "~/lib/cache";
+import { queryClient } from "~/lib/queryClient";
+import { currentUserQuery } from "~/queries/auth.q";
+import { AuthService } from "~/services/auth.service";
 
 export async function action({ request }: ActionFunctionArgs) {
-	const { supabase, headers } = createSupabaseServerClient(request);
-	const user = await useGetCurrentUser();
+	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
 	
 	if (!user) {
 		return redirect("/login");
 	}
 
-	const { error } = await supabase.auth.signOut();
+	const authService = new AuthService(request);
+	const { error, headers } = await authService.logout();
 
 	if (error) {
-		console.error(error);
 		return { error: error.message };
 	}
 	
-	clearCache();
+	await queryClient.invalidateQueries({ queryKey: ["current_user"] });
+
 	return redirect("/", { headers });
 }
 

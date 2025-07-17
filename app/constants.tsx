@@ -41,7 +41,7 @@ export const mainNavItems: NavItem[] = [
 		items: [
 			{
 				title: "Dashboard",
-				url: "/dashboard",
+				url: "/",
 				icon: <House />,
 			},
 			{
@@ -135,7 +135,17 @@ export const secondaryNavItems: NavSubItem[] = [
 export const product_attributes_enum: AttributeType[] = ["color", "size", "material", "style", "brand"] as const;
 
 export const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
-export const ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/webp"];
+export const ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+
+export const PRODUCT_IMG_DIMENSIONS = {
+	min: { width: 500, height: 600 },
+	max: { width: 1200, height: 1200 },
+};
+
+export const COLLECTION_IMG_DIMENSIONS = {
+	min: { width: 800, height: 400 },
+	max: { width: 1600, height: 1200 },
+}
 
 export const REQUIRED_VARIANT_ATTRIBS = ["color", "size"];
 export const OPTIONAL_PRODUCT_ATTRIBS = ["material", "style", "brand"];

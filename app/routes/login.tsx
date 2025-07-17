@@ -6,59 +6,91 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { toast } from "sonner";
-import React, { useEffect } from "react";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
+import { useEffect } from "react";
 import { Form as RouterForm } from "react-router";
 import { type LoginFormData, loginSchema } from "~/schemas/login.schema";
+import { ApiError } from "~/utils/ApiError";
+import type { ActionResponse } from "~/types/action-data";
+import { queryClient } from "~/lib/queryClient";
+import { currentUserQuery } from "~/queries/auth.q";
+import { AuthService } from "~/services/auth.service";
 
-export async function loader({ request: _ }: LoaderFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
+	try {
+		const formData = await request.formData();
+		const email = (formData.get("email") as string)?.trim();
+
+		const parseResult = loginSchema.safeParse({ email });
+		if (!parseResult.success) {
+			const firstError = Object.values(parseResult.error.flatten().fieldErrors).flat()[0]!;
+			return { error: firstError };
+		}
+
+		const authSvc = new AuthService(request);
+		const { error, headers } = await authSvc.getCode({ email });	
+
+		if (error) {
+			return { error: error.message || "Failed to send code" };
+		}
+
+		return new Response(
+			JSON.stringify({ success: true, email }),
+			{
+				status: 200,
+				headers: {
+					"Content-Type": "application/json",
+					"Set-Cookie": headers.get("Set-Cookie") || "",
+				},
+			}
+		);
+	} catch (error: any) {
+		const errorMessage =
+			error instanceof ApiError ? error.message : error.message || "Failed to send code";
+
+		if (error instanceof ApiError && error.details.length) {
+			console.error("ApiError details:", error.details);
+		}
+		return {
+			success: false,
+			error: errorMessage,
+		};
+	}
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
+	// console.log(user);
+	
+	if (user) {
+		return redirect("/");
+	}
+
 	return null;
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-	const formData = await request.formData();
-	const email = (formData.get("email") as string)?.trim();
-
-	const parseResult = loginSchema.safeParse({ email });
-	if (!parseResult.success) {
-		const firstError = Object.values(parseResult.error.flatten().fieldErrors).flat()[0]!;
-		return { error: firstError };
-	}
-
-	const { supabase, headers } = createSupabaseServerClient(request);
-
-	// Attempt to send OTP
-	const { error } = await supabase.auth.signInWithOtp({
-		email,
-		options: { shouldCreateUser: false },
-	});
-
-	if (error) {
-		return { error: error.message || "Failed to send code" };
-	}
-
-	// On success: redirect to /login/otp with email and a flag so OtpPage can toast
-	return redirect(`/login/otp?email=${encodeURIComponent(email)}&sent=true`, { headers });
-}
-
 function Login() {
-	const actionData = useActionData<{ error: string } | undefined>();
-
+	const actionData: (ActionResponse & { email?: string }) | undefined = useActionData();
+	
 	const navigation = useNavigation();
+	const navigate = useNavigate();
+
 	const isSubmitting =
 		navigation.state === "submitting" &&
 		navigation.formMethod === "POST";
-	
-	// React Hook Form setup
+
 	const form = useForm<LoginFormData>({
 		resolver: zodResolver(loginSchema),
 		mode: "onChange",
 	});
 
-	// If actionData.error changes, show a toast
 	useEffect(() => {
-		if (actionData?.error) {
-			toast.error(actionData.error);
+		if (actionData) {
+			if (actionData.success && actionData.email) {
+				toast.success("OTP sent successfully to your e-mail");
+				navigate(`/login/otp?email=${encodeURIComponent(actionData.email)}&sent=true`, { replace: true });
+			} else if (actionData.error) {
+				toast.error(actionData.error);
+			}
 		}
 	}, [actionData]);
 
@@ -69,7 +101,7 @@ function Login() {
 					<h2 className="text-2xl font-bold mx-auto w-fit mb-1">Login</h2>
 				</div>
 				<Form {...form}>
-					<RouterForm method="POST" className="space-y-4" noValidate>
+					<RouterForm method="POST" className="space-y-4" action="/login">
 						<FormField
 							control={form.control}
 							name="email"

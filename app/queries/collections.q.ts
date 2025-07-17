@@ -21,7 +21,7 @@ type collectionsDataItemsArgs = {
 
 export const collectionsQuery = ({ request, q, pageIndex, pageSize }: collectionsQueryArgs) => {
 	return queryOptions<GetHighLevelCollectionsResp>({
-		queryKey: ["products", q, pageIndex, pageSize],
+		queryKey: ["highLvlCollections", q, pageIndex, pageSize],
 		queryFn: async () => {
 			const prodService = new CollectionsService(request);
 			const result = await prodService.getHighLevelCollections(q, pageIndex, pageSize);

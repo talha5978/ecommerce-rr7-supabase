@@ -164,10 +164,10 @@ export default function CreateCategoryPage() {
 				</div>
 				<form className="space-y-6" onSubmit={handleSubmit(onFormSubmit)}>
 					<Form {...form}>
-						{/* ----- Section 1: Basic Details ----- */}
+						{/* ----- Section 1: General ----- */}
 						<Card>
 							<CardHeader>
-								<CardTitle className="text-lg">Basic Details</CardTitle>
+								<CardTitle className="text-lg">General</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
 								{/* Category Name */}

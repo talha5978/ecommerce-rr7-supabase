@@ -54,7 +54,7 @@ export default function ErrorPage() {
 						{error?.stack}
 					</p>
 					<div className="mt-10 flex items-center justify-center gap-x-6">
-						<Link to="/dashboard">
+						<Link to="/">
 							<Button>
 								<ArrowLeft />
 								<span>Go back home</span>

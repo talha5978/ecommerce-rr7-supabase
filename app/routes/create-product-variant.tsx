@@ -22,7 +22,7 @@ import { AllProductAttributesQuery } from "~/queries/product-attributes.q";
 import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
 import type { AttributeType, ProductAttribute } from "~/types/attributes.d";
 import { ProductVariantsService } from "~/services/product-variants.service";
-import { DISABLED_DEFAULT_VARIANT_MESSAGE, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
+import { DISABLED_DEFAULT_VARIANT_MESSAGE, PRODUCT_IMG_DIMENSIONS, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
 import { variantConstraintsQuery } from "~/queries/product-variants.q";
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
@@ -212,10 +212,10 @@ export default function CreateProductVariantPage({
 
 				<form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit(onFormSubmit)}>
 					<Form {...form}>
-						{/* Left Side: Basic Details and IMAGES */}
+						{/* Left Side: General and IMAGES */}
 						<Card>
 							<CardHeader>
-								<CardTitle className="text-lg">Basic Details</CardTitle>
+								<CardTitle className="text-lg">General</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
 								{/* Variant SKU */}
@@ -344,7 +344,7 @@ export default function CreateProductVariantPage({
 										<FormItem>
 											<FormLabel>Images</FormLabel>
 											<FormControl>
-												<MultipleImagesInput name="images" />
+												<MultipleImagesInput name="images" dimensions={PRODUCT_IMG_DIMENSIONS}/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>

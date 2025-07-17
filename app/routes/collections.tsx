@@ -480,20 +480,10 @@ function SortSelector() {
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelCollection>) {
-	const navigate = useNavigate();
 	const isMobile = useIsMobile({ customBreakpoint: 400 });
 
 	const [searchParams] = useSearchParams();
 	const currentQuery = searchParams.get("q") ?? "";
-
-	const status_filter_fields = useMemo(
-		() => [
-			{ label: "All", value: "null" },
-			{ label: "Active", value: "true" },
-			{ label: "Inactive", value: "false" },
-		],
-		[]
-	);
 
     return (
 		<>
@@ -538,77 +528,43 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
-				<div className="flex gap-2 items-center">
-					{/* Active Filters */}
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								variant="outline"
-								size="sm"
-								className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-								disabled={disabled}
-							>
-								<Settings2 />
-								<span className="hidden md:inline">Status</span>
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-[150px]">
-							<DropdownMenuLabel>Filter by status</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							{status_filter_fields.map((field) => (
-								<DropdownMenuCheckboxItem
-									key={field.value}
-									className="cursor-pointer"
-									checked={field.value === status}
-									onCheckedChange={(value) => {
-										if (field.value && value) {
-											const val = field.value === "null" ? "" : field.value as "true" | "false";
-											navigate(`?status=${val}`);
-										}
-									}}
-								>
-									{field.label}
-								</DropdownMenuCheckboxItem>
-							))}
-						</DropdownMenuContent>
-					</DropdownMenu> 
-					{/* Columns toggle */}
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								variant="outline"
-								size="sm"
-								className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-								disabled={disabled}
-							>
-								<Settings2 />
-								<span className="hidden md:inline">Columns</span>
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-[150px]">
-							<DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							{table
-								.getAllColumns()
-								.filter(
-									(column: any) =>
-										typeof column.accessorFn !== "undefined" && column.getCanHide()
-								)
-								.map((column: any) => {
-									return (
-										<DropdownMenuCheckboxItem
-											key={column.id}
-											className="cursor-pointer"
-											checked={column.getIsVisible()}
-											onCheckedChange={(value) => column.toggleVisibility(!!value)}
-										>
-											{column.id}
-										</DropdownMenuCheckboxItem>
-									);
-								})}
-						</DropdownMenuContent>
-					</DropdownMenu> 
-				</div>
+				
+				{/* Columns toggle */}
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
+							disabled={disabled}
+						>
+							<Settings2 />
+							<span className="hidden md:inline">Columns</span>
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-[150px]">
+						<DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						{table
+							.getAllColumns()
+							.filter(
+								(column: any) =>
+									typeof column.accessorFn !== "undefined" && column.getCanHide()
+							)
+							.map((column: any) => {
+								return (
+									<DropdownMenuCheckboxItem
+										key={column.id}
+										className="cursor-pointer"
+										checked={column.getIsVisible()}
+										onCheckedChange={(value) => column.toggleVisibility(!!value)}
+									>
+										{column.id}
+									</DropdownMenuCheckboxItem>
+								);
+							})}
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 		</>
 	);

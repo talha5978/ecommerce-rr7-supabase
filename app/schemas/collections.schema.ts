@@ -14,7 +14,7 @@ export const CollectionInputSchema = z.object({
 
 	description: z
 		.string({ required_error: "Description is required." })
-		.min(20, "Description must be at least 20 characters long.")
+		.min(10, "Description must be at least 10 characters long.")
 		.refine((value) => value.trim().length > 0, {
 			message: "Description is required.",
 		}),
@@ -52,11 +52,9 @@ export const CollectionInputSchema = z.object({
 
 export type CollectionFormValues = z.input<typeof CollectionInputSchema>;
 
-export const ProductActionDataSchema = z.object({
-	cover_image: z.instanceof(File),
+export const CollectionActionDataSchema = z.object({
+	image: z.instanceof(File),
 	description: z.string(),
-	free_shipping: z.string(),
-	is_featured: z.string(),
 	meta_details: z.object({
 		meta_title: z.string(),
 		meta_description: z.string(),
@@ -65,11 +63,11 @@ export const ProductActionDataSchema = z.object({
 	}),
 	name: z.string(),
 	status: z.string(),
-	sub_category: z.string(),
-	optional_attributes: z.array(z.string()),
+	sort_order: z.string(),
+	product_ids: z.array(z.string()),
 });
 
-export type ProductActionData = z.infer<typeof ProductActionDataSchema>;
+export type CollectionActionData = z.infer<typeof CollectionActionDataSchema>;
 
 // For updation
 

@@ -9,8 +9,7 @@ export default [
 	route("/logout", "./routes/_actions/logout.tsx"),
 
 	route("/", "./routes/layout.tsx", [
-		index("./routes/index-redirect.tsx"),
-		route("dashboard", "./routes/dashboard.tsx"),
+		index("./routes/dashboard.tsx"),
 		...prefix("/categories", [
 			index("./routes/categories.tsx"),
 			route("create", "./routes/CategoryForms/create-category.tsx"),

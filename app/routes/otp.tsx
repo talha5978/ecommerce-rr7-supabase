@@ -1,88 +1,145 @@
 import { useEffect } from "react";
 import { Button } from "~/components/ui/button";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "~/components/ui/input-otp";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Loader2 } from "lucide-react";
-import { ActionFunctionArgs, Form as AuthForm, Link, redirect, useActionData, useNavigation, useSearchParams, useSubmit } from "react-router";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Info, Loader2, Mail } from "lucide-react";
+import {
+	ActionFunctionArgs,
+	Link,
+	LoaderFunctionArgs,
+	useActionData,
+	useNavigate,
+	useNavigation,
+	useSearchParams,
+	useSubmit,
+} from "react-router";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "~/components/ui/form";
 import { type OtpFormData, OtpSchema } from "~/schemas/otp.schema";
-
-type OtpActionData = { error: string } | null;
+import { ApiError } from "~/utils/ApiError";
+import type { ActionResponse } from "~/types/action-data";
+import { queryClient } from "~/lib/queryClient";
+import { currentUserQuery } from "~/queries/auth.q";
+import { redirect } from "react-router";
+import { AuthService } from "~/services/auth.service";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 
 export async function action({ request }: ActionFunctionArgs) {
-	const formData = await request.formData();
-	const email = formData.get("email") as string;
-	const token = formData.get("token") as string;
+	try {
+		const formData = await request.formData();
+		const email = formData.get("email") as string;
+		const token = formData.get("token") as string;
 
-	const parseResult = OtpSchema.safeParse({ email, token });
+		const parseResult = OtpSchema.safeParse({ email, token });
 
-	if (!parseResult.success) {
-		const firstError = Object.values(parseResult.error.flatten().fieldErrors).flat()[0]!;
-        console.error(firstError);
-		return { error: firstError };
+		if (!parseResult.success) {
+			return new Response(
+				JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }),
+				{
+					status: 400,
+					headers: { "Content-Type": "application/json" },
+				}
+			);
+		}
+
+		const authSvc = new AuthService(request);
+		const { error, headers } = await authSvc.verifyOtp({ email, token });	
+		console.log(headers);
+		
+		console.log("ERROR 🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋", error);
+		await queryClient.invalidateQueries({ queryKey: ["current_user"] });
+		
+		if (error) {
+			return { error: error.message || "Failed to login" };
+		}
+
+		return new Response(
+			JSON.stringify({ success: true }),
+			{
+				status: 200,
+				headers: {
+					"Content-Type": "application/json",
+					"Set-Cookie": headers.get("Set-Cookie") || "",
+				},
+			}
+		);
+	} catch (error: any) {
+		const errorMessage = error instanceof ApiError ? error.message : error.message || "Failed to login";
+
+		if (error instanceof ApiError && error.details.length) {
+			console.error("ApiError details:", error.details);
+		}
+		return {
+			success: false,
+			error: errorMessage,
+		};
 	}
+}
 
-	const { supabase, headers } = createSupabaseServerClient(request);
-
-	const {
-		error,
-		data: {session}
-	} = await supabase.auth.verifyOtp({
-		email,
-		token,
-		type: "email",
-	});
-	// console.log(session);
+export async function loader({ request }: LoaderFunctionArgs) {
+	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
+	console.log("User in login otp: ", user);
 	
-	if (error) {
-		let _resp = error.message || "OTP verification failed";
-        console.error(_resp);
-        toast.error( _resp);
-		return { error: _resp };
+	if (user) {
+		return redirect("/");
 	}
 
-	return redirect("/dashboard", { headers });
+	return null;
 }
 
 export default function OtpPage() {
-	const [searchParams, setSearchParams] = useSearchParams();
+	const submit = useSubmit();
+	const navigate = useNavigate();
+
+	const [searchParams] = useSearchParams();
 	const emailParam = searchParams.get("email") || "";
-	const sentParam = searchParams.get("sent") || "";
 
-	useEffect(() => {
-		if (!emailParam) {
-			window.location.replace("/login");
-		}
-	}, [emailParam]);
-
-    const form = useForm<OtpFormData>({
+	const form = useForm<OtpFormData>({
 		resolver: zodResolver(OtpSchema),
 		defaultValues: {
 			email: emailParam,
-		}
+			token: "",
+		},
 	});
 
-	const { control } = form;
+	const { control, handleSubmit, setError } = form;
 
-    const actionData = useActionData<OtpActionData>();
+	const actionData: ActionResponse = useActionData();
 
-    useEffect(() => {
-		if (sentParam === "true") {
-			toast.success("OTP sent successfully to your e-mail");
-			searchParams.delete("sent");
-			setSearchParams(searchParams, { replace: true });
+	useEffect(() => {
+		if (actionData) {
+			console.log(actionData);
+			
+			if (actionData.success) {
+				toast.success("Logged in successfully");
+				navigate(`/`, { replace: true });
+			} else if (actionData.error) {
+				toast.error(actionData.error);
+				setError("token", { message: actionData.error });
+			} else if (actionData.validationErrors) {
+				toast.error("Invalid form data. Please check your inputs.");
+				Object.entries(actionData.validationErrors).forEach(([field, errors]) => {
+					setError(field as keyof OtpFormData, { message: errors[0] });
+				});
+			}
 		}
-    }, [actionData, sentParam]);
+	}, [actionData, navigate]);
 
-    const navigation = useNavigation();
-    const isVerifying =
-        navigation.state === "submitting" &&
-        navigation.formAction === "/login/otp" &&
-        navigation.formMethod === "POST";
+	const navigation = useNavigation();
+	const isVerifying =
+		navigation.state === "submitting" &&
+		navigation.formMethod === "POST";
+
+	const onCodeSubmit = (formData: OtpFormData) => {
+		submit({
+			email: formData.email.trim(),
+			token: formData.token.trim()
+		}, {
+			method: "POST",
+			action: `/login/otp?email=${encodeURIComponent(formData.email)}&sent=true`,
+		});
+	};
 
 	return (
 		<section className="flex w-full h-svh items-center py-4 px-4">
@@ -91,8 +148,8 @@ export default function OtpPage() {
 					<h2 className="text-2xl font-bold mx-auto w-fit">Enter OTP</h2>
 				</div>
 				<div>
-					<Form {...form}>
-						<AuthForm method="POST" action="/login/otp" className="space-y-4">
+					<form className="space-y-4" onSubmit={handleSubmit(onCodeSubmit)}>
+						<Form {...form}>
 							<input type="hidden" name="email" value={emailParam} />
 							<FormField
 								control={control}
@@ -127,9 +184,21 @@ export default function OtpPage() {
 								{isVerifying && <Loader2 className="animate-spin" />}
 								<span>Verify OTP</span>
 							</Button>
-						</AuthForm>
-					</Form>
+						</Form>
+					</form>
 				</div>
+				<Alert variant="default" className="mb-4">
+					<Mail className="h-4 w-4 text-primary" />
+					<AlertTitle>Note</AlertTitle>
+					<AlertDescription>
+						<p>
+							Please enter the code that was sent to{" "}
+							<a href={`mailto:${emailParam}`}>
+								<b className="hover:underline">{emailParam}</b>
+							</a>
+						</p>
+					</AlertDescription>
+				</Alert>
 				<div className="*:text-center *:text-sm *:text-muted-foreground flex gap-2 flex-wrap justify-center">
 					<p>Didn’t receive a code?</p>
 					<Link to="/login" className="hover:underline" prefetch="viewport" viewTransition>

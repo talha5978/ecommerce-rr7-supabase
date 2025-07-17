@@ -3,8 +3,17 @@ import { ApiError } from "~/utils/ApiError";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { defaults, TABLE_NAMES } from "~/constants";
-import { CollectionDataCategory, CollectionDataItemsResponse, CollectionDataSubCategory, GetHighLevelCollectionsResp, HighLevelCollection } from "~/types/collections";
+import {
+	CollectionDataCategory,
+	CollectionDataItemsResponse,
+	CollectionDataSubCategory,
+	GetHighLevelCollectionsResp,
+	HighLevelCollection,
+} from "~/types/collections";
 import { CollectionDataItemsArgs } from "~/queries/collections.q";
+import { CollectionActionData } from "~/schemas/collections.schema";
+import { MediaService } from "./media.service";
+import { stringToBooleanConverter } from "~/lib/utils";
 
 export class CollectionsService {
 	private supabase: SupabaseClient<Database>;
@@ -150,7 +159,7 @@ export class CollectionsService {
 				error = new ApiError(queryError.message, 500, [queryError.details]);
 			}
 
-			console.log(productsList);
+			// console.log(productsList);
 
 			// Process the flat product list into the hierarchical structure
 			const categoryMap = new Map<string, CollectionDataCategory>();
@@ -253,6 +262,50 @@ export class CollectionsService {
 				totalProducts: 0,
 				error: new ApiError("Unknown error", 500, [err.message]),
 			};
+		}
+	}
+
+	/** Create collection */
+	async createCollection(input: CollectionActionData): Promise<void> {
+		const { description, image, meta_details, name, product_ids, sort_order, status } = input;
+		const mediaSvc = new MediaService(this.request);
+		let uploaded_img_url = "";
+
+		try {
+			if (image && image.size > 0) {
+				const { data } = await mediaSvc.uploadImage(image);
+
+				uploaded_img_url = data?.path ?? "";
+
+				if (!uploaded_img_url || uploaded_img_url == "") {
+					throw new ApiError("Failed to upload image", 500, []);
+				}
+			}
+
+			const { error } = await this.supabase
+				.rpc("create_collection", {
+					p_name: name,
+					p_description: description,
+					p_image_url: uploaded_img_url,
+					p_url_key: meta_details.url_key,
+					p_meta_title: meta_details.meta_title,
+					p_meta_description: meta_details.meta_description,
+					p_meta_keywords: meta_details.meta_keywords || "",
+					p_sort_order: Number(sort_order),
+					p_status: stringToBooleanConverter(status),
+					p_product_ids: product_ids
+				});
+
+			if (error) {
+				throw new ApiError(`${error.message}`, 500, [
+					error.details || [],
+				]);
+			}
+		} catch (error) {
+			if (uploaded_img_url) {
+				await mediaSvc.deleteImage(uploaded_img_url);
+			}
+			throw error instanceof ApiError ? error : new ApiError("Failed to create collection", 500, []);
 		}
 	}
 }

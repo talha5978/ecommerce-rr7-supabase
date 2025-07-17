@@ -16,7 +16,6 @@ interface productsQueryArgs {
 }
 
 type productNamesQueryArgs = { request: Request };
-type productListForCollectionsArgs = { request: Request; q: string; pageIndex?: number };
 type singleProductQueryArgs = { request: Request; productId: string };
 
 export const productsQuery = ({ request, q, pageIndex, pageSize, filters }: productsQueryArgs) => {

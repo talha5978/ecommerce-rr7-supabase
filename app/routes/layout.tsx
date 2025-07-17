@@ -1,14 +1,14 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { LoaderFunctionArgs, Outlet, redirect, useNavigation } from "react-router";
 import SidebarLayout from "~/components/Nav/nav-layout";
-import { getCurrentUserFromRequest } from "~/hooks/useGetServerUser";
 import { queryClient } from "~/lib/queryClient";
 import { useEffect, useRef, useState } from "react";
 import LoadingBar, { LoadingBarRef } from "react-top-loading-bar";
+import { currentUserQuery } from "~/queries/auth.q";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const { user } = await getCurrentUserFromRequest(request);
-
+	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
+	
 	if (!user && request.url !== "/login") {
 		return redirect("/login");
 	}

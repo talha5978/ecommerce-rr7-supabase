@@ -19,7 +19,7 @@ import {
 	TagsInputItem,
 	TagsInputList,
 } from "~/components/ui/tags-input";
-import { defaults } from "~/constants";
+import { defaults, PRODUCT_IMG_DIMENSIONS } from "~/constants";
 import { toast } from "sonner";
 import { ApiError } from "~/utils/ApiError";
 import type { ActionResponse } from "~/types/action-data";
@@ -233,12 +233,12 @@ export default function CreateBasicProductPage({ loaderData : { categories: load
 
 				<form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit(onFormSubmit)}>
 					<Form {...form}>
-						{/* Left Side: Basic Details and Meta Details */}
+						{/* Left Side: General and Meta Details */}
 						<div className="space-y-4">
-							{/* Basic Details Card */}
+							{/* General Card */}
 							<Card>
 								<CardHeader>
-									<CardTitle className="text-lg">Basic Details</CardTitle>
+									<CardTitle className="text-lg">General</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-4">
 									{/* Product Name */}
@@ -372,7 +372,7 @@ export default function CreateBasicProductPage({ loaderData : { categories: load
 											<FormItem>
 												<FormLabel>Cover Image</FormLabel>
 												<FormControl>
-													<ImageInput name="cover_image" />
+													<ImageInput name="cover_image" dimensions={PRODUCT_IMG_DIMENSIONS}/>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
