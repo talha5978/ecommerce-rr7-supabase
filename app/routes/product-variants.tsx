@@ -8,7 +8,7 @@ import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
 import { queryClient } from "~/lib/queryClient";
-import { defaults, filterOps, productVariantSortTypeEnums, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
+import { defaults, filterOps, sortTypeEnums, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
@@ -114,7 +114,6 @@ export default function ProductVariantsPage({
 					return (
 						<div>
 							<ImageViewer
-								thumbnailUrl={image}
 								imageUrl={image}
 								classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
 							/>
@@ -122,7 +121,7 @@ export default function ProductVariantsPage({
 					)
 				} else {
 					return (
-						<Skeleton className="h-16 w-16 rounded-sm" />
+						<Skeleton className="h-20 w-18 rounded-sm" />
 					)
 				}
 			},
@@ -484,7 +483,7 @@ function SortSelector() {
 											<SelectValue placeholder="asc / desc" />
 										</SelectTrigger>
 										<SelectContent>
-											{productVariantSortTypeEnums.map((sortType) => (
+											{sortTypeEnums.map((sortType) => (
 												<SelectItem key={sortType} value={sortType}>
 													{sortType === "asc" ? (
 														<>
@@ -541,7 +540,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Pro
 
     return (
 		<>
-			<div className="w-full flex justify-between gap-4">
+			<div className="w-full flex justify-between gap-4 items-center">
 				<div className="flex gap-2 items-center">
 					<Form method="get">
 						<div className="relative">

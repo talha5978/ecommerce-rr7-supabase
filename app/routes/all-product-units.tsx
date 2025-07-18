@@ -284,7 +284,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Pro
     let currentQuery = searchParams.get("q") ?? "";
 	
     return (
-		<div className="w-full flex justify-between gap-4">
+		<div className="w-full flex justify-between gap-4 items-center">
 			<div>
 				<Form method="get">
 					<div className="relative">

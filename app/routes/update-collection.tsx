@@ -20,15 +20,7 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
-import {
-	ChevronUp,
-	Loader2,
-	PlusCircle,
-	RefreshCcw,
-	Search,
-	Trash2,
-	X,
-} from "lucide-react";
+import { ChevronUp, Loader2, PlusCircle, RefreshCcw, Search, Trash2, X } from "lucide-react";
 import { memo, Suspense, useEffect, useMemo, useState } from "react";
 import {
 	TagsInput,
@@ -43,11 +35,23 @@ import { ApiError } from "~/utils/ApiError";
 import type { ActionResponse } from "~/types/action-data";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
-import type { Route } from "./+types/create-collection";
+import type { Route } from "./+types/update-collection";
 import ImageInput from "~/components/Custom-Inputs/image-input";
-import { CollectionActionDataSchema, CollectionFormValues, CollectionInputSchema } from "~/schemas/collections.schema";
+import {
+	CollectionActionDataSchema,
+	CollectionUpdateActionData,
+	CollectionUpdateActionDataSchema,
+	CollectionUpdateFormValues,
+	CollectionUpdateInputSchema,
+} from "~/schemas/collections.schema";
 import { DataTable } from "~/components/Table/data-table";
-import { type ColumnDef, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
+import {
+	type ColumnDef,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	useReactTable,
+} from "@tanstack/react-table";
 import {
 	Dialog,
 	DialogContent,
@@ -67,33 +71,72 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from "@tabler/icons-react";
 import { useSearchParams } from "react-router";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
-import { collectionDataItemsQuery } from "~/queries/collections.q";
+import { collectionDataItemsQuery, FullCollectionQuery } from "~/queries/collections.q";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { Skeleton } from "~/components/ui/skeleton";
-import { cn } from "~/lib/utils";
+import { bolleanToStringConverter, cn } from "~/lib/utils";
 import { CollectionsService } from "~/services/collections.service";
+import { getSanitizedMetaDetailsForAction, getSanitizedMetaDetailsForForm } from "~/utils/getSanitizedMetaDetails";
 
+function getSimpleFields() {
+	return ["name", "description", "status", "sort_order"] as const;
+}
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+	const collectionId = (params.collectionId as string) || "";
+	if (!collectionId || collectionId == "") {
+		throw new Response("Collection ID is required", { status: 400 });
+	}
+	
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
 
+	const data: Partial<CollectionUpdateActionData> = {};
+	/*
 	const data = {
 		name: formData.get("name") as string,
 		description: formData.get("description") as string,
-		image: formData.get("image") as File,
 		sort_order: formData.get("sort_order") as string,
 		status: formData.get("status") as string,
+		image: formData.get("image") as File,
+		removed_image: formData.get("removed_image") as string,
 		meta_details: {
 			meta_title: formData.get("meta_details.meta_title") as string,
 			meta_description: formData.get("meta_details.meta_description") as string,
 			url_key: formData.get("meta_details.url_key") as string,
 			meta_keywords: formData.get("meta_details.meta_keywords"),
 		},
-		product_ids: formData.getAll("product_ids") as string[],
+		added_product_ids: formData.getAll("added_product_ids") as string[],
+		removed_product_ids: formData.getAll("removed_product_ids") as string[],
 	};
+*/
 
-	const parseResult = CollectionActionDataSchema.safeParse(data);
+	const simpleFields = getSimpleFields();
+
+	for (const field of simpleFields) {
+		if (formData.has(field)) {
+			data[field] = formData.get(field) as string;
+		}
+	}
+
+	if (formData.has("image") && formData.has("removed_image")) {
+		data.image = formData.get("image") as File;
+		data.removed_image = formData.get("removed_image") as string;
+	}
+
+	// Parse meta_details fields
+	getSanitizedMetaDetailsForAction({ formData, data });
+
+	if (formData.has("added_product_ids")) {
+		data.added_product_ids = formData.getAll("added_product_ids").map((value) => String(value));
+	}
+
+	// Extract attributes that are removed (array of strings)
+	if (formData.has("removed_product_ids")) {
+		data.removed_product_ids = formData.getAll("removed_product_ids").map((value) => String(value));
+	}
+
+	const parseResult = CollectionUpdateActionDataSchema.safeParse(data);
 	// console.log("Parse result: ", parseResult?.error);
 
 	if (!parseResult.success) {
@@ -108,13 +151,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const collectionSvc = new CollectionsService(request);
 	// return;
 	try {
-		await collectionSvc.createCollection(parseResult.data);
+		await collectionSvc.updateCollection(collectionId, parseResult.data);
 		await queryClient.invalidateQueries({ queryKey: ["highLvlCollections"] });
+		await queryClient.invalidateQueries({ queryKey: ["fullCollection", collectionId] });
+
 		return { success: true };
 	} catch (error: any) {
 		// console.error("Error in action:", error);
 		const errorMessage =
-			error instanceof ApiError ? error.message : error.message || "Failed to create collection";
+			error instanceof ApiError ? error.message : error.message || "Failed to Update collection";
 
 		if (error instanceof ApiError && error.details.length) {
 			console.error("ApiError details:", error.details);
@@ -126,49 +171,76 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	}
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const collection_id = params.collectionId;
+
+	if (!collection_id) {
+		throw new ApiError("Collection id not found", 400, []);
+	}
+
 	const { searchParams } = new URL(request.url);
 	const categoryPageParam = Number(searchParams.get("catPage"));
 	const productPageParam = Number(searchParams.get("prodPage"));
 	const productSearchQuery = searchParams.get("prodSearch") || "";
+
 	// console.log(Math.max(0, categoryPageParam - 1), Math.max(0, productPageParam - 1));
-	
+	const collectionResp = await queryClient.fetchQuery(FullCollectionQuery({ request, collection_id }));
+
 	const collectionsDataItems = queryClient.fetchQuery(
 		collectionDataItemsQuery({
 			request,
 			...(productSearchQuery && { q: productSearchQuery }),
 			categoryPageIndex: categoryPageParam ? Math.max(0, categoryPageParam - 1) : 0,
-			productPageIndex: productPageParam ? Math.max(0, productPageParam - 1) : 0
+			productPageIndex: productPageParam ? Math.max(0, productPageParam - 1) : 0,
 		})
 	);
 
-	return { collectionsDataItems };
+	return { collectionResp, collectionsDataItems };
 };
 
-export default function CreateCollectionPage({ loaderData: { collectionsDataItems } }: Route.ComponentProps) {
+export default function UpdateCollectionPage({
+	loaderData: {
+		collectionResp: { collection, error: collectionError },
+		collectionsDataItems,
+	},
+	params
+}: Route.ComponentProps) {
 	const navigate = useNavigate();
-
 	const submit = useSubmit();
 	const navigation = useNavigation();
+	const paramsCollectionId = params.collectionId;
+
+	useEffect(() => {
+		if (collectionError) {
+			toast.error(collectionError?.message || "Unknown error");
+			navigate(`/collections`);
+		}
+	}, [collection, collectionError]);
 
 	const actionData: ActionResponse = useActionData();
 
-	const form = useForm<CollectionFormValues>({
-		resolver: zodResolver(CollectionInputSchema),
+	const form = useForm<CollectionUpdateFormValues>({
+		resolver: zodResolver(CollectionUpdateInputSchema),
 		mode: "onSubmit",
 		defaultValues: {
-			name: "",
-			description: "",
-			image: undefined,
-			status: "true",
+			name: collection?.name || "",
+			description: collection?.description || "",
+			image: collection?.image_url || undefined,
+			status:
+				collection?.status != null
+					? (bolleanToStringConverter(collection?.status) as "true" | "false")
+					: "true",
 			meta_details: {
-				meta_title: "",
-				meta_description: "",
-				url_key: "",
-				meta_keywords: [],
+				meta_title: collection?.meta_details?.meta_title || "",
+				meta_description: collection?.meta_details?.meta_description || "",
+				url_key: collection?.meta_details?.url_key || "",
+				meta_keywords:
+					collection?.meta_details?.meta_keywords == ""
+						? []
+						: collection?.meta_details?.meta_keywords?.split(",") || [],
 			},
-			sort_order: "1",
-			selections: [],
+			sort_order: collection?.sort_order?.toString() || "1",
+			selections: collection?.products || [],
 		},
 	});
 
@@ -186,14 +258,14 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 	useEffect(() => {
 		if (actionData) {
 			if (actionData.success) {
-				toast.success("Collection created successfully");
+				toast.success("Collection updated successfully");
 				navigate(`/collections`);
 			} else if (actionData.error) {
 				toast.error(actionData.error);
 			} else if (actionData.validationErrors) {
 				toast.error("Invalid form data. Please check your inputs.");
 				Object.entries(actionData.validationErrors).forEach(([field, errors]) => {
-					setError(field as keyof CollectionFormValues, { message: errors[0] });
+					setError(field as keyof CollectionUpdateFormValues, { message: errors[0] });
 				});
 			}
 		}
@@ -213,16 +285,16 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 				const rows = table.getRowCount();
 				return rows > 0 ? (
 					<div className="flex items-center justify-center">
-					<Checkbox
-						checked={
-							table.getIsAllPageRowsSelected() ||
-							(table.getIsSomePageRowsSelected() && "indeterminate")
-						}
-						onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-						aria-label="Select all"
-					/>
+						<Checkbox
+							checked={
+								table.getIsAllPageRowsSelected() ||
+								(table.getIsSomePageRowsSelected() && "indeterminate")
+							}
+							onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+							aria-label="Select all"
+						/>
 					</div>
-				) : null
+				) : null;
 			},
 			cell: ({ row }) => (
 				<div className="flex items-center justify-center">
@@ -297,7 +369,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 		setValue("selections", updatedSelections);
 		table.resetRowSelection();
 	};
-	
+
 	const table = useReactTable({
 		data: selections,
 		columns: tableColumns,
@@ -309,11 +381,15 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 			pagination,
 		},
 	});
-	
 
-	async function onFormSubmit(values: CollectionFormValues) {
+	async function onFormSubmit(values: CollectionUpdateFormValues) {
 		// toast.info("Creating collection...");
-		console.log("Form values: ",values);
+		console.log("Form values: ", values);
+
+		if (!collection || collection == null) {
+			toast.error("Error updating collection. Please try again after some time.");
+			return;
+		}
 
 		if (values.selections.length === 0) {
 			toast.error("Please select at least one product.");
@@ -325,43 +401,99 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 			return;
 		}
 
+		const simpleFields = getSimpleFields();
+		let hasChanges = false;
+
+		const normalizedValues = {
+			name: values.name.trim(),
+			description: values.description.trim(),
+			image: values.image,
+			status: values.status ?? "true",
+			sort_order: values.sort_order?.toString() || "1",
+			meta_details: {
+				meta_title: values.meta_details.meta_title.trim(),
+				meta_description: values.meta_details.meta_description.trim(),
+				url_key: values.meta_details.url_key.trim().toLowerCase(),
+				meta_keywords: Array.isArray(values.meta_details.meta_keywords)
+					? values.meta_details.meta_keywords.map((kw) => kw.trim()).filter(Boolean)
+					: [],
+			},
+			selected_products: values.selections.map((product) => product.id),
+		};
+
 		const formData = new FormData();
-		formData.set("name", values.name.trim());
-		formData.set("description", values.description.trim());
-		formData.set("image", values.image);
-		formData.set("status", values.status ?? "true");
-		formData.set("sort_order", values.sort_order ?? "1");
-		formData.set("meta_details.meta_title", values.meta_details.meta_title.trim());
-		formData.set("meta_details.meta_description", values.meta_details.meta_description.trim());
-		formData.set("meta_details.url_key", values.meta_details.url_key.trim().toLowerCase());
-		if (values.meta_details.meta_keywords) {
-			const stringifiedKeywords = values.meta_details.meta_keywords
-				.map((keyword) => keyword.trim())
-				.join(",");
-			formData.set("meta_details.meta_keywords", stringifiedKeywords);
+
+		for (const field of simpleFields) {
+			if (normalizedValues[field] !== String(collection[field])) {
+				formData.set(field, normalizedValues[field]);
+				hasChanges = true;
+			}
 		}
 
-		values.selections.forEach((product) => {
-			formData.append("product_ids", product.id.toString());
+		// Separate image check..
+		if (normalizedValues.image && typeof normalizedValues.image !== "string") {
+			formData.set("image", normalizedValues.image as File);
+			formData.set("removed_image", collection.image_url as string);
+			hasChanges = true;
+		}
+
+		const { hasChanges: hasMetaChanges } = getSanitizedMetaDetailsForForm({
+			formData,
+			normalizedValues,
+			entity: collection,
+			hasChanges,
 		});
+
+		hasChanges = hasChanges || hasMetaChanges;
+
+		// Handle new product IDs
+		const existingProductIds = new Set(collection.products.map((p: { id: string }) => p.id));
+		const newProductIds = normalizedValues.selected_products.filter(
+			(productId) => !existingProductIds.has(productId)
+		);
+
+		if(newProductIds.length > 0) {
+			newProductIds.map((id) => formData.append("added_product_ids", id));
+			hasChanges = true;
+		}
+
+		// Handle removed product IDs
+		const removedProductIds: string[] = [];
+			existingProductIds.forEach((productId) => {
+			if (!normalizedValues.selected_products.includes(productId)) {
+				removedProductIds.push(productId);
+			}
+		});
+
+		if (removedProductIds.length > 0) {
+			removedProductIds.map((id) => formData.append("removed_product_ids", id));
+			hasChanges = true;
+		}
+
+		if (!hasChanges) {
+			toast.info("No changes to save");
+			return;
+		}
+
+		toast.info("Updating collection...");
 
 		submit(formData, {
 			method: "POST",
-			action: "/collections/create",
+			action: `/collections/${collection.id ?? paramsCollectionId}/update`,
 			encType: "multipart/form-data",
 		});
 	}
-	
+
 	return (
 		<>
 			<MetaDetails
-				metaTitle="Create Collection | Admin Panel"
-				metaDescription="Create new collection"
+				metaTitle="Update Collection | Admin Panel"
+				metaDescription="Update new collection"
 			/>
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href="/collections" />
-					<h1 className="text-2xl font-semibold">Create Collection</h1>
+					<h1 className="text-2xl font-semibold">Update Collection</h1>
 				</div>
 
 				<form className="space-y-4" onSubmit={handleSubmit(onFormSubmit)}>
@@ -382,10 +514,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 											<FormItem>
 												<FormLabel>Product Name</FormLabel>
 												<FormControl>
-													<Input
-														placeholder="e.g. New Arrivals"
-														{...field}
-													/>
+													<Input placeholder="e.g. New Arrivals" {...field} />
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -417,7 +546,10 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 											<FormItem>
 												<FormLabel>Image</FormLabel>
 												<FormControl>
-													<ImageInput name="image" dimensions={COLLECTION_IMG_DIMENSIONS}/>
+													<ImageInput
+														name="image"
+														dimensions={COLLECTION_IMG_DIMENSIONS}
+													/>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -466,8 +598,8 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 																</div>
 															</RadioGroup>
 															<span className="text-muted-foreground text-sm">
-																If inactive, the collection will not be visible
-																in the store
+																If inactive, the collection will not be
+																visible in the store
 															</span>
 														</div>
 													</FormControl>
@@ -506,17 +638,20 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 											variant="link"
 											size="sm"
 											onClick={removeSelectedRows}
-											className="space-x-1 text-destructive"
+											className="space-x-1 text-destructive/70"
 										>
 											<Trash2 className="h-3 w-3" />
 											<span>Remove</span>
 										</Button>
 									</div>
-
 								)}
 							</CardHeader>
 							<CardContent className="space-y-6">
-								<DataTable table={table} customEmptyMessage="No products selected :)" cellClassName="**:data-[slot=table-cell]:last:bg-transparent"/>
+								<DataTable
+									table={table}
+									customEmptyMessage="No products selected :)"
+									cellClassName="**:data-[slot=table-cell]:last:bg-transparent"
+								/>
 								<div className="flex items-center justify-between">
 									<div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
 										{table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -653,7 +788,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 																		>
 																			{item}
 																		</TagsInputItem>
-																))
+																  ))
 																: null}
 															<TagsInputInput
 																placeholder="Add meta keywords..."
@@ -705,7 +840,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 						<div className="flex justify-end md:col-span-3">
 							<Button type="submit" disabled={isSubmitting}>
 								{isSubmitting && <Loader2 className="animate-spin mr-2" />}
-								<span>Create</span>
+								<span>Update</span>
 							</Button>
 						</div>
 					</Form>
@@ -739,7 +874,7 @@ type ProductSelectionDialogProps = {
 const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 	main_skeletons = 3,
 	sub_skeletons = 2,
-	products = 3
+	products = 3,
 }: {
 	main_skeletons?: number;
 	sub_skeletons?: number;
@@ -759,7 +894,6 @@ const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 								<Label className="flex items-center px-2 py-2 cursor-pointer">
 									<Skeleton className="h-4 w-4 rounded-sm" />
 									<Skeleton className="h-4 min-w-[250px] rounded-sm" />
-
 								</Label>
 								<ChevronUp className="h-4 w-4 transition-transform duration-200 group-data-expanded:-rotate-180" />
 							</div>
@@ -783,8 +917,14 @@ const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 											</AccordionTrigger>
 											<AccordionContent>
 												<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-2 border-l px-2.5 py-0.5">
-													{Array.from({ length: products }, (_, product_idx) => product_idx).map((product) => (
-														<Skeleton className="h-4 w-[min(250px,100%)] rounded-sm ml-2 last:mb-1" key={product}/>
+													{Array.from(
+														{ length: products },
+														(_, product_idx) => product_idx
+													).map((product) => (
+														<Skeleton
+															className="h-4 w-[min(250px,100%)] rounded-sm ml-2 last:mb-1"
+															key={product}
+														/>
 													))}
 												</div>
 											</AccordionContent>
@@ -808,7 +948,7 @@ function ProductSelectionDialog({
 	selectedProducts,
 }: ProductSelectionDialogProps) {
 	const [tempSelected, setTempSelected] = useState<SelectedProduct[]>(selectedProducts);
-	
+
 	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const navigation = useNavigation();
@@ -972,7 +1112,7 @@ function ProductSelectionDialog({
 			);
 		}
 	};
-	
+
 	//TODO: Show a sheet where we display the information of product when we click on the name of product in the table list
 
 	const showMoreProducts = (subId: string) => {
@@ -989,7 +1129,7 @@ function ProductSelectionDialog({
 
 	const ProductsArea = () => {
 		if (isSearching) {
-			return <ProductSelectionDialogSkeleton />
+			return <ProductSelectionDialogSkeleton />;
 		} else {
 			return categories.length > 0 ? (
 				categories.map((cat) => (
@@ -1029,7 +1169,7 @@ function ProductSelectionDialog({
 												transition={{ duration: 0.2, ease: "easeInOut" }}
 												className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50"
 											>
-												<AccordionItem value={sub.id} >
+												<AccordionItem value={sub.id}>
 													<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
 														<div className="flex items-center justify-between">
 															<Label className="flex items-center px-2 py-1 cursor-pointer">
@@ -1089,7 +1229,9 @@ function ProductSelectionDialog({
 																		}
 																		className={cn("m-0 p-0")}
 																	>
-																		<p className="text-muted-foreground text-sm">Show More</p>
+																		<p className="text-muted-foreground text-sm">
+																			Show More
+																		</p>
 																	</Button>
 																)}
 															</div>
@@ -1123,7 +1265,7 @@ function ProductSelectionDialog({
 				</div>
 			);
 		}
-	}
+	};
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>

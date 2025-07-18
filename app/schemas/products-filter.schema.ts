@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { productSortByEnums, productSortTypeEnums } from "~/constants";
+import { productSortByEnums, sortTypeEnums } from "~/constants";
 
 export const ProductFilterFormSchema = z.object({
 	q: z.string().optional(),
@@ -18,7 +18,7 @@ export const ProductFilterFormSchema = z.object({
 		.nullable()
 		.optional(),
 	sortBy: z.enum(productSortByEnums).optional(),
-	sortType: z.enum(productSortTypeEnums).optional(),
+	sortType: z.enum(sortTypeEnums).optional(),
 });
 
 export type ProductsFilterFormData = z.infer<typeof ProductFilterFormSchema>;

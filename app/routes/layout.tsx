@@ -8,6 +8,7 @@ import { currentUserQuery } from "~/queries/auth.q";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
+	console.log("▶ ▶ ▶ Layout user requested 🌋");
 	
 	if (!user && request.url !== "/login") {
 		return redirect("/login");

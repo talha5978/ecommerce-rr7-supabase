@@ -8,6 +8,7 @@ export default function ErrorPage() {
     const error = useRouteError();
     // console.log(error);
     let errorText = "";
+	const isProdEnv: boolean = import.meta!.env!.VITE_ENV === "production";
 
     if (isRouteErrorResponse(error)) {
         if (error.status === 404) {
@@ -50,9 +51,11 @@ export default function ErrorPage() {
 					<p className="mt-6 text-lg font-medium text-pretty text-muted-foreground sm:text-xl/8">
 						{error.message || "Something went wrong."}
 					</p>
-					<p className="mt-3 text-sm font-medium text-pretty text-muted-foreground break-all">
-						{error?.stack}
-					</p>
+					{isProdEnv ? (
+						<p className="mt-3 text-sm font-medium text-pretty text-muted-foreground break-all">
+							{error?.stack}
+						</p>
+					) : null}
 					<div className="mt-10 flex items-center justify-center gap-x-6">
 						<Link to="/">
 							<Button>

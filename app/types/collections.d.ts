@@ -1,5 +1,6 @@
 import type { ApiError } from "~/utils/ApiError";
 import type { Database } from "~/types/supabase";
+import { MetaDetailsRow } from "./meta_details";
 
 export interface HighLevelCollection {
 	id: string;
@@ -60,3 +61,15 @@ export interface CollectionDataItemsResponse {
 
 // Product selected in collection mutation
 export type SelectedProduct = { id: string; name: string };
+
+type Collection_Row = Database["public"]["Tables"]["collections"]["Row"];
+
+export type FullCollection = Omit<Collection_Row, "meta_details"> & {
+	meta_details: MetaDetailsRow | null;
+	products: SelectedProduct[];
+}
+
+export type GetFullCollection = {
+	collection: FullCollection | null;
+	error: ApiError | null;
+}

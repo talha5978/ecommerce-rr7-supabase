@@ -31,6 +31,9 @@ class DefaultValues {
 
 	readonly DEFAULT_COLLECTIONS_PRODUCTS_PAGE_SIZE = 7;
 	readonly DEFAULT_COLLECTIONS_CATEGORY_PAGE_SIZE = 3;
+
+	readonly defaultCollectionSortByFilter = "createdAt";
+    readonly defaultCollectionSortTypeFilter = "desc";
 }
 
 export const defaults = new DefaultValues();
@@ -143,7 +146,7 @@ export const PRODUCT_IMG_DIMENSIONS = {
 };
 
 export const COLLECTION_IMG_DIMENSIONS = {
-	min: { width: 800, height: 400 },
+	min: { width: 600, height: 400 },
 	max: { width: 1600, height: 1200 },
 }
 
@@ -162,6 +165,7 @@ export const TABLE_NAMES = {
 	category: "category",
 	sub_category: "sub_category",
 	collection: "collections",
+	collection_products: "collection_products",
 } as const;
 
 export const STORAGE_BUCKETS = {
@@ -171,6 +175,8 @@ export const STORAGE_BUCKETS = {
 export const SUPABASE_IMAGE_BUCKET_PATH = `https://xbpbnydexqzhespljrqi.supabase.co/storage/v1/object/public/${STORAGE_BUCKETS.images}/`;
 
 
+export const sortTypeEnums = ["asc", "desc"] as const;
+
 export const productSortByEnums = [
 	"id",
 	"name",
@@ -179,7 +185,6 @@ export const productSortByEnums = [
 	"free_shipping",
 	"createdAt",
 ] as const;
-export const productSortTypeEnums = ["asc", "desc"] as const;
 
 export const productVariantsSortByEnums = [
 	"id",
@@ -189,9 +194,15 @@ export const productVariantsSortByEnums = [
 	"stock",
 	"createdAt",
 ] as const;
-export const productVariantSortTypeEnums = ["asc", "desc"] as const;
 
 export const filterOps = ["eq","gt","gte","lt","lte"] as const;
 export type FilterOp = typeof filterOps[number];
 
 export const collectionsSelectionTypeEnum = ["null", "category_based", "product_based"] as const;
+
+export const collectionSortByEnums = [
+	"status",
+	"products_count",
+	"name",
+	"createdAt",
+] as const;

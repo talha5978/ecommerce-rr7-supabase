@@ -1,12 +1,14 @@
 import { queryOptions } from "@tanstack/react-query";
+import { CollectionFilers } from "~/schemas/collections-filter.schema";
 import { CollectionsService } from "~/services/collections.service";
-import { CollectionDataItemsResponse, GetHighLevelCollectionsResp } from "~/types/collections";
+import { CollectionDataItemsResponse, GetFullCollection, GetHighLevelCollectionsResp } from "~/types/collections";
 
 interface collectionsQueryArgs {
     request: Request;
     q: string;
     pageIndex?: number;
     pageSize?: number;
+	filters?: CollectionFilers
 }
 
 export type CollectionDataItemsArgs = {
@@ -19,12 +21,17 @@ type collectionsDataItemsArgs = {
     request: Request;
 } & CollectionDataItemsArgs;
 
-export const collectionsQuery = ({ request, q, pageIndex, pageSize }: collectionsQueryArgs) => {
+type fullCollectionQueryArgs = {
+	request: Request;
+	collection_id: string;
+}
+
+export const collectionsQuery = ({ request, q, pageIndex, pageSize, filters }: collectionsQueryArgs) => {
 	return queryOptions<GetHighLevelCollectionsResp>({
-		queryKey: ["highLvlCollections", q, pageIndex, pageSize],
+		queryKey: ["highLvlCollections", q, pageIndex, pageSize, filters],
 		queryFn: async () => {
 			const prodService = new CollectionsService(request);
-			const result = await prodService.getHighLevelCollections(q, pageIndex, pageSize);
+			const result = await prodService.getHighLevelCollections(q, pageIndex, pageSize, filters);
 			return result;
 		},
 	});
@@ -45,6 +52,18 @@ export const collectionDataItemsQuery = ({
 				categoryPageIndex,
 				productPageIndex,
 			});
+			return result;
+		},
+	});
+};
+
+
+export const FullCollectionQuery = ({ request, collection_id }: fullCollectionQueryArgs) => {
+	return queryOptions<GetFullCollection>({
+		queryKey: ["fullCollection", collection_id],
+		queryFn: async () => {
+			const collectionSvc = new CollectionsService(request);
+			const result = await collectionSvc.getFullCollection(collection_id);
 			return result;
 		},
 	});

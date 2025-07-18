@@ -149,7 +149,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 	}
 
     return (
-		<div className="w-full flex justify-between gap-4">
+		<div className="w-full flex justify-between gap-4 items-center">
 			<div>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="relative">

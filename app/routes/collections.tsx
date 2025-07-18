@@ -12,7 +12,7 @@ import { queryClient } from "~/lib/queryClient";
 import { useEffect, useMemo, useState } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
-import { defaults, SUPABASE_IMAGE_BUCKET_PATH, productSortTypeEnums } from "~/constants";
+import { defaults, SUPABASE_IMAGE_BUCKET_PATH, sortTypeEnums } from "~/constants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { bolleanToStringConverter, GetFormattedDate } from "~/lib/utils";
 import StatusBadge from "~/components/status-badge";
@@ -28,9 +28,9 @@ import { useIsMobile } from "~/hooks/use-mobile";
 import { ProductStatusUpdateFormValues, ProductStatusUpdateInputSchema } from "~/schemas/product.schema";
 import { collectionsQuery } from "~/queries/collections.q";
 import { HighLevelCollection } from "~/types/collections";
-
-const defaultPage = (defaults.DEFAULT_COLLECTIONS_PAGE - 1).toString();
-const defaultSize = defaults.DEFAULT_COLLECTIONS_PAGE_SIZE.toString();
+import { CollectionFilers, CollectionFilterFormSchema, CollectionsFilterFormData } from "~/schemas/collections-filter.schema";
+import { getProductsFiltersPayload } from "~/utils/getProductsFiltersPayload";
+import { getCollectionsFiltersPayload } from "~/utils/getCollectionssFiltersPayload";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
@@ -39,7 +39,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		defaultPageSize: defaults.DEFAULT_COLLECTIONS_PAGE_SIZE,
 	});
 
-	const data = await queryClient.fetchQuery(collectionsQuery({ request, q, pageIndex, pageSize }));
+	const collectionFilters: CollectionFilers = getCollectionsFiltersPayload({ request });
+
+	const data = await queryClient.fetchQuery(collectionsQuery({
+		request,
+		q,
+		pageIndex,
+		pageSize,
+		filters: collectionFilters
+	}));
 
 	return {
 		data,
@@ -74,54 +82,25 @@ export default function CollectionsPage({
 	const columns: ColumnDef<HighLevelCollection, unknown>[] = [
 		{
 			id: "select",
-			header: ({ table }) => {
-				data.total > 0 ? (
-					<div className="flex items-center justify-center">
-						<Checkbox
-							checked={
-								table.getIsAllPageRowsSelected() ||
-								(table.getIsSomePageRowsSelected() && "indeterminate")
-							}
-							onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-							aria-label="Select all"
-						/>
-					</div>
-				) : null;
-			},
+			header: ({ table }) => (
+				<Checkbox
+					checked={
+						table.getIsAllPageRowsSelected() ||
+						(table.getIsSomePageRowsSelected() && "indeterminate")
+					}
+					onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+					aria-label="Select all"
+				/>
+			),
 			cell: ({ row }) => (
-				<div className="flex items-center justify-center">
-					<Checkbox
-						checked={row.getIsSelected()}
-						onCheckedChange={(value) => row.toggleSelected(!!value)}
-						aria-label="Select collections"
-					/>
-				</div>
+				<Checkbox
+					checked={row.getIsSelected()}
+					onCheckedChange={(value) => row.toggleSelected(!!value)}
+					aria-label="Select row"
+				/>
 			),
 			enableSorting: false,
 			enableHiding: false,
-		},
-		{
-			id: "Image",
-			accessorKey: "image_url",
-			cell: (info: any) => {
-				const rowImg = info.row.original.image_url;
-				const image = `${SUPABASE_IMAGE_BUCKET_PATH}/${rowImg}`;
-
-				if (rowImg) {
-					return (
-						<div>
-							<ImageViewer
-								thumbnailUrl={image}
-								imageUrl={image}
-								classNameThumbnailViewer="h-22 w-24 rounded-sm object-cover shadow-md"
-							/>
-						</div>
-					);
-				} else {
-					return <Skeleton className="h-16 w-16 rounded-sm" />;
-				}
-			},
-			header: () => "",
 		},
 		{
 			id: "Name",
@@ -163,7 +142,7 @@ export default function CollectionsPage({
 			id: "Url Key",
 			accessorKey: "url_key",
 			cell: (info: any) => "/" + info.row.original.url_key,
-			header: () => "Url Key"
+			header: () => "Url Key",
 		},
 		{
 			id: "Created At",
@@ -185,11 +164,10 @@ export default function CollectionsPage({
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuSeparator />
 							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 								<DropdownMenuItem>Update</DropdownMenuItem>
 							</Link>
-							<UpdateStatusForm product={rowData as HighLevelCollection} />
+							<UpdateStatusForm inputStatus={rowData.status as boolean} collectionId={rowData.id} />
 							<Link to={`${rowData.id}/update`}>
 								<DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
 							</Link>
@@ -263,9 +241,9 @@ export default function CollectionsPage({
 	);
 }
 
-function UpdateStatusForm({ product }: { product: HighLevelCollection }) {
+function UpdateStatusForm({ inputStatus, collectionId }: { inputStatus: boolean, collectionId: string }) {
 	const defaultValues = {
-		status: bolleanToStringConverter(product?.status) as "true" | "false"
+		status: bolleanToStringConverter(inputStatus) as "true" | "false"
 	};
 
 	const { control, reset } = useForm<ProductStatusUpdateFormValues>({
@@ -305,16 +283,16 @@ function UpdateStatusForm({ product }: { product: HighLevelCollection }) {
 
 	// Trigger submission when status or is_featured changes
 	useEffect(() => {
-		const initialStatus = bolleanToStringConverter(product?.status) as "true" | "false";
+		const initialStatus = bolleanToStringConverter(inputStatus) as "true" | "false";
 		const currentStatus = status !== initialStatus;
 
 		if (currentStatus && status != undefined) {
 			const formData = new FormData();
 			formData.append("status", status);
 			setSubmitting(true); // Set the submitting field
-			fetcher.submit(formData, { method: "post", action: `${product.id}/update` });
+			fetcher.submit(formData, { method: "post", action: `${collectionId}/update` });
 		}
-	}, [status, product]);
+	}, [status, inputStatus, collectionId, fetcher]);
 
 	const fields = useMemo(
 		() => [
@@ -373,17 +351,17 @@ function SortSelector() {
 	const navigation = useNavigation();
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
-	type sortFormData = Pick<ProductsFilterFormData, "sortBy" | "sortType">;
+	type sortFormData = Pick<CollectionsFilterFormData, "sortBy" | "sortType">;
 
 	const form = useForm<sortFormData>({
-		resolver: zodResolver(ProductFilterFormSchema),
+		resolver: zodResolver(CollectionFilterFormSchema),
 		defaultValues: {
 			sortBy:
 				(searchParams.get("sortBy") as sortFormData["sortBy"]) ||
-				defaults.defaultProductSortByFilter,
+				defaults.defaultCollectionSortByFilter,
 			sortType:
 				(searchParams.get("sortType") as sortFormData["sortType"]) ||
-				defaults.defaultProductSortTypeFilter,
+				defaults.defaultCollectionSortTypeFilter,
 		},
 	});
 
@@ -421,11 +399,9 @@ function SortSelector() {
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value="createdAt">Date Created</SelectItem>
-											<SelectItem value="name">Name</SelectItem>
 											<SelectItem value="status">Status</SelectItem>
-											<SelectItem value="is_featured">Featured</SelectItem>
-											<SelectItem value="free_shipping">Free Shipping</SelectItem>
-											<SelectItem value="id">ID</SelectItem>
+											<SelectItem value="products_count">Products	Count</SelectItem>
+											<SelectItem value="name">Name</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
@@ -448,7 +424,7 @@ function SortSelector() {
 											<SelectValue placeholder="asc / desc" />
 										</SelectTrigger>
 										<SelectContent>
-											{productSortTypeEnums.map((sortType) => (
+											{sortTypeEnums.map((sortType) => (
 												<SelectItem key={sortType} value={sortType}>
 													{sortType === "asc" ? (
 														<>
@@ -484,12 +460,13 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 
 	const [searchParams] = useSearchParams();
 	const currentQuery = searchParams.get("q") ?? "";
-
+	console.log("FDsa");
+	
     return (
 		<>
-			<div className="w-full flex justify-between gap-4">
+			<div className="w-full flex justify-between gap-4 items-center">
 				<div className="flex gap-2 items-center">
-					<Form method="get" action="/products">
+					<Form method="get" action="/collections">
 						<div className="relative">
 							<Search
 								className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
@@ -520,7 +497,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 								<span className="hidden md:inline">Sort</span>
 							</Button>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent align={isMobile ? "center" : "start"} className="w-fit">
+						<DropdownMenuContent align={isMobile ? "end" : "start"} className="w-fit">
 							<DropdownMenuLabel>Sort Products</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							{/* Sorting Select! */}

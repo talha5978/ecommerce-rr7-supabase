@@ -43,6 +43,7 @@ interface DataTableProps<T> {
 	pageSize?: number;
 	total?: number;
 	customEmptyMessage?: string;
+	cellClassName?: string;
 }
 
 export interface DataTableViewOptionsProps<T> {
@@ -61,7 +62,8 @@ export function DataTable<T>({
 	onPageSizeChange,
 	pageSize,
 	total,
-	customEmptyMessage
+	customEmptyMessage,
+	cellClassName = "**:data-[slot=table-cell]:last:bg-background"
 }: DataTableProps<T>) {
 	if (!table) {
 		return (
@@ -96,7 +98,7 @@ export function DataTable<T>({
 						</TableRow>
 					))}
 				</TableHeader>
-				<TableBody className="**:data-[slot=table-cell]:first:w-8">
+				<TableBody className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}>
 					{table.getRowModel().rows?.length > 0 ? (
 						table.getRowModel().rows.map((row) => (
 							<TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>

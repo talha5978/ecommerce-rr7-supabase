@@ -473,12 +473,49 @@ export type Database = {
 				};
 				Returns: string;
 			};
+			get_high_level_collections: {
+				Args: {
+					p_search_term?: string;
+					p_page?: number;
+					p_page_size?: number;
+					p_sort_by?: string;
+					p_sort_direction?: string;
+				};
+				Returns: {
+					id: string;
+					name: string;
+					image_url: string;
+					status: boolean;
+					created_at: string;
+					url_key: string;
+					products_count: number;
+					total_count: number;
+				}[];
+			};
 			get_product_attribute_types: {
 				Args: Record<PropertyKey, never>;
 				Returns: {
 					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
 					values_count: number;
 				}[];
+			};
+			update_collection: {
+				Args: {
+					p_collection_id: string;
+					p_name: string;
+					p_description: string;
+					p_image_url: string;
+					p_sort_order: number;
+					p_status: boolean;
+					p_meta_details_id: string;
+					p_url_key: string;
+					p_meta_title: string;
+					p_meta_description: string;
+					p_meta_keywords: string;
+					p_added_product_ids: string[];
+					p_removed_product_ids: string[];
+				};
+				Returns: undefined;
 			};
 		};
 		Enums: {

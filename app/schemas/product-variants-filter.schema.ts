@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type FilterOp, filterOps, productVariantSortTypeEnums, productVariantsSortByEnums } from "~/constants";
+import { type FilterOp, filterOps, sortTypeEnums, productVariantsSortByEnums } from "~/constants";
 
 export const defaultOp = "eq";
 
@@ -23,7 +23,7 @@ export const ProductVariantsFilterFormSchema = z.object({
 		.nullable()
 		.optional(),
 	sortBy: z.enum(productVariantsSortByEnums).optional(),
-	sortType: z.enum(productVariantSortTypeEnums).optional(),
+	sortType: z.enum(sortTypeEnums).optional(),
 });
 
 export type ProductVaraintsFilterFormData = z.infer<typeof ProductVariantsFilterFormSchema>;

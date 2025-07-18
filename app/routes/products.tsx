@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { productsQuery } from "~/queries/products.q";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
-import { defaults, SUPABASE_IMAGE_BUCKET_PATH, productSortTypeEnums } from "~/constants";
+import { defaults, SUPABASE_IMAGE_BUCKET_PATH, sortTypeEnums } from "~/constants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import type { HighLevelProduct } from "~/types/products";
 import { bolleanToStringConverter, GetFormattedDate } from "~/lib/utils";
@@ -110,7 +110,6 @@ export default function ProductsMainPage({
 					return (
 						<div>
 							<ImageViewer
-								thumbnailUrl={image}
 								imageUrl={image}
 								classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
 							/>
@@ -118,7 +117,7 @@ export default function ProductsMainPage({
 					)
 				} else {
 					return (
-						<Skeleton className="h-16 w-16 rounded-sm" />
+						<Skeleton className="h-20 w-18 rounded-sm" />
 					)
 				}
 			},
@@ -561,7 +560,7 @@ function SortSelector() {
 											<SelectValue placeholder="asc / desc" />
 										</SelectTrigger>
 										<SelectContent>
-											{productSortTypeEnums.map((sortType) => (
+											{sortTypeEnums.map((sortType) => (
 												<SelectItem key={sortType} value={sortType}>
 													{sortType === "asc" ? (
 														<>
@@ -618,7 +617,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 
     return (
 		<>
-			<div className="w-full flex justify-between gap-4">
+			<div className="w-full flex justify-between gap-4 items-center">
 				<div className="flex gap-2 items-center">
 					<Form method="get" action="/products">
 						<div className="relative">
@@ -938,7 +937,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 												className="rounded"
 												open={allChecked || indeterminate}
 											>
-												<summary className="flex items-center gap-2 cursor-pointer list-none">
+												<summary className="flex items-center gap-2 cursor-pointer list-none hover:underline underline-offset-4">
 													<Checkbox
 														id={`cat-${cat.id}`}
 														checked={
@@ -968,9 +967,9 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 													</Label>
 												</summary>
 
-												<div className="pl-6 mt-2 space-y-1">
+												<div className="pl-4 m-2 mt-2 space-y-1 border-sidebar-border border-l">
 													{cat.sub_category.map((sub) => (
-														<div key={sub.id} className="flex items-center gap-2">
+														<div key={sub.id} className="flex items-center gap-2 hover:underline underline-offset-4">
 															<Checkbox
 																id={`subcat-${sub.id}`}
 																checked={selectedSubCategories.includes(

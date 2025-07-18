@@ -50,6 +50,11 @@ const getAcceptedFormats = () : { [key: string]: string[] } => {
 	return accept;
 };
 
+export const getSimpleImgFormats = () => {
+	const formats = ALLOWED_IMAGE_FORMATS.map(format => format.split('/')[1].toUpperCase());
+	return formats.join(', ');
+}
+
 const ImagePreview = ({ url, onRemove }: ImagePreviewProps) => (
 	<div className="relative">
 		<button
@@ -72,7 +77,7 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 	const validateImage = useCallback((file: File): Promise<string | null> => {
 		return new Promise((resolve) => {
 			if (!ALLOWED_IMAGE_FORMATS.includes(file.type)) {
-				return resolve(`Invalid image format. Only JPEG, PNG, or WebP are allowed.`);
+				return resolve(`Invalid image format. Only ${getSimpleImgFormats()} are allowed.`);
 			}
 			if (file.size > MAX_IMAGE_SIZE) {
 				console.log(file.size);
@@ -169,56 +174,58 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 	const acceptedFormats = getAcceptedFormats();
 
 	return (
-		<div className="w-full max-w-[300px] space-y-2">
-			{previewUrl && !uploadError ? (
-				<ImagePreview url={previewUrl} onRemove={handleRemove} />
-			) : (
-				<Dropzone
-					onDrop={handleDrop}
-					accept={acceptedFormats}
-					maxFiles={1}
-					maxSize={MAX_IMAGE_SIZE}
-				>
-					{({ getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject }) => (
-						<div
-							{...getRootProps()}
-							className={cn(
-								"border border-dashed flex items-center justify-center aspect-square rounded-md focus:outline-none outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointer",
-								{
-									"border-primary bg-secondary": isDragActive && isDragAccept,
-									"border-destructive bg-destructive/20": isDragActive && isDragReject,
-								}
-							)}
-						>
-							<input {...getInputProps()} id={name} />
-							<div className="flex flex-col items-center gap-2">
-								<ImageIcon className="h-16 w-16 text-muted-foreground" strokeWidth={0.85} />
-								<div className="px-2 flex flex-col gap-1 justify-center items-center">
-									<span className="text-sm text-muted-foreground">
-										Drag and drop or click to upload
-									</span>
-									<span className="text-xs text-muted-foreground">
-										{ALLOWED_IMAGE_FORMATS.map(
-											(fmt) => `.${fmt.split("/")[1].toUpperCase()}`
-										).join(", ")}
-									</span>
-									<span className="text-xs text-muted-foreground">
-										MAX {formatFileSize(MAX_IMAGE_SIZE)} Supported
-									</span>
-									<span className="text-xs text-muted-foreground">
-										{formatDimensions(dimensions.min)} to{" "}
-										{formatDimensions(dimensions.max)}px
-									</span>
-									
+		<>
+			<div className="w-full max-w-[300px]">
+				{previewUrl && !uploadError ? (
+					<ImagePreview url={previewUrl} onRemove={handleRemove} />
+				) : (
+					<Dropzone
+						onDrop={handleDrop}
+						accept={acceptedFormats}
+						maxFiles={1}
+						maxSize={MAX_IMAGE_SIZE}
+					>
+						{({ getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject }) => (
+							<div
+								{...getRootProps()}
+								className={cn(
+									"border border-dashed flex items-center justify-center aspect-square rounded-md focus:outline-none outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointer",
+									{
+										"border-primary bg-secondary": isDragActive && isDragAccept,
+										"border-destructive bg-destructive/20": isDragActive && isDragReject,
+									}
+								)}
+							>
+								<input {...getInputProps()} id={name} />
+								<div className="flex flex-col items-center gap-2">
+									<ImageIcon className="h-16 w-16 text-muted-foreground" strokeWidth={0.85} />
+									<div className="px-2 flex flex-col gap-1 justify-center items-center">
+										<span className="text-sm text-muted-foreground">
+											Drag and drop or click to upload
+										</span>
+										<span className="text-xs text-muted-foreground">
+											{ALLOWED_IMAGE_FORMATS.map(
+												(fmt) => `.${fmt.split("/")[1].toUpperCase()}`
+											).join(", ")}
+										</span>
+										<span className="text-xs text-muted-foreground">
+											MAX {formatFileSize(MAX_IMAGE_SIZE)} Supported
+										</span>
+										<span className="text-xs text-muted-foreground">
+											{formatDimensions(dimensions.min)} to{" "}
+											{formatDimensions(dimensions.max)}px
+										</span>
+										
+									</div>
 								</div>
 							</div>
-						</div>
-					)}
-				</Dropzone>
-			)}
+						)}
+					</Dropzone>
+				)}
+			</div>
 			{uploadError && (
 				<span className="text-sm text-destructive">{uploadError}</span>
 			)}
-		</div>
+		</>
 	);
 }

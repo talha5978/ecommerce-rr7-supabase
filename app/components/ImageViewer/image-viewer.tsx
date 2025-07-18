@@ -14,7 +14,7 @@ import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { Button } from "~/components/ui/button";
 
 const DEFAULT_PLACEHOLDER_URL =
-	"https://raw.githubusercontent.com/stackzero-labs/ui/refs/heads/main/public/placeholders/headphone-2.jpg";
+	"https://www.google.com/url?sa=i&url=https%3A%2F%2Fwallpapers.com%2Fblank-white-background&psig=AOvVaw267cKwkHwDis3w_7n710Id&ust=1752859270362000&source=images&cd=vfe&opi=89978449&ved=0CBUQjRxqFwoTCNDEwuSzxI4DFQAAAAAdAAAAABAM";
 
 interface ImageViewerProps {
 	className?: string;
