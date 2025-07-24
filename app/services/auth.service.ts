@@ -1,31 +1,63 @@
-import type { Database } from "~/types/supabase";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError } from "~/utils/ApiError";
 import type { GetCurrentUser, Login, Logout, VerifyOtp } from "~/types/auth";
+import type { AdminUser } from "~/types/user";
+import { Service } from "~/services/service";
 
-export class AuthService {
-	private supabase: SupabaseClient<Database>;
-	readonly headers: Headers;
-
-	constructor(request: Request) {
-		const { supabase, headers } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-		this.headers = headers;
-	}
-
+export class AuthService extends Service {
 	async getCurrentUser(): Promise<GetCurrentUser> {
 		try {
 			const {
-				data: { user }, error: fetchError
+				data: { user: authUser }, error: authUserErr
 			} = await this.supabase.auth.getUser();
-
+			console.log("Auth user: ", authUser);
+			
 			let error: null | ApiError = null;
-			if (fetchError) {
-				error = new ApiError(fetchError.message, 500, []);
+			if (authUserErr || authUser == null) {
+				error = new ApiError(
+					authUserErr?.message || "User not found", 401, []
+				);
+				return { user: null, error };
 			}
 
-			return { user, error };
+			console.log("Reached here 😀😀😀", authUser.id);
+			
+			const { data: userDetails, error: userDetailsErr } = await this.supabase
+				.from(this.USERS_TABLE)
+				.select(`
+					user_id,
+					first_name,
+					last_name,
+					phone_number,
+					role,
+					${this.USER_ROLES_TABLE}(id, role_name)
+				`)
+				.eq("user_id", authUser.id)
+				.single();
+			
+			console.log("Reached at next level 😀😀😀", userDetails ?? "NOT FOUND 🌋");
+			
+			if (userDetailsErr || userDetails == null) {
+				error = new ApiError(
+					userDetailsErr?.message || "User not found", 500, []
+				);
+				return { user: null, error };
+			}
+
+			const appUser: AdminUser = {
+				id: authUser.id ?? userDetails.user_id,
+				email: authUser.email ?? "",
+				is_email_verified: authUser.user_metadata.email_verified ?? true,
+				createdAt: authUser.created_at,
+				first_name: userDetails.first_name ?? null,
+				last_name: userDetails.last_name ?? null,
+				phone_number: userDetails.phone_number ?? null,
+				role: {
+					role_id: userDetails.user_roles?.id ?? 2,
+					role_name: userDetails.user_roles?.role_name ?? "admin",
+				}
+			}
+
+			return { user: appUser, error };
 		} catch (err: any) {
 			if (err instanceof ApiError) {
 				return { user: null, error: err };

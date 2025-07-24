@@ -1,21 +1,10 @@
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { UploadMediaResponse } from "~/types/media";
 import { generateFilePath } from "~/utils/generateSlug";
 import { compressImage } from "~/utils/ImageCompression";
-import { STORAGE_BUCKETS } from "~/constants";
+import { Service } from "~/services/service";
 
-export class MediaService {
-	private supabase: SupabaseClient<Database>;
-	private readonly IMAGES_BUCKET = STORAGE_BUCKETS.images;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-	}
-
+export class MediaService extends Service {
 	/** Uploads image to supabase storage */
 	async uploadImage(file: File): Promise<UploadMediaResponse> {
 		const compressedBuffer = await compressImage(file);

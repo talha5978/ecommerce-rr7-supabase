@@ -1,8 +1,5 @@
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { defaults, TABLE_NAMES } from "~/constants";
+import { defaults } from "~/constants";
 import {
 	CollectionDataCategory,
 	CollectionDataItemsResponse,
@@ -17,23 +14,9 @@ import { CollectionActionData, CollectionUpdateActionData } from "~/schemas/coll
 import { MediaService } from "./media.service";
 import { stringToBooleanConverter } from "~/lib/utils";
 import { CollectionFilers } from "~/schemas/collections-filter.schema";
+import { Service } from "~/services/service";
 
-export class CollectionsService {
-	private supabase: SupabaseClient<Database>;
-	private readonly request: Request;
-	private readonly PRODUCTS_TABLE = TABLE_NAMES.product;
-	private readonly CATEGORY_TABLE = TABLE_NAMES.category;
-	private readonly SUB_CATEGORY_TABLE = TABLE_NAMES.sub_category;
-	private readonly VARIANTS_TABLE = TABLE_NAMES.product_variant;
-	private readonly COLLECTION_PRODUCTS_TABLE = TABLE_NAMES.collection_products;
-	private readonly COLLECTION_TABLE = TABLE_NAMES.collection;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-		this.request = request;
-	}
-
+export class CollectionsService extends Service {
 	/** Fetch collections for index page */
 	async getHighLevelCollections(
 		q = "",
@@ -117,7 +100,7 @@ export class CollectionsService {
 						name,
 						status,
 						createdAt,
-						${this.VARIANTS_TABLE}!inner(id, status),
+						${this.PRODUCT_VARIANT_TABLE}!inner(id, status),
 						${this.SUB_CATEGORY_TABLE}!inner(
 							id,
 							sub_category_name,
@@ -133,7 +116,7 @@ export class CollectionsService {
 					{ count: "exact" }
 				)
 				.eq("status", true) // Filter active products
-				.eq(`${this.VARIANTS_TABLE}.status`, true); // Filter products with active variants
+				.eq(`${this.PRODUCT_VARIANT_TABLE}.status`, true); // Filter products with active variants
 
 			// Apply search filter to product name if provided
 			if (q.length > 0) {

@@ -44,14 +44,21 @@ export async function action({ request }: ActionFunctionArgs) {
 		}
 
 		const authSvc = new AuthService(request);
-		const { error, headers } = await authSvc.verifyOtp({ email, token });	
+		const { error: tokenError, headers } = await authSvc.verifyOtp({ email, token });	
 		console.log(headers);
 		
-		console.log("ERROR 🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋", error);
+		if (tokenError) {
+			return { success: false, error: tokenError.message || "Failed to login" };
+		}
+
+		console.log("ERROR 🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋", tokenError);
 		await queryClient.invalidateQueries({ queryKey: ["current_user"] });
 		
-		if (error) {
-			return { error: error.message || "Failed to login" };
+		const { user, error: userErr } = await authSvc.getCurrentUser();
+
+		if (userErr || !user) {
+			console.error("Failed to fetch user after OTP verification:", userErr);
+			return { success: false, error: "Failed to fetch user session" };
 		}
 
 		return new Response(

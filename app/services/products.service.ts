@@ -1,9 +1,6 @@
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { FullProduct, GetAllProductsResponse, GetSingleProductResponse, ProductNameResponse, ProductNamesListResponse, ProductUpdationPayload } from "~/types/products";
-import { defaults, TABLE_NAMES } from "~/constants";
+import { defaults } from "~/constants";
 import type { ProductActionData, ProductUpdateActionData } from "~/schemas/product.schema";
 import { MetaDetailsService } from "~/services/meta-details.service";
 import { MediaService } from "~/services/media.service";
@@ -11,27 +8,14 @@ import { stringToBooleanConverter } from "~/lib/utils";
 import { ProductRAttributesService } from "./product-r-attributes.service";
 import { ProductAttributeRow } from "~/types/attributes";
 import type { ProductFilters } from "~/schemas/products-filter.schema";
+import { Service } from "~/services/service";
 
-export class ProductsService {
-	private supabase: SupabaseClient<Database>;
-	private readonly request: Request;
-	private readonly PRODUCT_TABLE = TABLE_NAMES.product;
-	private readonly VARIANT_TABLE = TABLE_NAMES.product_variant;
-	private readonly CATEGORIES_TABLE = TABLE_NAMES.category;
-	private readonly PRODUCT_ATTRIBUTES_TABLE = TABLE_NAMES.product_attributes;
-	private readonly ATTRIBUTES_TABLE = TABLE_NAMES.attributes;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-		this.request = request;
-	}
-
+export class ProductsService extends Service {
 	/** Fetch product name to show on varaint creation and updation page as a disabled field! */
 	async getProductName(product_id:string): Promise<ProductNameResponse> {
 		const { data: fetchedProduct, error: productError } =
 			await this.supabase
-				.from(this.PRODUCT_TABLE)
+				.from(this.PRODUCTS_TABLE)
 				.select(`name`)
 				.eq("id", product_id)
 				.single();
@@ -49,7 +33,7 @@ export class ProductsService {
 
 			const { data, error: fetchError, count: ProductCount } =
 				await this.supabase
-					.from(this.PRODUCT_TABLE)
+					.from(this.PRODUCTS_TABLE)
 					.select("id, name", { count: "exact" })
 					.limit(maxProductsAssumed);
 
@@ -92,13 +76,13 @@ export class ProductsService {
 			const to = from + pageSize - 1;
 
 			let query = this.supabase
-				.from(this.PRODUCT_TABLE)
+				.from(this.PRODUCTS_TABLE)
 				.select(`
 					name, id, cover_image, is_featured, status, createdAt,
 					sub_category!inner(
-						sub_category_name, ${this.CATEGORIES_TABLE}(category_name)
+						sub_category_name, ${this.CATEGORY_TABLE}(category_name)
 					),
-					${this.VARIANT_TABLE}(id)
+					${this.PRODUCT_VARIANT_TABLE}(id)
 				`, { count: "exact" })
 				.order(
 					filters.sortBy || defaults.defaultProductSortByFilter,
@@ -145,7 +129,7 @@ export class ProductsService {
 				products: data?.map((product) => {
 					return {
 						...product,
-						variants_count: product[this.VARIANT_TABLE].length ?? 0,
+						variants_count: product[this.PRODUCT_VARIANT_TABLE].length ?? 0,
 						categoryName: product.sub_category?.category?.category_name || "",
 						subCategoryName: product.sub_category?.sub_category_name || "",
 					}
@@ -168,7 +152,7 @@ export class ProductsService {
 	/** DELETE A PRODUCT FOR ROLLBACK!! */
 	async delProdcutForRollback(productId: string) {
 		return await this.supabase
-			.from(this.PRODUCT_TABLE)
+			.from(this.PRODUCTS_TABLE)
 			.delete()
 			.eq("id", productId);
 	}
@@ -205,7 +189,7 @@ export class ProductsService {
 
 
 		const { error: prodError, data } = await this.supabase
-			.from(this.PRODUCT_TABLE)
+			.from(this.PRODUCTS_TABLE)
 			.insert({
 				cover_image: cover_public_url,
 				description,
@@ -254,7 +238,7 @@ export class ProductsService {
 	async getFullSingleProduct(productId: string): Promise<GetSingleProductResponse> {
 		try {
 			let { data, error: queryError } = await this.supabase
-				.from(this.PRODUCT_TABLE)
+				.from(this.PRODUCTS_TABLE)
 				.select(`
 					*,
 					meta_details(*),
@@ -316,7 +300,7 @@ export class ProductsService {
 		} = input;
 
 		const { data: prodData, error: fetchError } = await this.supabase
-			.from(this.PRODUCT_TABLE)
+			.from(this.PRODUCTS_TABLE)
 			.select("meta_details, cover_image")
 			.eq("id", productId)
 			.single();
@@ -392,7 +376,7 @@ export class ProductsService {
 
 		if (Object.keys(prodUpdate).length > 0) {
 			const { error: prodUpdateError } = await this.supabase
-				.from(this.PRODUCT_TABLE)
+				.from(this.PRODUCTS_TABLE)
 				.update(prodUpdate)
 				.eq("id", productId);
 

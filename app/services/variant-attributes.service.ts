@@ -1,26 +1,15 @@
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { GetVariantAttributesResponse, VariantAttributeCreateResponse, VariantAttributeInput } from "~/types/variant-attributes";
-import { TABLE_NAMES } from "~/constants";
+import { Service } from "~/services/service";
 
-export class VariantsAttributesService {
-	private supabase: SupabaseClient<Database>;
-	private readonly TABLE = TABLE_NAMES.variant_attributes;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-	}
-
+export class VariantsAttributesService extends Service {
 	/** Create bulk of variant attributes */
 	async createBulkVariantAttributes(input: VariantAttributeInput[]): Promise<VariantAttributeCreateResponse> {
 		if (input.length == 0) {
 			throw new ApiError("Failed to create variant attributes", 500, []);
 		}
 		const { error: insertError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.VARIANT_ATTRIBUTES_TABLE)
 			.insert(input);
 
 		let error: null | ApiError = null;
@@ -37,7 +26,7 @@ export class VariantsAttributesService {
 	/** Fetch variant attributes for a variant using variant id */
 	async getVariantAttributes(variant_id: string): Promise<GetVariantAttributesResponse> {
 		const { data, error: dbError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.VARIANT_ATTRIBUTES_TABLE)
 			.select("*")
 			.eq("variant_id", variant_id);
 
@@ -55,7 +44,7 @@ export class VariantsAttributesService {
 	/** Delete a row of variant attributes table*/
 	async deleteVariantAttribute(variant_id: string, attribute_id: string): Promise<void> {
 		const { error } = await this.supabase
-			.from(this.TABLE)
+			.from(this.VARIANT_ATTRIBUTES_TABLE)
 			.delete()
 			.eq("variant_id", variant_id)
 			.eq("attribute_id", attribute_id);
@@ -72,7 +61,7 @@ export class VariantsAttributesService {
 	}): Promise<void> {
 
 		const { error } = await this.supabase
-			.from(this.TABLE)
+			.from(this.VARIANT_ATTRIBUTES_TABLE)
 			.delete()
 			.eq("variant_id", variant_id)
 			.in("attribute_id", attributes_ids);

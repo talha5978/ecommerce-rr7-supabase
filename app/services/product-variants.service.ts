@@ -1,32 +1,18 @@
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { GetAllProductVariants, ProductVariantUpdationPayload, SingleProductVariantResponse, VariantConstraintsData } from "~/types/product-variants";
-import { defaults, FilterOp, REQUIRED_VARIANT_ATTRIBS, TABLE_NAMES } from "~/constants";
+import { defaults, FilterOp, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
 import { MediaService } from "~/services/media.service";
-import { DuplicateVariantActionData, ProductVariantActionData, ProductVariantUpdateActionData } from "~/schemas/product-variants.schema";
+import type { DuplicateVariantActionData, ProductVariantActionData, ProductVariantUpdateActionData } from "~/schemas/product-variants.schema";
 import { bolleanToStringConverter, stringToBooleanConverter } from "~/lib/utils";
 import { VariantsAttributesService } from "./variant-attributes.service";
 import type { VariantAttributeInput } from "~/types/variant-attributes";
 import type { ProductAttributeRow } from "~/types/attributes.d";
 import { ProductsService } from "~/services/products.service";
-import { defaultOp, ProductVariantsFilters } from "~/schemas/product-variants-filter.schema";
+import { defaultOp, type ProductVariantsFilters } from "~/schemas/product-variants-filter.schema";
 import { applyFilterOps } from "~/utils/applyFilterOps";
+import { Service } from "~/services/service";
 
-export class ProductVariantsService {
-	private supabase: SupabaseClient<Database>;
-	private readonly VARIANTS_TABLE = TABLE_NAMES.product_variant;
-	private readonly VARIANT_ATTRIBUTES_TABLE = TABLE_NAMES.variant_attributes;
-	private readonly ATTRIBUTES_TABLE = TABLE_NAMES.attributes;
-	private readonly request: Request;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-		this.request = request;
-	}
-
+export class ProductVariantsService extends Service {
 	/** Fetch products variants for a product */
 	async getProductVariants(
 		q = "",
@@ -40,7 +26,7 @@ export class ProductVariantsService {
 			const to = from + pageSize - 1;
 
 			let query = this.supabase
-				.from(this.VARIANTS_TABLE)
+				.from(this.PRODUCT_VARIANT_TABLE)
 				.select("*", { count: "exact" })
 				.eq("product_id", productId)
 				.order(
@@ -122,7 +108,7 @@ export class ProductVariantsService {
 			const to = from + pageSize - 1;
 
 			let query = this.supabase
-				.from(this.VARIANTS_TABLE)
+				.from(this.PRODUCT_VARIANT_TABLE)
 				.select("*", { count: "exact" })
 				.order("createdAt", { ascending: false })
 				.range(from, to);
@@ -157,7 +143,7 @@ export class ProductVariantsService {
 
 	async delProductVariantForRollback(varaintId: string) {
 		return await this.supabase
-			.from(this.VARIANTS_TABLE)
+			.from(this.PRODUCT_VARIANT_TABLE)
 			.delete()
 			.eq("id", varaintId);
 	}
@@ -219,7 +205,7 @@ export class ProductVariantsService {
 		}
 
 		const { error: variantError, data } = await this.supabase
-			.from(this.VARIANTS_TABLE)
+			.from(this.PRODUCT_VARIANT_TABLE)
 			.insert({
 				product_id: productId as string,
 				images: images_arr as string[],
@@ -304,7 +290,7 @@ export class ProductVariantsService {
 			])
 		}
 		const { error: variantError, data } = await this.supabase
-			.from(this.VARIANTS_TABLE)
+			.from(this.PRODUCT_VARIANT_TABLE)
 			.insert({
 				product_id,
 				images: images as string[],
@@ -353,7 +339,7 @@ export class ProductVariantsService {
 	async getConstaintsForVariantMutations(product_id: string): Promise<VariantConstraintsData> {
 		try {
 			const { data, error: defaultFetchError } = await this.supabase
-				.from(this.VARIANTS_TABLE)
+				.from(this.PRODUCT_VARIANT_TABLE)
 				.select(`id`)
 				.eq("product_id", product_id)
 				.eq("is_default", true)
@@ -400,7 +386,7 @@ export class ProductVariantsService {
 	async getVariantData(variant_id: string): Promise<SingleProductVariantResponse> {
 		try {
 			const { data, error: dbError } = await this.supabase
-				.from(this.VARIANTS_TABLE)
+				.from(this.PRODUCT_VARIANT_TABLE)
 				.select(`
 					*, ${this.VARIANT_ATTRIBUTES_TABLE}(${this.ATTRIBUTES_TABLE}(*))
 				`)
@@ -524,7 +510,7 @@ export class ProductVariantsService {
 
 		// Conditionaly fetch the images first to update the image array
 		const { data, error: imageFetchError } = await this.supabase
-			.from(this.VARIANTS_TABLE)
+			.from(this.PRODUCT_VARIANT_TABLE)
 			.select("images")
 			.eq("id", variant_id)
 			.single();
@@ -594,7 +580,7 @@ export class ProductVariantsService {
 		}
 
 		const { error } = await this.supabase
-			.from(this.VARIANTS_TABLE)
+			.from(this.PRODUCT_VARIANT_TABLE)
 			.update(prodUpdate)
 			.eq("id", variant_id);
 

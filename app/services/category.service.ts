@@ -1,26 +1,12 @@
 
 import type { CategoryUpdationPayload, FullCategoryRow, FullSubCategoryRow, GetAllCategoriesResponse, GetCategoryResponse, GetHighLevelCategoriesResponse, GetHighLevelSubCategoriesResponse, GetSubCategoryResponse,  HighLevelCategory,  SubCategoryUpdationPayload } from "~/types/category.d";
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { defaults, TABLE_NAMES } from "~/constants";
+import { defaults } from "~/constants";
 import type { CategoryActionData, CategoryUpdateActionData, SubCategoryActionData, SubCategoryUpdateActionData } from "~/schemas/category.schema";
 import { MetaDetailsService } from "~/services/meta-details.service";
+import { Service } from "~/services/service";
 
-export class CategoryService {
-	private supabase: SupabaseClient<Database>;
-	private readonly request: Request;
-	private readonly CATEGORY_TABLE = TABLE_NAMES.category;
-	private readonly SUB_CATEGORY_TABLE = TABLE_NAMES.sub_category;
-	private readonly META_TABLE = TABLE_NAMES.meta_details;
-	
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-		this.request = request;
-	}
-
+export class CategoryService extends Service {
 	/** Fetch categoreies list where each category has at least one sub category (to be used for mutations and other tasks like in product creation page, updation page, theri filters and more...) */
 	async getAllCategories(pageIndex?: number): Promise<GetAllCategoriesResponse> {
 		try {
@@ -98,7 +84,7 @@ export class CategoryService {
 				.select(`
 					id, category_name, createdAt,
 					${this.SUB_CATEGORY_TABLE}(count),
-					${this.META_TABLE}(url_key)
+					${this.META_DETAILS_TABLE}(url_key)
 				`,
 					{ count: "exact" }
 				)
@@ -156,7 +142,7 @@ export class CategoryService {
 				.from(this.SUB_CATEGORY_TABLE)
 				.select(`
 					id, sub_category_name, description, createdAt,
-					${this.META_TABLE}(url_key)
+					${this.META_DETAILS_TABLE}(url_key)
 				`,
 					{ count: "exact" }
 				)
@@ -253,7 +239,7 @@ export class CategoryService {
 					`
 					*, 
 					${this.SUB_CATEGORY_TABLE}:sub_category(*),
-					${this.META_TABLE}:meta_details(*)
+					${this.META_DETAILS_TABLE}:meta_details(*)
 				`
 				)
 				.eq("id", categoryId)
@@ -330,7 +316,7 @@ export class CategoryService {
 				.from(this.SUB_CATEGORY_TABLE)
 				.select(`
 					*,
-					${this.META_TABLE}:meta_details(*)
+					${this.META_DETAILS_TABLE}:meta_details(*)
 				`)
 				.eq("id", sub_category_id)
 				.single();

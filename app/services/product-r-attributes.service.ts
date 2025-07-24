@@ -1,26 +1,15 @@
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { ProductRAttributeCreateResponse, ProductRAttributeInput } from "~/types/product-r-attributes";
-import { TABLE_NAMES } from "~/constants";
+import { Service } from "~/services/service";
 
-export class ProductRAttributesService {
-	private supabase: SupabaseClient<Database>;
-	private readonly TABLE = TABLE_NAMES.product_attributes;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-	}
-
+export class ProductRAttributesService extends Service {
 	/** Create bulk of product related attributes */
 	async createBulkProductAttributes(input: ProductRAttributeInput[]): Promise<ProductRAttributeCreateResponse> {
 		if (input.length == 0) {
 			throw new ApiError("Failed to create product attributes", 500, []);
 		}
 		const { error: insertError } = await this.supabase
-			.from(this.TABLE)
+			.from(this.PRODUCT_ATTRIBUTES_TABLE)
 			.insert(input);
 
 		let error: null | ApiError = null;
@@ -37,7 +26,7 @@ export class ProductRAttributesService {
 	/** Delete a row of variant attributes table*/
 	async deleteVariantAttribute(variant_id: string, attribute_id: string): Promise<void> {
 		const { error } = await this.supabase
-			.from(this.TABLE)
+			.from(this.PRODUCT_ATTRIBUTES_TABLE)
 			.delete()
 			.eq("variant_id", variant_id)
 			.eq("attribute_id", attribute_id);
@@ -54,7 +43,7 @@ export class ProductRAttributesService {
 	}): Promise<void> {
 
 		const { error } = await this.supabase
-			.from(this.TABLE)
+			.from(this.PRODUCT_ATTRIBUTES_TABLE)
 			.delete()
 			.eq("product_id", product_id)
 			.in("attribute_id", attributes_ids);

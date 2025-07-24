@@ -166,6 +166,8 @@ export const TABLE_NAMES = {
 	sub_category: "sub_category",
 	collection: "collections",
 	collection_products: "collection_products",
+	user_roles: "user_roles",
+	users: "app_users",
 } as const;
 
 export const STORAGE_BUCKETS = {
@@ -206,3 +208,5 @@ export const collectionSortByEnums = [
 	"name",
 	"createdAt",
 ] as const;
+
+export const ADDRESS_TYPE_ENUM = ["shipping", "billing", "both"] as const;

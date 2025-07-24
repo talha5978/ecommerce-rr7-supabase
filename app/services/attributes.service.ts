@@ -1,22 +1,12 @@
 
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { AllProductAttributesResponse, AttributeType, AttributeUpdationPayload, GroupedProductAttributes, HighLevelProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/attributes.d";
 import { ProductAttributeActionData, ProductAttributesUpdateActionData } from "~/schemas/product-attributes.schema";
-import { OPTIONAL_PRODUCT_ATTRIBS, REQUIRED_VARIANT_ATTRIBS, TABLE_NAMES } from "~/constants";
+import { OPTIONAL_PRODUCT_ATTRIBS, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
 import { GetAllProductAttribsInput } from "~/types/attributes.d";
+import { Service } from "~/services/service";
 
-export class ProductAttributesService {
-	private supabase: SupabaseClient<Database>;
-	private readonly ATTRIBUTES_TABLE = TABLE_NAMES.attributes;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-	}
-
+export class ProductAttributesService extends Service {
 	/** Fetch product attributes types for index page */
 	async getHighLevelProductAttributes(): Promise<HighLevelProductAttributesResponse> {
 		try {

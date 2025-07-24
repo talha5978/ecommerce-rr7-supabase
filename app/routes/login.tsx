@@ -59,7 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
-	// console.log(user);
+	console.log(user);
 	
 	if (user) {
 		return redirect("/");

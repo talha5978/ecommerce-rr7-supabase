@@ -1,27 +1,15 @@
-
-import type { Database } from "~/types/supabase";
 import { ApiError } from "~/utils/ApiError";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { MetaUpdationPayload } from "~/types/meta_details.d";
-import { MetaDetailsActionData } from "~/schemas/meta-details.schema";
-import { TABLE_NAMES } from "~/constants";
+import type { MetaDetailsActionData } from "~/schemas/meta-details.schema";
+import { Service } from "~/services/service";
 
-export class MetaDetailsService {
-	private supabase: SupabaseClient<Database>;
-	private readonly META_TABLE = TABLE_NAMES.meta_details;
-
-	constructor(request: Request) {
-		const { supabase } = createSupabaseServerClient(request);
-		this.supabase = supabase;
-	}
-
+export class MetaDetailsService extends Service {
 	/** Create meta details row */
 	async createMetaDetails(input: MetaDetailsActionData): Promise<string> {
 		const { meta_description, meta_title, url_key, meta_keywords } = input;
 
 		const { data: metaData, error: metaError } = await this.supabase
-			.from(this.META_TABLE)
+			.from(this.META_DETAILS_TABLE)
 			.insert({
 				meta_title,
 				meta_description,
@@ -58,7 +46,7 @@ export class MetaDetailsService {
 
 		if (Object.keys(metaUpdate).length > 0) {
 			const { error: metaError } = await this.supabase
-				.from(this.META_TABLE)
+				.from(this.META_DETAILS_TABLE)
 				.update(metaUpdate)
 				.eq("id", metaDetailsId);
 
@@ -70,7 +58,7 @@ export class MetaDetailsService {
 
 	async deleteMetaDetails(metaDetailsId: string): Promise<void> {
 		const { error: metaError } = await this.supabase
-			.from(this.META_TABLE)
+			.from(this.META_DETAILS_TABLE)
 			.delete()
 			.eq("id", metaDetailsId);
 		

@@ -7,23 +7,23 @@ import LoadingBar, { LoadingBarRef } from "react-top-loading-bar";
 import { currentUserQuery } from "~/queries/auth.q";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
-	console.log("▶ ▶ ▶ Layout user requested 🌋");
-	
-	if (!user && request.url !== "/login") {
-		return redirect("/login");
-	}
+	const { user, error } = await queryClient.fetchQuery(currentUserQuery({ request }));
+    console.log("Layout loader: user =", user, "error =", error);
 
-	return { user };
+    if (!user || error) {
+		console.log("No user or error, redirecting to /login from", request.url);
+		return redirect("/login");
+    }
+
+	return { user, error };
 }
 // TODO: Write functionality where we show the checkboxes in each row of products table and variants table! and we can share them and export urls if we want to.
-// TODO: Create separate roles like EMPLOYEE, CUSTOMER, ADMIN!!
-// TODO: ALLOW THE COUPONS AND DISCOUNTS ON THE BASIS OF USER ROLES!
+
 export default function Layout() {
 	const navigation = useNavigation();
 	const loadingBarRef = useRef<null | LoadingBarRef>(null);
 	const [isLoadingBarStarted, setIsLoadingBarStarted] = useState<boolean>(false);
-
+	
 	useEffect(() => {
 		if (loadingBarRef.current != null) {
 			if (navigation.state === "loading") {

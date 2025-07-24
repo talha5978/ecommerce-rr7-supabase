@@ -3,6 +3,7 @@ import {
 	IconSettings,
 	IconUserCircle,
 } from "@tabler/icons-react";
+import { Mail } from "lucide-react";
 import { useLoaderData } from "react-router";
 
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -15,16 +16,18 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import type { AdminUser } from "~/types/user";
 
 export function UserButton() {
 	const { user } = useLoaderData();
-	
+	const currentUser: AdminUser = user as AdminUser;
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild tabIndex={0}>
 				<Avatar className="h-8 w-8 rounded-full my-1 ml-1 border-2 border-primary cursor-pointer">
-					<AvatarImage src={"https://bundui-images.netlify.app/avatars/01.png"} alt={user?.name} />
-					<AvatarFallback className="rounded-lg">AD</AvatarFallback>
+					<AvatarImage src={"https://bundui-images.netlify.app/avatars/01.png"} alt={currentUser?.last_name ?? "Admin"} />
+					<AvatarFallback className="rounded-lg">A</AvatarFallback>
 				</Avatar>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
@@ -35,9 +38,12 @@ export function UserButton() {
 			>
 				<DropdownMenuLabel className="p-0 font-normal">
 					<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-						<div className="grid flex-1 text-left text-sm leading-tight">
-							<span className="truncate font-medium">{user?.name || "Admin"}</span>
-							<span className="truncate font-normal text-muted-foreground">{user?.email}</span>
+						<div className="grid flex-1 text-left text-sm gap-1">
+							<span className="truncate font-medium">{currentUser?.first_name} {currentUser?.last_name}</span>
+							<div className="flex gap-3 items-center">
+								<Mail className="h-4 w-4 text-muted-foreground" />
+								<span className="truncate font-normal text-muted-foreground">{currentUser?.email}</span>
+							</div>
 						</div>
 					</div>
 				</DropdownMenuLabel>

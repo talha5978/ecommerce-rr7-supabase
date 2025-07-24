@@ -1,7 +1,8 @@
 import type { ApiError } from "~/utils/ApiError";
+import type { AdminUser } from "./user";
 
 export type GetCurrentUser = {
-    user: User | null;
+    user: AdminUser | null;
     error: ApiError | null
 };
 
