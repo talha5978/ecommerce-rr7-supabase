@@ -2,8 +2,8 @@ import { type RouteConfig, route, index, prefix, layout } from "@react-router/de
 
 export default [
 	...prefix("/login", [
-		index("./routes/login.tsx"),
-		route("otp", "./routes/otp.tsx"),
+		index("./routes/Auth/login.tsx"),
+		route("otp", "./routes/Auth/otp.tsx"),
 	]),
 
 	route("/logout", "./routes/_actions/logout.tsx"),
@@ -11,54 +11,50 @@ export default [
 	route("/", "./routes/layout.tsx", [
 		index("./routes/dashboard.tsx"),
 		...prefix("/categories", [
-			index("./routes/categories.tsx"),
-			route("create", "./routes/CategoryForms/create-category.tsx"),
+			index("./routes/Category/categories.tsx"),
+			route("create", "./routes/Category/create-category.tsx"),
 
 			...prefix(":categoryId", [
-				route("update", "./routes/CategoryForms/update-category.tsx"),
-				// route("delete", "./routes/_actions/delete-category.tsx"),
-
+				route("update", "./routes/Category/update-category.tsx"),
 				...prefix("sub-categories", [
-					index("./routes/sub-categories.tsx"),
-					route("create", "./routes/CategoryForms/create-sub-category.tsx"),
-					route(":subCategoryId/update", "./routes/CategoryForms/update-sub-category.tsx"),
+					index("./routes/SubCategory/sub-categories.tsx"),
+					route("create", "./routes/SubCategory/create-sub-category.tsx"),
+					route(":subCategoryId/update", "./routes/SubCategory/update-sub-category.tsx"),
 				]),
 			]),
 		]),
 
 		...prefix("/product-attributes", [
-			route("", "./routes/product-attributes.tsx", [
-				route("create", "./routes/create-product-attributes.tsx", { id: "create-attribute-main" }),
+			route("", "./routes/ProductAttributes/product-attributes.tsx", [
+				route("create", "./routes/ProductAttributes/create-product-attributes.tsx", { id: "create-attribute-main" }),
 			]),
 
-			route(":attributeType/values", "./routes/product-attributes-values.tsx", [
-				route("create", "./routes/create-product-attributes.tsx", { id: "create-attribute-values" }),
-				route(":attributeId/update", "./routes/update-product-attributes.tsx"),
+			route(":attributeType/values", "./routes/ProductAttributes/product-attributes-values.tsx", [
+				route("create", "./routes/ProductAttributes/create-product-attributes.tsx", { id: "create-attribute-values" }),
+				route(":attributeId/update", "./routes/ProductAttributes/update-product-attributes.tsx"),
 			]),
 		]),
 		
 		...prefix("/products", [
-			index("./routes/products.tsx"),
-			route("create", "./routes/create-product.tsx"),
+			index("./routes/Products/products.tsx"),
+			route("create", "./routes/Products/create-product.tsx"),
 			...prefix(":productId", [
-				route("update", "./routes/update-product.tsx"),
-				// route("delete", "./routes/_actions/delete-product.tsx"),
-
+				route("update", "./routes/Products/update-product.tsx"),
 				...prefix("variants", [
-					index("./routes/product-variants.tsx"),
-					route("create", "./routes/create-product-variant.tsx"),
+					index("./routes/ProductVariants/product-variants.tsx"),
+					route("create", "./routes/ProductVariants/create-product-variant.tsx"),
 					route("duplicate", "./routes/_actions/create-product-variant-duplicate.tsx"),
-					route(":variantId/update", "./routes/update-product-variant.tsx"),
+					route(":variantId/update", "./routes/ProductVariants/update-product-variant.tsx"),
 				])
 			]),
 		]),
 
-		route("/all-product-units", "./routes/all-product-units.tsx"),
+		route("/all-product-units", "./routes/Products/all-product-units.tsx"),
 
 		...prefix("/collections", [
-			index("./routes/collections.tsx"),
-			route("create", "./routes/create-collection.tsx"),
-			route(":collectionId/update", "./routes/update-collection.tsx"),
+			index("./routes/Collections/collections.tsx"),
+			route("create", "./routes/Collections/create-collection.tsx"),
+			route(":collectionId/update", "./routes/Collections/update-collection.tsx"),
 			
 		]),
 	]),

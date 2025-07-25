@@ -8,7 +8,7 @@ import { currentUserQuery } from "~/queries/auth.q";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const { user, error } = await queryClient.fetchQuery(currentUserQuery({ request }));
-    console.log("Layout loader: user =", user, "error =", error);
+    // console.log("Layout loader: user =", user, "error =", error);
 
     if (!user || error) {
 		console.log("No user or error, redirecting to /login from", request.url);
