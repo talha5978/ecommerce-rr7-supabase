@@ -693,9 +693,9 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		}
 	};
 
-	const isFixedProdctsTable =
+	const isFixedProdctsEnabled =
 		watchedDiscountType === "fixed_product" || watchedDiscountType === "percentage_product";
-	const isBuyXGetYTable = watchedDiscountType === "buy_x_get_y";
+	const isBuyXGetYEnabled = watchedDiscountType === "buy_x_get_y";
 
 	const appendOrderCondition = () => {
 		append_order_field({
@@ -963,7 +963,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 									/>
 								)}
 								{/* Table according to the selected discount type */}
-								{isFixedProdctsTable ? (
+								{isFixedProdctsEnabled ? (
 									<section className="grid gap-3">
 										<Label className="text-md font-semibold">Target Products</Label>
 										<div className="flex flex-col gap-3">
