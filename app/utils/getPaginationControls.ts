@@ -1,12 +1,12 @@
 import { NavigateFunction, useNavigate, useSearchParams } from "react-router";
 
 interface PaginationControlsReturnType {
-    onPageChange: (newPageIndex: number) => void;
-    onPageSizeChange: (newPageSize: number) => void;
+	onPageChange: (newPageIndex: number) => void;
+	onPageSizeChange: (newPageSize: number) => void;
 }
 
 interface PaginationControlsProps {
-    defaultPage: number
+	defaultPage: number;
 }
 
 class GetPaginationControlsController {
@@ -21,7 +21,7 @@ class GetPaginationControlsController {
 	constructor({ defaultPage }: PaginationControlsProps) {
 		const navigate = useNavigate();
 		this.navigate = navigate;
-		const [searchParams] = useSearchParams()
+		const [searchParams] = useSearchParams();
 		this.searchParams = searchParams;
 		this.defaultPage = defaultPage;
 	}
@@ -29,20 +29,20 @@ class GetPaginationControlsController {
 	onPageChange = (newPageIndex: number) => {
 		this.searchParams.set("page", (newPageIndex + 1).toString());
 		this.navigate({ search: this.searchParams.toString() });
-	}
+	};
 
 	onPageSizeChange = (newPageSize: number) => {
 		this.searchParams.set("size", newPageSize.toString());
 		this.searchParams.set("page", String(this.defaultPage));
 		this.navigate({ search: this.searchParams.toString() });
-	}
+	};
 }
 
 export function GetPaginationControls({
-	defaultPage
+	defaultPage,
 }: PaginationControlsProps): PaginationControlsReturnType {
 	const GetPaginationControls = new GetPaginationControlsController({
-		defaultPage: defaultPage ?? 1
+		defaultPage: defaultPage ?? 1,
 	});
 
 	return GetPaginationControls;

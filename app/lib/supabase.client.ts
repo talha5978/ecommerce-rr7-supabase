@@ -7,7 +7,7 @@ function createSupabaseClient() {
 	if (!supabaseClient) {
 		if (typeof window === "undefined") {
 			console.log("server window found!");
-			
+
 			throw new Error("Supabase client requires browser environment and ENV variables");
 		}
 

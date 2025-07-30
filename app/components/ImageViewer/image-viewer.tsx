@@ -54,7 +54,7 @@ const ImageViewer = ({
 						width="100%"
 						className={cn(
 							"h-auto w-full rounded-lg object-contain transition-opacity hover:opacity-90",
-							classNameThumbnailViewer
+							classNameThumbnailViewer,
 						)}
 						onError={handleImgError}
 						loading="lazy"
@@ -77,7 +77,7 @@ const ImageViewer = ({
 											alt={`${imageTitle ?? "Image"} - Full`}
 											className={cn(
 												"max-h-[90vh] max-w-[90vw] object-contain",
-												classNameImageViewer
+												classNameImageViewer,
 											)}
 											onError={handleImgError}
 										/>

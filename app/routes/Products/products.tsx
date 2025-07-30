@@ -1,9 +1,44 @@
-import { Form, Link, LoaderFunctionArgs, useFetcher, useLoaderData, useLocation, useMatches, useNavigate, useSearchParams } from "react-router";
+import {
+	Form,
+	Link,
+	LoaderFunctionArgs,
+	useFetcher,
+	useLoaderData,
+	useLocation,
+	useNavigate,
+	useSearchParams,
+} from "react-router";
 import { Route } from "./+types/products";
 import { Button } from "~/components/ui/button";
-import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpNarrowWide, ListFilter, Loader2, MoreHorizontal, PlusCircle, RotateCcw, Search, Settings2, TriangleAlert } from "lucide-react";
+import {
+	ArrowDownWideNarrow,
+	ArrowUpDown,
+	ArrowUpNarrowWide,
+	ListFilter,
+	Loader2,
+	MoreHorizontal,
+	PlusCircle,
+	RotateCcw,
+	Search,
+	Settings2,
+	TriangleAlert,
+} from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuPortal,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
@@ -20,16 +55,35 @@ import { bolleanToStringConverter, GetFormattedDate } from "~/lib/utils";
 import StatusBadge from "~/components/status-badge";
 import { Skeleton } from "~/components/ui/skeleton";
 import ImageViewer from "~/components/ImageViewer/image-viewer";
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
+import {
+	Sheet,
+	SheetClose,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from "~/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Label } from "~/components/ui/label";
 import { categoriesQuery } from "~/queries/categories.q";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form as ShadcnForm } from "~/components/ui/form";
+import {
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+	Form as ShadcnForm,
+} from "~/components/ui/form";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { CategoryListRow } from "~/types/category";
 import DateRangePicker from "~/components/Custom-Inputs/date-range-picker";
 import { Checkbox } from "~/components/ui/checkbox";
-import { ProductsFilterFormData, ProductFilterFormSchema, ProductFilters } from "~/schemas/products-filter.schema";
+import {
+	ProductsFilterFormData,
+	ProductFilterFormSchema,
+	ProductFilters,
+} from "~/schemas/products-filter.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getProductsFiltersPayload } from "~/utils/getProductsFiltersPayload";
 import { getActiveProductsFiltersCount } from "~/utils/getActiveProductsFiltersCount";
@@ -56,7 +110,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			pageIndex,
 			pageSize,
 			filters: productFilters,
-		})
+		}),
 	);
 
 	const categories = await queryClient.fetchQuery(categoriesQuery({ request }));
@@ -66,21 +120,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		query: q,
 		pageIndex,
 		pageSize,
-		categories
+		categories,
 	};
 };
 
 export default function ProductsMainPage({
-	loaderData: { data, query, pageIndex, pageSize }
+	loaderData: { data, query, pageIndex, pageSize },
 }: Route.ComponentProps) {
 	const navigation = useNavigation();
 	const location = useLocation();
 
 	const pageCount = Math.ceil(data.total / pageSize);
-	
+
 	const isFetchingThisRoute = useMemo(
 		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname]
+		[navigation.state, navigation.location?.pathname, location.pathname],
 	);
 	// console.log(data);
 
@@ -90,7 +144,7 @@ export default function ProductsMainPage({
 		}
 	}, [data.error]);
 	console.log("Re rendered");
-	
+
 	const columns: ColumnDef<HighLevelProduct, unknown>[] = [
 		{
 			id: "Sr. No.",
@@ -114,11 +168,9 @@ export default function ProductsMainPage({
 								classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
 							/>
 						</div>
-					)
+					);
 				} else {
-					return (
-						<Skeleton className="h-20 w-18 rounded-sm" />
-					)
+					return <Skeleton className="h-20 w-18 rounded-sm" />;
 				}
 			},
 			header: () => "Cover",
@@ -128,9 +180,7 @@ export default function ProductsMainPage({
 			enableHiding: false,
 			accessorKey: "name",
 			cell: (info: any) => {
-				return (
-					<p className="md:max-w-[35ch] max-w-[20ch] truncate">{info.row.original.name}</p>
-				)
+				return <p className="md:max-w-[35ch] max-w-[20ch] truncate">{info.row.original.name}</p>;
 			},
 			header: () => "Name",
 		},
@@ -154,9 +204,7 @@ export default function ProductsMainPage({
 				const isZeroLen = len === 0;
 				return (
 					<div className={`${isZeroLen ? "flex gap-2 items-center" : ""}`}>
-						<p className={`${isZeroLen ? "text-destructive" : ""}`}>
-							{len}
-						</p>
+						<p className={`${isZeroLen ? "text-destructive" : ""}`}>{len}</p>
 						{isZeroLen && <TriangleAlert className="w-4 h-4 text-destructive" />}
 					</div>
 				);
@@ -169,7 +217,10 @@ export default function ProductsMainPage({
 			cell: (info: any) => {
 				const featured = info.row.original.is_featured;
 				return (
-					<StatusBadge variant={featured ? "success" : "default"} icon={featured ? "tick" : "cross"}>
+					<StatusBadge
+						variant={featured ? "success" : "default"}
+						icon={featured ? "tick" : "cross"}
+					>
 						{featured ? "Yes" : "No"}
 					</StatusBadge>
 				);
@@ -193,7 +244,10 @@ export default function ProductsMainPage({
 			accessorKey: "free_shipping",
 			cell: (info: any) => {
 				return (
-					<StatusBadge variant={info.row.original.free_shipping ? "warning" : "default"} icon="dot">
+					<StatusBadge
+						variant={!info.row.original.free_shipping ? "warning" : "default"}
+						icon="dot"
+					>
 						{info.row.original.free_shipping ? "Free" : "Paid"}
 					</StatusBadge>
 				);
@@ -252,7 +306,7 @@ export default function ProductsMainPage({
 	const tableColumns = useMemo(() => columns, []);
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPage: defaults.DEFAULT_PRODUCTS_PAGE
+		defaultPage: defaults.DEFAULT_PRODUCTS_PAGE,
 	});
 
 	const table = useReactTable({
@@ -265,8 +319,8 @@ export default function ProductsMainPage({
 			pagination: {
 				pageIndex,
 				pageSize,
-			}
-		}
+			},
+		},
 	});
 
 	return (
@@ -323,7 +377,6 @@ function UpdateStatusForm({ product }: { product: HighLevelProduct }) {
 		defaultValues,
 	});
 
-	
 	// Watch form values to trigger submission on change
 	const status = useWatch({ control, name: "status" });
 	const isFeatured = useWatch({ control, name: "is_featured" });
@@ -332,9 +385,9 @@ function UpdateStatusForm({ product }: { product: HighLevelProduct }) {
 
 	const isStatusSubmitting = submittingField === "status";
 	const isFeaturedSubmitting = submittingField === "is_featured";
-	
+
 	const fetcher = useFetcher();
-	
+
 	// Handle fetcher state for toasts and state updates
 	useEffect(() => {
 		if (fetcher.data) {
@@ -395,9 +448,9 @@ function UpdateStatusForm({ product }: { product: HighLevelProduct }) {
 			{ label: "Active", value: "true", id: Math.floor(Math.random() * 99999).toString() },
 			{ label: "Inactive", value: "false", id: Math.floor(Math.random() * 99999).toString() },
 		],
-		[]
+		[],
 	);
-	
+
 	return (
 		<>
 			<DropdownMenuSub>
@@ -491,8 +544,7 @@ function SortSelector() {
 		resolver: zodResolver(ProductFilterFormSchema),
 		defaultValues: {
 			sortBy:
-				(searchParams.get("sortBy") as sortFormData["sortBy"]) ||
-				defaults.defaultProductSortByFilter,
+				(searchParams.get("sortBy") as sortFormData["sortBy"]) || defaults.defaultProductSortByFilter,
 			sortType:
 				(searchParams.get("sortType") as sortFormData["sortType"]) ||
 				defaults.defaultProductSortTypeFilter,
@@ -607,15 +659,18 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 	}
 
 	function handleResetFilters() {
-		navigate(getProductsResetFiltersUrl({
-			defaultPage,
-			defaultSize,
-			pathname: location.pathname,
-			search: location.search
-		}), { replace: true });
+		navigate(
+			getProductsResetFiltersUrl({
+				defaultPage,
+				defaultSize,
+				pathname: location.pathname,
+				search: location.search,
+			}),
+			{ replace: true },
+		);
 	}
 
-    return (
+	return (
 		<>
 			<div className="w-full flex justify-between gap-4 items-center">
 				<div className="flex gap-2 items-center">
@@ -705,7 +760,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 								.getAllColumns()
 								.filter(
 									(column: any) =>
-										typeof column.accessorFn !== "undefined" && column.getCanHide()
+										typeof column.accessorFn !== "undefined" && column.getCanHide(),
 								)
 								.map((column: any) => {
 									return (
@@ -720,7 +775,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 									);
 								})}
 						</DropdownMenuContent>
-					</DropdownMenu> 
+					</DropdownMenu>
 				</div>
 			</div>
 			<FiltersSheet open={filtersMenuOpen} setOpen={handleFiltersClick} />
@@ -736,9 +791,9 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 
 	const currentPageIndex = searchParams.get("page") || defaultPage;
 	const currentPageSize = searchParams.get("size") || defaultSize;
-	
+
 	const loaderData = useLoaderData<typeof loader>();
-	
+
 	const categories: CategoryListRow[] = loaderData.categories.categories as CategoryListRow[];
 	const navigation = useNavigation();
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
@@ -763,8 +818,8 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 					? {
 							from: new Date(createdFromParam),
 							to: new Date(createdToParam),
-					}
-					: null
+					  }
+					: null,
 		},
 	});
 
@@ -799,10 +854,10 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 
 		if (values.q) params.set("q", values.q);
 		if (values.status && values.status !== "null") params.set("status", values.status);
-		if (values.is_featured && values.is_featured !== "null"){
+		if (values.is_featured && values.is_featured !== "null") {
 			params.set("is_featured", values.is_featured);
 		}
-		if (values.category && Array.isArray(values.category) && values.category.length > 0){
+		if (values.category && Array.isArray(values.category) && values.category.length > 0) {
 			params.set("category", values.category!.join(","));
 		}
 		if (values.sub_category && Array.isArray(values.sub_category) && values.sub_category!.length > 0) {
@@ -829,7 +884,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		if (currentPageSize !== defaultSize) {
 			params.set("size", String(currentPageSize));
 		}
-		
+
 		// preserve kro unko agr pehly se apply keye hoe hain
 		const sortBy = searchParams.get("sortBy");
 		const sortType = searchParams.get("sortType");
@@ -841,12 +896,15 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 
 	function handleReset() {
 		reset(); // Resets the form state
-		navigate(getProductsResetFiltersUrl({
-			defaultPage,
-			defaultSize,
-			pathname: location.pathname,
-			search: location.search
-		}), { replace: true });
+		navigate(
+			getProductsResetFiltersUrl({
+				defaultPage,
+				defaultSize,
+				pathname: location.pathname,
+				search: location.search,
+			}),
+			{ replace: true },
+		);
 		setOpen(false);
 	}
 
@@ -925,7 +983,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 									{categories.map((cat) => {
 										const subIds = cat.sub_category.map((sc) => sc.id);
 										const childChecked = subIds.map((id) =>
-											selectedSubCategories.includes(id)
+											selectedSubCategories.includes(id),
 										);
 										const allChecked = childChecked.every(Boolean);
 										const noneChecked = childChecked.every((c) => !c);
@@ -950,7 +1008,9 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 														onCheckedChange={(checked) => {
 															const newSubs = new Set(selectedSubCategories);
 															subIds.forEach((id) =>
-																checked ? newSubs.add(id) : newSubs.delete(id)
+																checked
+																	? newSubs.add(id)
+																	: newSubs.delete(id),
 															);
 
 															const newCats = new Set(selectedCategories);
@@ -962,22 +1022,28 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 															setValue("category", Array.from(newCats));
 														}}
 													/>
-													<Label htmlFor={`cat-${cat.id}`} className="font-medium text-sm cursor-pointer">
+													<Label
+														htmlFor={`cat-${cat.id}`}
+														className="font-medium text-sm cursor-pointer"
+													>
 														{cat.category_name}
 													</Label>
 												</summary>
 
 												<div className="pl-4 m-2 mt-2 space-y-1 border-sidebar-border border-l">
 													{cat.sub_category.map((sub) => (
-														<div key={sub.id} className="flex items-center gap-2 hover:underline underline-offset-4">
+														<div
+															key={sub.id}
+															className="flex items-center gap-2 hover:underline underline-offset-4"
+														>
 															<Checkbox
 																id={`subcat-${sub.id}`}
 																checked={selectedSubCategories.includes(
-																	sub.id
+																	sub.id,
 																)}
 																onCheckedChange={(checked) => {
 																	const newSubs = new Set(
-																		selectedSubCategories
+																		selectedSubCategories,
 																	);
 																	checked
 																		? newSubs.add(sub.id)
@@ -985,10 +1051,10 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 
 																	// if any child remains, keep parent checked
 																	const newCats = new Set(
-																		selectedCategories
+																		selectedCategories,
 																	);
 																	const stillAny = subIds.some((id) =>
-																		newSubs.has(id)
+																		newSubs.has(id),
 																	);
 																	stillAny
 																		? newCats.add(cat.id)
@@ -996,12 +1062,15 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 
 																	setValue(
 																		"sub_category",
-																		Array.from(newSubs)
+																		Array.from(newSubs),
 																	);
 																	setValue("category", Array.from(newCats));
 																}}
 															/>
-															<Label htmlFor={`subcat-${sub.id}`} className="font-medium text-sm cursor-pointer">
+															<Label
+																htmlFor={`subcat-${sub.id}`}
+																className="font-medium text-sm cursor-pointer"
+															>
 																{sub.sub_category_name}
 															</Label>
 														</div>

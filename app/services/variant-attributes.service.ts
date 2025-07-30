@@ -1,16 +1,20 @@
 import { ApiError } from "~/utils/ApiError";
-import type { GetVariantAttributesResponse, VariantAttributeCreateResponse, VariantAttributeInput } from "~/types/variant-attributes";
+import type {
+	GetVariantAttributesResponse,
+	VariantAttributeCreateResponse,
+	VariantAttributeInput,
+} from "~/types/variant-attributes";
 import { Service } from "~/services/service";
 
 export class VariantsAttributesService extends Service {
 	/** Create bulk of variant attributes */
-	async createBulkVariantAttributes(input: VariantAttributeInput[]): Promise<VariantAttributeCreateResponse> {
+	async createBulkVariantAttributes(
+		input: VariantAttributeInput[],
+	): Promise<VariantAttributeCreateResponse> {
 		if (input.length == 0) {
 			throw new ApiError("Failed to create variant attributes", 500, []);
 		}
-		const { error: insertError } = await this.supabase
-			.from(this.VARIANT_ATTRIBUTES_TABLE)
-			.insert(input);
+		const { error: insertError } = await this.supabase.from(this.VARIANT_ATTRIBUTES_TABLE).insert(input);
 
 		let error: null | ApiError = null;
 
@@ -37,8 +41,8 @@ export class VariantsAttributesService extends Service {
 
 		return {
 			data: data ?? null,
-			error
-		}
+			error,
+		};
 	}
 
 	/** Delete a row of variant attributes table*/
@@ -55,11 +59,13 @@ export class VariantsAttributesService extends Service {
 	}
 
 	/** Delete bulk rows of variant attributes table (by variant id and array of attribute ids associated with that variant) */
-	async deleteBulkVariantAttributes({variant_id, attributes_ids} : {
+	async deleteBulkVariantAttributes({
+		variant_id,
+		attributes_ids,
+	}: {
 		variant_id: string;
 		attributes_ids: string[];
 	}): Promise<void> {
-
 		const { error } = await this.supabase
 			.from(this.VARIANT_ATTRIBUTES_TABLE)
 			.delete()
@@ -71,4 +77,3 @@ export class VariantsAttributesService extends Service {
 		}
 	}
 }
-

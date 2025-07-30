@@ -21,8 +21,11 @@ export function getProductsFiltersPayload({ request }: FilterPayloadParams) {
 	const fromParam = url.searchParams.get("createdFrom");
 	const toParam = url.searchParams.get("createdTo");
 
-	const sortBy = (url.searchParams.get("sortBy") as ProductFilters["sortBy"]) || defaults.defaultProductSortByFilter;
-	const sortType = (url.searchParams.get("sortType") as ProductFilters["sortType"]) || defaults.defaultProductSortTypeFilter;
+	const sortBy =
+		(url.searchParams.get("sortBy") as ProductFilters["sortBy"]) || defaults.defaultProductSortByFilter;
+	const sortType =
+		(url.searchParams.get("sortType") as ProductFilters["sortType"]) ||
+		defaults.defaultProductSortTypeFilter;
 
 	const filters: ProductFilters = {
 		// boolean flags
@@ -42,7 +45,7 @@ export function getProductsFiltersPayload({ request }: FilterPayloadParams) {
 					to: new Date(toParam),
 				},
 			}),
-		
+
 		// sort fields
 		...(sortBy && { sortBy: sortBy }),
 		...(sortType && { sortType: sortType }),

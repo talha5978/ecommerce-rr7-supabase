@@ -10,9 +10,9 @@ export const ProductVariantInputSchema = z.object({
 				.refine((file) => file.size <= MAX_IMAGE_SIZE, "Image must be less than 1MB.")
 				.refine(
 					(file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
-					"Only JPEG, PNG, or WebP image formats are allowed."
+					"Only JPEG, PNG, or WebP image formats are allowed.",
 				)
-				.nullable()
+				.nullable(),
 		)
 		.refine(
 			(arr) =>
@@ -20,7 +20,7 @@ export const ProductVariantInputSchema = z.object({
 				arr.filter((file) => Boolean(file)).length <= 4,
 			{
 				message: "At least one image is required.",
-			}
+			},
 		),
 
 	is_default: z.string().default("false").optional(),
@@ -86,7 +86,7 @@ export type DuplicateVariantActionData = z.infer<typeof DuplicateVariantActionDa
 
 // For updation
 export const ProductVariantUpdateInputSchema = z.object({
-    images: z
+	images: z
 		.array(
 			z.union([
 				z
@@ -94,11 +94,11 @@ export const ProductVariantUpdateInputSchema = z.object({
 					.refine((file) => file.size <= MAX_IMAGE_SIZE, "Image must be less than 1MB.")
 					.refine(
 						(file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
-						"Only JPEG, PNG, or WebP image formats are allowed."
+						"Only JPEG, PNG, or WebP image formats are allowed.",
 					)
 					.nullable(),
 				z.string().min(1, "Image path is required."),
-			])
+			]),
 		)
 		.refine(
 			(arr) =>
@@ -106,10 +106,10 @@ export const ProductVariantUpdateInputSchema = z.object({
 				arr.filter((file) => Boolean(file)).length <= 4,
 			{
 				message: "At least one image is required.",
-			}
+			},
 		),
 
-    is_default: z.string().default("false").optional(),
+	is_default: z.string().default("false").optional(),
 
 	original_price: z
 		.string({ required_error: "Original price is required." })
@@ -156,7 +156,6 @@ export const ProductVariantUpdateActionDataSchema = z.object({
 });
 
 export type ProductVariantUpdateActionData = z.infer<typeof ProductVariantUpdateActionDataSchema>;
-
 
 // SCHEMA FOR UPDATION OF STATUS
 export const VariantStatusUpdateInputSchema = z.object({

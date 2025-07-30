@@ -1,0 +1,11 @@
+build
+dist
+.env
+
+.vscode/
+README.md
+
+logs/
+*.log
+
+**/*.html

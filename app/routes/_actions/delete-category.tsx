@@ -1,18 +1,21 @@
 import { ActionFunctionArgs } from "react-router";
-import { CategoryService } from "~/services/category.service";
+// import { CategoryService } from "~/services/category.service";
 import { ApiError } from "~/utils/ApiError";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-    const categoryId = (params.categoryId as string) || "";
+export const action = async ({
+	// request,
+	params,
+}: ActionFunctionArgs) => {
+	const categoryId = (params.categoryId as string) || "";
 	if (!categoryId || categoryId == "") {
-        return {
-            success: false,
-            error: "Category ID is required",
-        }
+		return {
+			success: false,
+			error: "Category ID is required",
+		};
 	}
 
 	try {
-		const categoryService = new CategoryService(request);
+		//const categoryService = new CategoryService(request);
 		// await categoryService.deleteCategory(categoryId);
 
 		return { success: true };

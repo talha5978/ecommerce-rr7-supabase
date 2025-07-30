@@ -11,14 +11,9 @@ interface AttributeSelectProps {
 	disabled?: boolean;
 }
 
-export default function AttributeSelect({
-	name,
-	attributeKey,
-	options,
-	disabled,
-}: AttributeSelectProps) {
+export default function AttributeSelect({ name, attributeKey, options, disabled }: AttributeSelectProps) {
 	const { control } = useFormContext();
-	
+
 	return (
 		<FormItem className="flex gap-2">
 			<FormControl>

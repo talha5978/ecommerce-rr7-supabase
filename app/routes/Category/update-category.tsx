@@ -1,11 +1,23 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, Params, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
+import {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	useActionData,
+	useNavigate,
+	useNavigation,
+	useSubmit,
+} from "react-router";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { queryClient } from "~/lib/queryClient";
 import { singleCategoryQuery } from "~/queries/categories.q";
 import { Route } from "./+types/update-category";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { CategoryActionData, CategoryFormValues, CategoryInputSchema, CategoryUpdateActionDataSchema } from "~/schemas/category.schema";
+import {
+	CategoryActionData,
+	CategoryFormValues,
+	CategoryInputSchema,
+	CategoryUpdateActionDataSchema,
+} from "~/schemas/category.schema";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import BackButton from "~/components/Nav/BackButton";
@@ -13,31 +25,38 @@ import { Loader2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "~/components/ui/form";
-import { CustomTagsInputClear, TagsInput, TagsInputInput, TagsInputItem, TagsInputList } from "~/components/ui/tags-input";
+import {
+	CustomTagsInputClear,
+	TagsInput,
+	TagsInputInput,
+	TagsInputItem,
+	TagsInputList,
+} from "~/components/ui/tags-input";
 import { Textarea } from "~/components/ui/textarea";
 import { defaults } from "~/constants";
 import { Input } from "~/components/ui/input";
 import { ApiError } from "~/utils/ApiError";
 import { CategoryService } from "~/services/category.service";
 import { ActionResponse } from "~/types/action-data";
-import { getSanitizedMetaDetailsForAction, getSanitizedMetaDetailsForForm } from "~/utils/getSanitizedMetaDetails";
+import {
+	getSanitizedMetaDetailsForAction,
+	getSanitizedMetaDetailsForForm,
+} from "~/utils/getSanitizedMetaDetails";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-    const categoryId = (params.categoryId as string) || "";
-    if (!categoryId || categoryId == "") {
-        throw new Response("Category ID is required", { status: 400 });
-    }
+	const categoryId = (params.categoryId as string) || "";
+	if (!categoryId || categoryId == "") {
+		throw new Response("Category ID is required", { status: 400 });
+	}
 
-    const data = await queryClient.fetchQuery(
-        singleCategoryQuery({request, categoryId})
-    );
+	const data = await queryClient.fetchQuery(singleCategoryQuery({ request, categoryId }));
 
-    return {
+	return {
 		data,
 	};
 };
 
-export const action = async ({ request, params } : ActionFunctionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const categoryId = (params.categoryId as string) || "";
 	if (!categoryId || categoryId == "") {
 		throw new Response("Category ID is required", { status: 400 });
@@ -101,16 +120,17 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
 export default function UpdateCategoryForm({
 	loaderData: {
-		data: { category, error }},
+		data: { category, error },
+	},
 }: Route.ComponentProps) {
-    const navigate = useNavigate();
+	const navigate = useNavigate();
 
-    useEffect(() => {
-        if (error) {
-            toast.error(error.message);
-            navigate("/categories");
-        }
-    }, [error]);
+	useEffect(() => {
+		if (error) {
+			toast.error(error.message);
+			navigate("/categories");
+		}
+	}, [error]);
 
 	const navigation = useNavigation();
 
@@ -127,18 +147,20 @@ export default function UpdateCategoryForm({
 				meta_title: category?.meta_details?.meta_title || "",
 				meta_description: category?.meta_details?.meta_description || "",
 				url_key: category?.meta_details?.url_key || "",
-				meta_keywords: category?.meta_details?.meta_keywords == "" ? [] : category?.meta_details?.meta_keywords?.split(",") || [],
+				meta_keywords:
+					category?.meta_details?.meta_keywords == ""
+						? []
+						: category?.meta_details?.meta_keywords?.split(",") || [],
 			},
 		},
 	});
 
 	const { handleSubmit, setError, control } = form;
-    const submit = useSubmit();
+	const submit = useSubmit();
 
-    const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
+	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
-    
-    async function onFormSubmit(values: CategoryFormValues) {
+	async function onFormSubmit(values: CategoryFormValues) {
 		if (!category) {
 			toast.error("Category not found");
 			return;
@@ -153,18 +175,16 @@ export default function UpdateCategoryForm({
 				meta_description: values.meta_details.meta_description.trim(),
 				url_key: values.meta_details.url_key.trim().toLowerCase(),
 				meta_keywords: values.meta_details.meta_keywords
-					? values.meta_details.meta_keywords
-							.map((kw) => kw.trim())
-							.filter(Boolean)
-					: []
+					? values.meta_details.meta_keywords.map((kw) => kw.trim()).filter(Boolean)
+					: [],
 			},
 		};
 
-        const categoryFields = ["category_name", "description", "sort_order"] as const;
+		const categoryFields = ["category_name", "description", "sort_order"] as const;
 
 		const formData = new FormData();
 		let hasChanges = false;
-        
+
 		// Compare top-level category fields
 		for (const field of categoryFields) {
 			if (normalizedValues[field] !== String(category[field])) {
@@ -181,7 +201,7 @@ export default function UpdateCategoryForm({
 		});
 
 		hasChanges = hasChanges || hasMetaChanges;
-        
+
 		// If no changes, notify user
 		if (!hasChanges) {
 			toast.info("No changes to save");
@@ -193,21 +213,21 @@ export default function UpdateCategoryForm({
 		submit(formData, { method: "POST", action: `/categories/${category?.id}/update` });
 	}
 
-    useEffect(() => {
-        if (actionData) {
-            if (actionData.success) {
-                toast.success("Category updated successfully");
-                navigate("/categories");
-            } else if (actionData.error) {
-                toast.error(actionData.error);
-            } else if (actionData.validationErrors) {
-                toast.error("Invalid form data. Please check your inputs.");
-                Object.entries(actionData.validationErrors).forEach(([field, errors]) => {
-                    setError(field as keyof CategoryFormValues, { message: errors[0] });
-                });
-            }
-        }
-    }, [actionData, navigate]);
+	useEffect(() => {
+		if (actionData) {
+			if (actionData.success) {
+				toast.success("Category updated successfully");
+				navigate("/categories");
+			} else if (actionData.error) {
+				toast.error(actionData.error);
+			} else if (actionData.validationErrors) {
+				toast.error("Invalid form data. Please check your inputs.");
+				Object.entries(actionData.validationErrors).forEach(([field, errors]) => {
+					setError(field as keyof CategoryFormValues, { message: errors[0] });
+				});
+			}
+		}
+	}, [actionData, navigate]);
 
 	return (
 		<>

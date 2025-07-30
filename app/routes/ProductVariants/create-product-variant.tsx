@@ -8,7 +8,7 @@ import { queryClient } from "~/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { DollarSign, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { ApiError } from "~/utils/ApiError";
@@ -16,19 +16,27 @@ import type { ActionResponse } from "~/types/action-data";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import { Route } from "./+types/create-product-variant";
-import { ProductVariantActionDataSchema, type ProductVariantFormValues, ProductVariantInputSchema } from "~/schemas/product-variants.schema";
+import {
+	ProductVariantActionDataSchema,
+	type ProductVariantFormValues,
+	ProductVariantInputSchema,
+} from "~/schemas/product-variants.schema";
 import MultipleImagesInput from "~/components/Custom-Inputs/multiple-images-input";
 import { AllProductAttributesQuery } from "~/queries/product-attributes.q";
 import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
 import type { AttributeType, ProductAttribute } from "~/types/attributes.d";
 import { ProductVariantsService } from "~/services/product-variants.service";
-import { DISABLED_DEFAULT_VARIANT_MESSAGE, PRODUCT_IMG_DIMENSIONS, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
+import {
+	DISABLED_DEFAULT_VARIANT_MESSAGE,
+	PRODUCT_IMG_DIMENSIONS,
+	REQUIRED_VARIANT_ATTRIBS,
+} from "~/constants";
 import { variantConstraintsQuery } from "~/queries/product-variants.q";
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	console.log("Form data: ", formData);
-	const productId = params.productId as string || ""
+	const productId = (params.productId as string) || "";
 
 	if (!productId || productId == "") {
 		throw new Response("Product ID is required", { status: 400 });
@@ -45,7 +53,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		stock: formData.get("stock") as string,
 		weight: formData.get("weight") as string,
 		attributes: formData.getAll("attributes") as string[],
-	}
+	};
 
 	const parseResult = ProductVariantActionDataSchema.safeParse(data);
 	console.log("Parse result: ", parseResult?.error?.errors);
@@ -58,7 +66,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	}
 
 	console.log("Data in the action: ", parseResult.data);
-	
+
 	const variantService = new ProductVariantsService(request);
 
 	try {
@@ -69,7 +77,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		await queryClient.invalidateQueries({ queryKey: ["fullProduct", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });
-		
+
 		return { success: true };
 	} catch (error: any) {
 		console.error("Error in action:", error);
@@ -87,18 +95,20 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const productId = params.productId as string || "";
+	const productId = (params.productId as string) || "";
 	if (!productId || productId == "") {
 		throw new Response("Product ID is required", { status: 400 });
 	}
-	
+
 	const data = await queryClient.fetchQuery(AllProductAttributesQuery({ request, input: "for-variant" }));
-	const constraints = await queryClient.fetchQuery(variantConstraintsQuery({
-		request,
-		product_id: productId
-	}));
+	const constraints = await queryClient.fetchQuery(
+		variantConstraintsQuery({
+			request,
+			product_id: productId,
+		}),
+	);
 	//console.log("Constrains data in loader:", constraints);
-	
+
 	return { data, constraints };
 };
 
@@ -106,9 +116,9 @@ export default function CreateProductVariantPage({
 	params,
 	loaderData: {
 		data: { product_attributes, error },
-		constraints: { is_default_variant_exists, productName }
-	}
-} : Route.ComponentProps) {
+		constraints: { is_default_variant_exists, productName },
+	},
+}: Route.ComponentProps) {
 	const navigate = useNavigate();
 	const productId = params.productId as string;
 
@@ -121,7 +131,7 @@ export default function CreateProductVariantPage({
 	}, [error]);
 
 	const attributeKeys = Object.keys(product_attributes || {});
-	
+
 	const submit = useSubmit();
 	const navigation = useNavigation();
 
@@ -143,19 +153,21 @@ export default function CreateProductVariantPage({
 			required_attributes: Array(REQUIRED_VARIANT_ATTRIBS.length).fill(""),
 		},
 	});
-	
+
 	const { handleSubmit, setError, control } = form;
 	console.log(productName);
-	
+
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
 	async function onFormSubmit(values: ProductVariantFormValues) {
 		console.log(values);
 		toast.info("Creating product variant...");
-		
+
 		const formData = new FormData();
-				
-		const finalAttributes = values.required_attributes.filter((attr) => attr !== "" && attr !== null) as string[];
+
+		const finalAttributes = values.required_attributes.filter(
+			(attr) => attr !== "" && attr !== null,
+		) as string[];
 		const finalImages = values.images.filter((img) => img !== null) as File[];
 
 		for (const key in values) {
@@ -178,10 +190,10 @@ export default function CreateProductVariantPage({
 		submit(formData, {
 			method: "POST",
 			action: `/products/${productId}/variants/create`,
-			encType: "multipart/form-data"
+			encType: "multipart/form-data",
 		});
 	}
-	
+
 	useEffect(() => {
 		if (actionData) {
 			if (actionData.success) {
@@ -267,7 +279,7 @@ export default function CreateProductVariantPage({
 														className="pointer-events-none"
 														tabIndex={-1}
 													>
-														Rs.
+														<DollarSign className="h-4 w-4" />
 													</Button>
 												</div>
 											</FormControl>
@@ -297,7 +309,7 @@ export default function CreateProductVariantPage({
 														className="pointer-events-none"
 														tabIndex={-1}
 													>
-														Rs.
+														$
 													</Button>
 												</div>
 											</FormControl>
@@ -344,7 +356,10 @@ export default function CreateProductVariantPage({
 										<FormItem>
 											<FormLabel>Images</FormLabel>
 											<FormControl>
-												<MultipleImagesInput name="images" dimensions={PRODUCT_IMG_DIMENSIONS}/>
+												<MultipleImagesInput
+													name="images"
+													dimensions={PRODUCT_IMG_DIMENSIONS}
+												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -529,18 +544,18 @@ export default function CreateProductVariantPage({
 																			options={
 																				//@ts-ignore
 																				product_attributes != null
-																					//@ts-ignore
-																					? product_attributes[
-																						key
-																					]?.map(
+																					? //@ts-ignore
+																					  product_attributes[
+																							key
+																					  ]?.map(
 																							(
-																								opt: ProductAttribute
+																								opt: ProductAttribute,
 																							) => ({
 																								id: opt.id,
 																								value: opt.value,
 																								name: opt.name,
-																							})
-																					)
+																							}),
+																					  )
 																					: []
 																			}
 																			disabled={!product_attributes}

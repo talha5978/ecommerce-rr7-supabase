@@ -45,7 +45,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
 								{Array.isArray(item.items) &&
 									item.items?.map((subItem, index) => (
 										<SubItem
-											key={(subItem.title+index).toString()}
+											key={(subItem.title + index).toString()}
 											url={subItem.url}
 											icon={subItem.icon}
 											title={subItem.title}

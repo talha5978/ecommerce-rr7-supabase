@@ -1,11 +1,30 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "~/components/ui/sheet";
+import {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	useActionData,
+	useNavigate,
+	useNavigation,
+	useSubmit,
+} from "react-router";
+import {
+	Sheet,
+	SheetContent,
+	SheetHeader,
+	SheetTitle,
+	SheetDescription,
+	SheetFooter,
+	SheetClose,
+} from "~/components/ui/sheet";
 import { Route } from "./+types/update-product-attributes";
 import { Button } from "~/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ProductAttributesFormValues, ProductAttributesInputSchema, ProductAttributesUpdateActionSchema } from "~/schemas/product-attributes.schema";
+import {
+	ProductAttributesFormValues,
+	ProductAttributesInputSchema,
+	ProductAttributesUpdateActionSchema,
+} from "~/schemas/product-attributes.schema";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { product_attributes_enum } from "~/constants";
@@ -36,27 +55,26 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	});
 
 	if (!parseResult.success) {
-		return new Response(
-			JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }),
-			{ status: 400, headers: { "Content-Type": "application/json" } }
-		);
+		return new Response(JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
 	}
 
 	const attributeService = new ProductAttributesService(request);
 
 	try {
-		await attributeService.updateProductAttribute(
-			attributeId,
-			parseResult.data
-		);
+		await attributeService.updateProductAttribute(attributeId, parseResult.data);
 
-		await queryClient.invalidateQueries({ queryKey: ["productAttributesByType", AttributeParam ?? parseResult.data.attribute_type!] });
+		await queryClient.invalidateQueries({
+			queryKey: ["productAttributesByType", AttributeParam ?? parseResult.data.attribute_type!],
+		});
 		await queryClient.invalidateQueries({ queryKey: ["singleProductAttributesById", attributeId] });
 		await queryClient.invalidateQueries({ queryKey: ["productAttributes"] });
 		await queryClient.invalidateQueries({ queryKey: ["all_productAttributes"] });
 
 		return { success: true };
-	} catch (error:any) {
+	} catch (error: any) {
 		console.error("Error in action:", error);
 		const errorMessage =
 			error instanceof ApiError ? error.message : error.message || "Failed to update category";
@@ -77,15 +95,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response("Attribute ID is required", { status: 400 });
 	}
 	const data = await queryClient.fetchQuery(
-		singleProductAttributeByIdQuery({ request, attribute_id: attributeId })
+		singleProductAttributeByIdQuery({ request, attribute_id: attributeId }),
 	);
 
 	return {
-		data
+		data,
 	};
 };
 
-export default function UpdateProductAttributes({ params, loaderData : { data: { product_attribute, error } } }: Route.ComponentProps) {
+export default function UpdateProductAttributes({
+	params,
+	loaderData: {
+		data: { product_attribute, error },
+	},
+}: Route.ComponentProps) {
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -99,9 +122,7 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 	const actionData: ActionResponse = useActionData();
 
 	const navigation = useNavigation();
-	const isSubmitting =
-		navigation.state === "submitting" &&
-		navigation.formMethod === "POST";
+	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
 	const form = useForm<ProductAttributesFormValues>({
 		resolver: zodResolver(ProductAttributesInputSchema),
@@ -110,7 +131,7 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 			attribute_type: AttributeParam ?? "",
 			name: product_attribute?.name ?? "",
 			value: product_attribute?.value ?? "",
-		}
+		},
 	});
 
 	const { setError, control, handleSubmit } = form;
@@ -143,7 +164,7 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 		}
 	}, [actionData, navigate]);
 
-    return (
+	return (
 		<Sheet defaultOpen onOpenChange={() => navigate(-1)}>
 			<SheetContent>
 				<SheetHeader>
@@ -163,20 +184,21 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 									<FormControl>
 										<div className="*:w-full grid gap-2">
 											<Select
-													onValueChange={field.onChange}
-													value={field.value}
-													disabled={AttributeParam != null}
-												>
-													<SelectTrigger>
-														<SelectValue placeholder="Select Attribute Type" />
-													</SelectTrigger>
-													<SelectContent>
-														{product_attributes_enum.map((item) => (
-															<SelectItem key={item} value={item}>
-																{item.charAt(0).toUpperCase() + String(item).slice(1)}
-															</SelectItem>
-														))}
-													</SelectContent>
+												onValueChange={field.onChange}
+												value={field.value}
+												disabled={AttributeParam != null}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Select Attribute Type" />
+												</SelectTrigger>
+												<SelectContent>
+													{product_attributes_enum.map((item) => (
+														<SelectItem key={item} value={item}>
+															{item.charAt(0).toUpperCase() +
+																String(item).slice(1)}
+														</SelectItem>
+													))}
+												</SelectContent>
 											</Select>
 										</div>
 									</FormControl>
@@ -208,8 +230,8 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 											<Input placeholder="S" {...field} />
 										) : (
 											<span className="flex gap-2">
-												<Input placeholder="#FFFFFF" {...field}/>
-												<ColorPicker {...field}  />
+												<Input placeholder="#FFFFFF" {...field} />
+												<ColorPicker {...field} />
 											</span>
 										)}
 									</FormControl>
@@ -223,8 +245,7 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 								<AlertTitle>Recommendation</AlertTitle>
 								<AlertDescription>
 									The recommended way for attribute's name is "Abccc" and value is "
-									{watchedAttributeType != "color" &&
-									watchedAttributeType != "size"
+									{watchedAttributeType != "color" && watchedAttributeType != "size"
 										? "abcdef"
 										: "S"}
 									".
@@ -243,4 +264,4 @@ export default function UpdateProductAttributes({ params, loaderData : { data: {
 			</SheetContent>
 		</Sheet>
 	);
-};
+}

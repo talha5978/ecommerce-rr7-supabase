@@ -8,7 +8,7 @@ import { queryClient } from "~/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { DollarSign, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { ApiError } from "~/utils/ApiError";
@@ -16,14 +16,23 @@ import type { ActionResponse } from "~/types/action-data";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import { Route } from "./+types/update-product-variant";
-import { type ProductVariantUpdateActionData, ProductVariantUpdateActionDataSchema, ProductVariantUpdateFormValues, ProductVariantUpdateInputSchema } from "~/schemas/product-variants.schema";
+import {
+	type ProductVariantUpdateActionData,
+	ProductVariantUpdateActionDataSchema,
+	ProductVariantUpdateFormValues,
+	ProductVariantUpdateInputSchema,
+} from "~/schemas/product-variants.schema";
 import MultipleImagesInput from "~/components/Custom-Inputs/multiple-images-input";
 import { AllProductAttributesQuery } from "~/queries/product-attributes.q";
 import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
 import type { AttributeType, ProductAttribute, ProductAttributeRow } from "~/types/attributes.d";
 import { ProductVariantsService } from "~/services/product-variants.service";
 import { singleVariantQuery, variantConstraintsQuery } from "~/queries/product-variants.q";
-import { DISABLED_DEFAULT_VARIANT_MESSAGE, PRODUCT_IMG_DIMENSIONS, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
+import {
+	DISABLED_DEFAULT_VARIANT_MESSAGE,
+	PRODUCT_IMG_DIMENSIONS,
+	REQUIRED_VARIANT_ATTRIBS,
+} from "~/constants";
 
 function getSimpleFields() {
 	const fields = [
@@ -46,7 +55,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	if (!variantId || variantId === "") {
 		throw new Response("Variant ID is required", { status: 400 });
 	}
-	
+
 	const productId = (params.productId as string) || "";
 	if (!variantId || variantId === "") {
 		throw new Response("Product ID is required", { status: 400 });
@@ -74,7 +83,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	if (formData.has("removed_images")) {
 		data.removed_images = formData.getAll("removed_images").map((value) => String(value));
 	}
-	
+
 	// Extract new attributes (array of strings)
 	if (formData.has("added_attributes")) {
 		data.added_attributes = formData.getAll("added_attributes").map((value) => String(value));
@@ -97,7 +106,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	}
 
 	console.log("Data in the action: ", parseResult.data);
-	
+
 	// Initialize the service with the request
 	const productVariantsService = new ProductVariantsService(request);
 
@@ -130,8 +139,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const variant_id = params.variantId as string || "";
-	const product_id = params.productId as string || "";
+	const variant_id = (params.variantId as string) || "";
+	const product_id = (params.productId as string) || "";
 
 	if (!variant_id || variant_id == "") {
 		throw new Response("Variant ID is required", { status: 400 });
@@ -142,16 +151,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	}
 
 	const variantData = await queryClient.fetchQuery(singleVariantQuery({ request, variant_id }));
-	const attributesData = await queryClient.fetchQuery(AllProductAttributesQuery({
-		request,
-		input: "for-variant"
-	}));
-	const constraints = await queryClient.fetchQuery(variantConstraintsQuery({
-		request,
-		product_id
-	}));
+	const attributesData = await queryClient.fetchQuery(
+		AllProductAttributesQuery({
+			request,
+			input: "for-variant",
+		}),
+	);
+	const constraints = await queryClient.fetchQuery(
+		variantConstraintsQuery({
+			request,
+			product_id,
+		}),
+	);
 	//console.log(constraints);
-	
+
 	return { variantData, attributesData, constraints };
 };
 
@@ -160,10 +173,9 @@ export default function UpdateProductVariantPage({
 	loaderData: {
 		variantData: { variant, error: variantError },
 		attributesData: { product_attributes, error: attributesError },
-		constraints: { is_default_variant_exists, default_variant_id, productName }
+		constraints: { is_default_variant_exists, default_variant_id, productName },
 	},
-} : Route.ComponentProps) {
-	
+}: Route.ComponentProps) {
 	const navigate = useNavigate();
 	const productId = params.productId as string;
 
@@ -182,8 +194,9 @@ export default function UpdateProductVariantPage({
 			return;
 		}
 	}, [attributesError]);
-	
-	const is_default_disabled = (is_default_variant_exists && default_variant_id !== variant?.id ? true : false) || false;
+
+	const is_default_disabled =
+		(is_default_variant_exists && default_variant_id !== variant?.id ? true : false) || false;
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
@@ -195,7 +208,7 @@ export default function UpdateProductVariantPage({
 	}
 
 	function getdefaultImages() {
-		return variant?.images ? normalizeImgArray(variant.images) : Array(4).fill(null)
+		return variant?.images ? normalizeImgArray(variant.images) : Array(4).fill(null);
 	}
 
 	const attributeKeys = Object.keys(product_attributes || {});
@@ -203,11 +216,12 @@ export default function UpdateProductVariantPage({
 	function getdefaultRequiredAttributes() {
 		const attribs = variant?.attributes;
 		return attribs
-			? attributeKeys
-				.map((key) => {
-					const attr = variant?.attributes.find((a: ProductAttributeRow) => a.attribute_type === key);
-					return attr ? attr.id : null; 
-				})
+			? attributeKeys.map((key) => {
+					const attr = variant?.attributes.find(
+						(a: ProductAttributeRow) => a.attribute_type === key,
+					);
+					return attr ? attr.id : null;
+			  })
 			: Array(REQUIRED_VARIANT_ATTRIBS.length).fill("");
 	}
 
@@ -224,7 +238,7 @@ export default function UpdateProductVariantPage({
 			status: variant?.status || "true",
 			stock: variant?.stock || "0",
 			weight: variant?.weight || "",
-			required_attributes: getdefaultRequiredAttributes()
+			required_attributes: getdefaultRequiredAttributes(),
 		},
 	});
 
@@ -232,13 +246,13 @@ export default function UpdateProductVariantPage({
 		console.log(form.getValues());
 	}, [form]);
 
-	const { handleSubmit, setError, control } = form; 
+	const { handleSubmit, setError, control } = form;
 
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
-	
+
 	async function onFormSubmit(values: ProductVariantUpdateFormValues) {
 		console.log("Form submitted: \n", values);
-		
+
 		const variantFields = getSimpleFields();
 
 		const formData = new FormData();
@@ -255,14 +269,14 @@ export default function UpdateProductVariantPage({
 			stock: String(values.stock).trim(),
 			weight: String(values.weight || "").trim(),
 			images: values.images, // Handling images separately...
-			required_attributes: values.required_attributes.map((id) => id?.trim() || "")
+			required_attributes: values.required_attributes.map((id) => id?.trim() || ""),
 		};
 
 		// Compare simple fields
 		for (const field of variantFields) {
 			const formValue = normalizedValues[field];
 			const originalValue = String(variant?.[field] || "");
-			
+
 			if (formValue != null && formValue !== originalValue) {
 				formData.append(field, formValue);
 				hasChanges = true;
@@ -303,15 +317,16 @@ export default function UpdateProductVariantPage({
 
 			console.log("New Images", newImages);
 			console.log("Removed Images", removedImages);
-			
 
 			hasChanges = true;
 		}
 
 		// Compare attributes
-		const originalAttributeIds = (variant?.attributes || []).map((attr: ProductAttributeRow) => attr.id).sort();
-		const formAttributeIds: string[] = normalizedValues?.required_attributes!
-			.filter((attr) => attr !== null && attr !== "")
+		const originalAttributeIds = (variant?.attributes || [])
+			.map((attr: ProductAttributeRow) => attr.id)
+			.sort();
+		const formAttributeIds: string[] = normalizedValues
+			?.required_attributes!.filter((attr) => attr !== null && attr !== "")
 			.sort() as string[];
 
 		// Calculate removed attributes (in original but not in form)
@@ -338,7 +353,7 @@ export default function UpdateProductVariantPage({
 
 		console.log("Added Attributes: ", addedAttributes);
 		console.log("Removed Attributes: ", removedAttributes);
-		
+
 		// If no changes, show toast and return
 		if (!hasChanges) {
 			toast.info("No changes to update");
@@ -353,7 +368,7 @@ export default function UpdateProductVariantPage({
 			encType: "multipart/form-data",
 		});
 	}
-	
+
 	useEffect(() => {
 		if (actionData) {
 			if (actionData.success) {
@@ -369,7 +384,7 @@ export default function UpdateProductVariantPage({
 			}
 		}
 	}, [actionData, navigate]);
-	
+
 	return (
 		<>
 			<MetaDetails
@@ -439,7 +454,7 @@ export default function UpdateProductVariantPage({
 														className="pointer-events-none"
 														tabIndex={-1}
 													>
-														Rs.
+														<DollarSign className="h-4 w-4" />
 													</Button>
 												</div>
 											</FormControl>
@@ -469,7 +484,7 @@ export default function UpdateProductVariantPage({
 														className="pointer-events-none"
 														tabIndex={-1}
 													>
-														Rs.
+														$
 													</Button>
 												</div>
 											</FormControl>
@@ -516,7 +531,10 @@ export default function UpdateProductVariantPage({
 										<FormItem>
 											<FormLabel>Images</FormLabel>
 											<FormControl>
-												<MultipleImagesInput name="images" dimensions={PRODUCT_IMG_DIMENSIONS}/>
+												<MultipleImagesInput
+													name="images"
+													dimensions={PRODUCT_IMG_DIMENSIONS}
+												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -547,7 +565,10 @@ export default function UpdateProductVariantPage({
 															value={field.value}
 														>
 															<div className="flex items-center gap-3 *:cursor-pointer">
-																<RadioGroupItem value="true" id="status-active" />
+																<RadioGroupItem
+																	value="true"
+																	id="status-active"
+																/>
 																<Label htmlFor="status-active">Active</Label>
 															</div>
 															<div className="flex items-center gap-3 *:cursor-pointer">
@@ -555,12 +576,14 @@ export default function UpdateProductVariantPage({
 																	value="false"
 																	id="status-inactive"
 																/>
-																<Label htmlFor="status-inactive">Inactive</Label>
+																<Label htmlFor="status-inactive">
+																	Inactive
+																</Label>
 															</div>
 														</RadioGroup>
 														<span className="text-muted-foreground text-sm">
-															If inactive, then this variant will not be visible in
-															the store.
+															If inactive, then this variant will not be visible
+															in the store.
 														</span>
 													</div>
 												</FormControl>
@@ -568,7 +591,7 @@ export default function UpdateProductVariantPage({
 											</FormItem>
 										)}
 									/>
-							
+
 									{/* Is default */}
 									<FormField
 										control={control}
@@ -598,12 +621,15 @@ export default function UpdateProductVariantPage({
 																<Label htmlFor="default-val-no">No</Label>
 															</div>
 														</RadioGroup>
-														<span className={`text-muted-foreground text-sm ${is_default_disabled && "italic"}`}>
+														<span
+															className={`text-muted-foreground text-sm ${
+																is_default_disabled && "italic"
+															}`}
+														>
 															{is_default_disabled
 																? DISABLED_DEFAULT_VARIANT_MESSAGE
 																: `If "Yes" is selected then this variant will be auto
-																selected at first load in store front.`
-															}
+																selected at first load in store front.`}
 														</span>
 													</div>
 												</FormControl>
@@ -657,8 +683,8 @@ export default function UpdateProductVariantPage({
 															{...field}
 														/>
 														<span className="text-muted-foreground text-sm">
-															On your set reorder level, admins will be notified by
-															email about the low stock.
+															On your set reorder level, admins will be notified
+															by email about the low stock.
 														</span>
 													</div>
 												</FormControl>
@@ -682,24 +708,29 @@ export default function UpdateProductVariantPage({
 												<FormControl>
 													<div className="space-y-4">
 														{attributeKeys.map((key, index) => (
-															<div
-																key={key}
-																className="grid grid-cols-1"
-															>
+															<div key={key} className="grid grid-cols-1">
 																<FormItem>
 																	<FormControl>
 																		<AttributeSelect
 																			name={`required_attributes.${index}`}
-																			attributeKey={key as AttributeType}
+																			attributeKey={
+																				key as AttributeType
+																			}
 																			options={
-																				// @ts-ignore
-																				product_attributes != null ? product_attributes[key]?.map(
-																					(opt: ProductAttribute) => ({
-																						id: opt.id,
-																						value: opt.value,
-																						name: opt.name
-																					})
-																				) : []
+																				product_attributes != null
+																					? // @ts-ignore
+																					  product_attributes[
+																							key
+																					  ]?.map(
+																							(
+																								opt: ProductAttribute,
+																							) => ({
+																								id: opt.id,
+																								value: opt.value,
+																								name: opt.name,
+																							}),
+																					  )
+																					: []
 																			}
 																			disabled={!product_attributes}
 																		/>

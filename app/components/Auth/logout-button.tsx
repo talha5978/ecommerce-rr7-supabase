@@ -6,35 +6,34 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 const LogoutButton = () => {
-    const navigation = useNavigation();
-    const actionData = useActionData();
+	const navigation = useNavigation();
+	const actionData = useActionData();
 
 	const isLoggingOut =
 		navigation.state === "submitting" &&
 		navigation.formAction === "/logout" &&
 		navigation.formMethod === "POST";
 
-    useEffect(() => {
+	useEffect(() => {
 		if (actionData?.error) {
 			toast.error(actionData.error);
 		} else if (actionData == undefined && navigation.formAction === "/logout") {
-            toast.success("Logged out successfully");
-        }
+			toast.success("Logged out successfully");
+		}
 	}, [actionData]);
 
-    return (
-        <Form action="/logout" method="POST">
-            <Button
-                variant="destructive"
-                disabled={isLoggingOut}
-                className="min-w-full"
-                size={"sm"}
-            >
-                {isLoggingOut ? <Loader2 className="animate-spin" color="white" /> : <IconLogout color="white"/>}
-                <span>Logout</span>
-            </Button>
-        </Form>
-    )
+	return (
+		<Form action="/logout" method="POST">
+			<Button variant="destructive" disabled={isLoggingOut} className="min-w-full" size={"sm"}>
+				{isLoggingOut ? (
+					<Loader2 className="animate-spin" color="white" />
+				) : (
+					<IconLogout color="white" />
+				)}
+				<span>Logout</span>
+			</Button>
+		</Form>
+	);
 };
 
 export default LogoutButton;

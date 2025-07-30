@@ -26,10 +26,12 @@ export function getProductVariantsFiltersPayload({ request }: FilterPayloadParam
 	const maxStockParam = url.searchParams.get("max_stock");
 	const minStockParam = url.searchParams.get("min_stock");
 
-	const sortBy = (url.searchParams.get("sortBy") as ProductVariantsFilters["sortBy"])
-		|| defaults.defaultProductVaraintsSortByFilter;
-	const sortType = (url.searchParams.get("sortType") as ProductVariantsFilters["sortType"])
-		|| defaults.defaultProductVaraintsSortTypeFilter;
+	const sortBy =
+		(url.searchParams.get("sortBy") as ProductVariantsFilters["sortBy"]) ||
+		defaults.defaultProductVaraintsSortByFilter;
+	const sortType =
+		(url.searchParams.get("sortType") as ProductVariantsFilters["sortType"]) ||
+		defaults.defaultProductVaraintsSortTypeFilter;
 
 	const filters: ProductVariantsFilters = {
 		// boolean flags

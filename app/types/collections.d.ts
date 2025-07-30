@@ -67,9 +67,9 @@ type Collection_Row = Database["public"]["Tables"]["collections"]["Row"];
 export type FullCollection = Omit<Collection_Row, "meta_details"> & {
 	meta_details: MetaDetailsRow | null;
 	products: SelectedProduct[];
-}
+};
 
 export type GetFullCollection = {
 	collection: FullCollection | null;
 	error: ApiError | null;
-}
+};

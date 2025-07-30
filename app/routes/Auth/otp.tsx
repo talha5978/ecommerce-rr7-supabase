@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "~/components/ui/input-otp";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Info, Loader2, Mail } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import {
 	ActionFunctionArgs,
 	Link,
@@ -39,21 +39,21 @@ export async function action({ request }: ActionFunctionArgs) {
 				{
 					status: 400,
 					headers: { "Content-Type": "application/json" },
-				}
+				},
 			);
 		}
 
 		const authSvc = new AuthService(request);
-		const { error: tokenError, headers } = await authSvc.verifyOtp({ email, token });	
+		const { error: tokenError, headers } = await authSvc.verifyOtp({ email, token });
 		console.log(headers);
-		
+
 		if (tokenError) {
 			return { success: false, error: tokenError.message || "Failed to login" };
 		}
 
 		console.log("ERROR 🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋🌋", tokenError);
 		await queryClient.invalidateQueries({ queryKey: ["current_user"] });
-		
+
 		const { user, error: userErr } = await authSvc.getCurrentUser();
 
 		if (userErr || !user) {
@@ -61,16 +61,13 @@ export async function action({ request }: ActionFunctionArgs) {
 			return { success: false, error: "Failed to fetch user session" };
 		}
 
-		return new Response(
-			JSON.stringify({ success: true }),
-			{
-				status: 200,
-				headers: {
-					"Content-Type": "application/json",
-					"Set-Cookie": headers.get("Set-Cookie") || "",
-				},
-			}
-		);
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: {
+				"Content-Type": "application/json",
+				"Set-Cookie": headers.get("Set-Cookie") || "",
+			},
+		});
 	} catch (error: any) {
 		const errorMessage = error instanceof ApiError ? error.message : error.message || "Failed to login";
 
@@ -87,7 +84,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export async function loader({ request }: LoaderFunctionArgs) {
 	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
 	console.log("User in login otp: ", user);
-	
+
 	if (user) {
 		return redirect("/");
 	}
@@ -117,7 +114,7 @@ export default function OtpPage() {
 	useEffect(() => {
 		if (actionData) {
 			console.log(actionData);
-			
+
 			if (actionData.success) {
 				toast.success("Logged in successfully");
 				navigate(`/`, { replace: true });
@@ -134,18 +131,19 @@ export default function OtpPage() {
 	}, [actionData, navigate]);
 
 	const navigation = useNavigation();
-	const isVerifying =
-		navigation.state === "submitting" &&
-		navigation.formMethod === "POST";
+	const isVerifying = navigation.state === "submitting" && navigation.formMethod === "POST";
 
 	const onCodeSubmit = (formData: OtpFormData) => {
-		submit({
-			email: formData.email.trim(),
-			token: formData.token.trim()
-		}, {
-			method: "POST",
-			action: `/login/otp?email=${encodeURIComponent(formData.email)}&sent=true`,
-		});
+		submit(
+			{
+				email: formData.email.trim(),
+				token: formData.token.trim(),
+			},
+			{
+				method: "POST",
+				action: `/login/otp?email=${encodeURIComponent(formData.email)}&sent=true`,
+			},
+		);
 	};
 
 	return (

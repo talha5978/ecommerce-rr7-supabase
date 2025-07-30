@@ -1,20 +1,26 @@
 import { queryOptions } from "@tanstack/react-query";
 import { CategoryService } from "~/services/category.service";
-import type { GetAllCategoriesResponse, GetCategoryResponse, GetHighLevelCategoriesResponse, GetHighLevelSubCategoriesResponse, GetSubCategoryResponse } from "~/types/category.d";
+import type {
+	GetAllCategoriesResponse,
+	GetCategoryResponse,
+	GetHighLevelCategoriesResponse,
+	GetHighLevelSubCategoriesResponse,
+	GetSubCategoryResponse,
+} from "~/types/category.d";
 
 interface highLevelCategoriesQueryArgs {
-    request: Request;
-    q: string;
-    pageIndex?: number;
-    pageSize?: number;
+	request: Request;
+	q: string;
+	pageIndex?: number;
+	pageSize?: number;
 }
 
 interface subCategoriesQueryArgs {
-    request: Request;
-    categoryId: string,
-	q: string,
-	pageIndex: number,
-	pageSize: number
+	request: Request;
+	categoryId: string;
+	q: string;
+	pageIndex: number;
+	pageSize: number;
 }
 
 interface singleCategoryQueryArgs {
@@ -27,7 +33,12 @@ interface singleSubCategoryQueryArgs {
 	subCategoryId: string;
 }
 
-export const highLevelCategoriesQuery = ({ request, q, pageIndex, pageSize }: highLevelCategoriesQueryArgs) => {
+export const highLevelCategoriesQuery = ({
+	request,
+	q,
+	pageIndex,
+	pageSize,
+}: highLevelCategoriesQueryArgs) => {
 	return queryOptions<GetHighLevelCategoriesResponse>({
 		queryKey: ["highLevelCategories", q, pageIndex, pageSize],
 		queryFn: async () => {
@@ -38,13 +49,7 @@ export const highLevelCategoriesQuery = ({ request, q, pageIndex, pageSize }: hi
 	});
 };
 
-export const categoriesQuery = ({
-	request,
-	pageIndex
-}: {
-	request: Request;
-	pageIndex?: number;
-}) => {
+export const categoriesQuery = ({ request, pageIndex }: { request: Request; pageIndex?: number }) => {
 	return queryOptions<GetAllCategoriesResponse>({
 		queryKey: ["categories", pageIndex],
 		queryFn: async () => {

@@ -1,30 +1,34 @@
 import { queryOptions } from "@tanstack/react-query";
 import { CollectionFilers } from "~/schemas/collections-filter.schema";
 import { CollectionsService } from "~/services/collections.service";
-import { CollectionDataItemsResponse, GetFullCollection, GetHighLevelCollectionsResp } from "~/types/collections";
+import {
+	CollectionDataItemsResponse,
+	GetFullCollection,
+	GetHighLevelCollectionsResp,
+} from "~/types/collections";
 
 interface collectionsQueryArgs {
-    request: Request;
-    q: string;
-    pageIndex?: number;
-    pageSize?: number;
-	filters?: CollectionFilers
+	request: Request;
+	q: string;
+	pageIndex?: number;
+	pageSize?: number;
+	filters?: CollectionFilers;
 }
 
 export type CollectionDataItemsArgs = {
 	q?: string;
 	categoryPageIndex?: number;
 	productPageIndex?: number;
-}
+};
 
 type collectionsDataItemsArgs = {
-    request: Request;
+	request: Request;
 } & CollectionDataItemsArgs;
 
 type fullCollectionQueryArgs = {
 	request: Request;
 	collection_id: string;
-}
+};
 
 export const collectionsQuery = ({ request, q, pageIndex, pageSize, filters }: collectionsQueryArgs) => {
 	return queryOptions<GetHighLevelCollectionsResp>({
@@ -56,7 +60,6 @@ export const collectionDataItemsQuery = ({
 		},
 	});
 };
-
 
 export const FullCollectionQuery = ({ request, collection_id }: fullCollectionQueryArgs) => {
 	return queryOptions<GetFullCollection>({

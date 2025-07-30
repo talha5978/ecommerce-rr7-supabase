@@ -4,13 +4,13 @@ import { Service } from "~/services/service";
 
 export class ProductRAttributesService extends Service {
 	/** Create bulk of product related attributes */
-	async createBulkProductAttributes(input: ProductRAttributeInput[]): Promise<ProductRAttributeCreateResponse> {
+	async createBulkProductAttributes(
+		input: ProductRAttributeInput[],
+	): Promise<ProductRAttributeCreateResponse> {
 		if (input.length == 0) {
 			throw new ApiError("Failed to create product attributes", 500, []);
 		}
-		const { error: insertError } = await this.supabase
-			.from(this.PRODUCT_ATTRIBUTES_TABLE)
-			.insert(input);
+		const { error: insertError } = await this.supabase.from(this.PRODUCT_ATTRIBUTES_TABLE).insert(input);
 
 		let error: null | ApiError = null;
 
@@ -37,11 +37,13 @@ export class ProductRAttributesService extends Service {
 	}
 
 	/** Delete bulk rows of product attributes table (by product id and array of attribute ids associated with that product) */
-	async deleteBulkProductRAttributes({product_id, attributes_ids} : {
+	async deleteBulkProductRAttributes({
+		product_id,
+		attributes_ids,
+	}: {
 		product_id: string;
 		attributes_ids: string[];
 	}): Promise<void> {
-
 		const { error } = await this.supabase
 			.from(this.PRODUCT_ATTRIBUTES_TABLE)
 			.delete()
@@ -53,4 +55,3 @@ export class ProductRAttributesService extends Service {
 		}
 	}
 }
-

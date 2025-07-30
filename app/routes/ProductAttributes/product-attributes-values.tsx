@@ -3,8 +3,22 @@ import { Route } from "./+types/product-attributes-values";
 import { Button } from "~/components/ui/button";
 import { Dot, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
-import { ColumnDef, ColumnFiltersState, getCoreRowModel, getFilteredRowModel, useReactTable } from "@tanstack/react-table";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import {
+	ColumnDef,
+	ColumnFiltersState,
+	getCoreRowModel,
+	getFilteredRowModel,
+	useReactTable,
+} from "@tanstack/react-table";
 import { useNavigation } from "react-router";
 import { queryClient } from "~/lib/queryClient";
 import BackButton from "~/components/Nav/BackButton";
@@ -17,45 +31,42 @@ import { Input } from "~/components/ui/input";
 import { useState } from "react";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-    const attributeType = (params.attributeType as AttributeType);
-    if (!attributeType) {
-        throw new Response("Attribute type is required", { status: 400 });
-    }
-    
-    const data = await queryClient.fetchQuery(
-		productAttributesByTypeQuery({ request, attribute_type: attributeType })
+	const attributeType = params.attributeType as AttributeType;
+	if (!attributeType) {
+		throw new Response("Attribute type is required", { status: 400 });
+	}
+
+	const data = await queryClient.fetchQuery(
+		productAttributesByTypeQuery({ request, attribute_type: attributeType }),
 	);
 
-    return {
-        data,
-    };
+	return {
+		data,
+	};
 };
 
-export default function ProductAttributeValuesPage({
-    loaderData: { data }, params
-}: Route.ComponentProps) {
-    
-    if (data.product_attributes == null) {
-        throw new Response(`Error fetching ${params.attributeType} attributes`, { status: 404 });
-    }
-    // console.log(data);
-    
-    const navigation = useNavigation();
-    const location = useLocation();
+export default function ProductAttributeValuesPage({ loaderData: { data }, params }: Route.ComponentProps) {
+	if (data.product_attributes == null) {
+		throw new Response(`Error fetching ${params.attributeType} attributes`, { status: 404 });
+	}
+	// console.log(data);
 
-    const isFetchingThisRoute =
-        navigation.state === "loading" && navigation.location?.pathname === location.pathname;
+	const navigation = useNavigation();
+	const location = useLocation();
 
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+	const isFetchingThisRoute =
+		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
-    const tableColumns: ColumnDef<ProductAttribute, unknown>[] = [
-        {
-            id: "Attribute ID",
-            enableHiding: false,
-            accessorKey: "id",
-            cell: (info: any) => <TableId id={info.row.original.id} message="Attribute ID copied"/>,
-            header: () => "Attribute ID",
-        },
+	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+	const tableColumns: ColumnDef<ProductAttribute, unknown>[] = [
+		{
+			id: "Attribute ID",
+			enableHiding: false,
+			accessorKey: "id",
+			cell: (info: any) => <TableId id={info.row.original.id} message="Attribute ID copied" />,
+			header: () => "Attribute ID",
+		},
 		{
 			id: "attribute_name",
 			enableHiding: false,
@@ -67,24 +78,31 @@ export default function ProductAttributeValuesPage({
 			id: "Attribute Value",
 			accessorKey: "value",
 			cell: (info: any) => {
-                const val = info.row.original.value;
-                const isColor = params.attributeType == "color";
-                
-                return (
-                    <div className="flex gap-2 items-center">
-                        {isColor && <Dot className={`text-[${val}]  rounded-full`} color={val} size={48} strokeWidth={7} />}
-                        <span>{val}</span>
-                    </div>
-                )
-            },
+				const val = info.row.original.value;
+				const isColor = params.attributeType == "color";
+
+				return (
+					<div className="flex gap-2 items-center">
+						{isColor && (
+							<Dot
+								className={`text-[${val}]  rounded-full`}
+								color={val}
+								size={48}
+								strokeWidth={7}
+							/>
+						)}
+						<span>{val}</span>
+					</div>
+				);
+			},
 			header: () => "Attribute Value",
 		},
-        {
-            id: "actions",
-            cell: ({ row }) => {
-                const rowData: ProductAttribute = row.original;
+		{
+			id: "actions",
+			cell: ({ row }) => {
+				const rowData: ProductAttribute = row.original;
 
-                return (
+				return (
 					<>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -109,22 +127,22 @@ export default function ProductAttributeValuesPage({
 						</DropdownMenu>
 					</>
 				);
-            },
-        },
-    ];
+			},
+		},
+	];
 
-    const table = useReactTable({
-        data: (data.product_attributes as ProductAttribute[]) ?? [],
-        columns: tableColumns,
-        getCoreRowModel: getCoreRowModel(),
-        onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
-        state: {
-            columnFilters,
-        },
-    });
-    
-    return (
+	const table = useReactTable({
+		data: (data.product_attributes as ProductAttribute[]) ?? [],
+		columns: tableColumns,
+		getCoreRowModel: getCoreRowModel(),
+		onColumnFiltersChange: setColumnFilters,
+		getFilteredRowModel: getFilteredRowModel(),
+		state: {
+			columnFilters,
+		},
+	});
+
+	return (
 		<>
 			<MetaDetails
 				metaTitle="Product Attribute | Admin Panel"
@@ -148,7 +166,7 @@ export default function ProductAttributeValuesPage({
 							</Button>
 						</Link>
 					</div>
-                    {columnFilters[0] && (
+					{columnFilters[0] && (
 						<div className="mt-3">
 							<p>Showing records for "{(columnFilters[0]?.value as string)?.trim()}"</p>
 						</div>
@@ -169,68 +187,71 @@ export default function ProductAttributeValuesPage({
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<ProductAttribute>) {
-    const { register, handleSubmit } = useForm({
-        defaultValues: {
-            attribute_name: (table.getColumn("attribute_name")?.getFilterValue() as string) ?? "",
-        },
-    });
+	const { register, handleSubmit } = useForm({
+		defaultValues: {
+			attribute_name: (table.getColumn("attribute_name")?.getFilterValue() as string) ?? "",
+		},
+	});
 
-    function onSubmit(data: { attribute_name: string }) {
-        table.getColumn("attribute_name")?.setFilterValue(data.attribute_name);
-    }
-    return (
-        <div className="w-full flex justify-between gap-4 items-center">
-            <div>
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="relative">
-                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
-                        <Input
-                            placeholder="Search attributes"
-                            className="w-full pl-8"
-                            id="search"
-                            disabled={disabled}
-                            {...register("attribute_name")}
-                        />
-                    </div>
-                    <Button type="submit" className="hidden">
-                        Search
-                    </Button>
-                </form>
-            </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-                        disabled={disabled}
-                    >
-                        <Settings2 />
-                        <span className="hidden md:inline">Columns</span>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[150px]">
-                    <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {table
-                        .getAllColumns()
-                        .filter(
-                            (column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide()
-                        )
-                        .map((column: any) => {
-                            return (
-                                <DropdownMenuCheckboxItem
-                                    key={column.id}
-                                    className="cursor-pointer"
-                                    checked={column.getIsVisible()}
-                                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                >
-                                    {column.id}
-                                </DropdownMenuCheckboxItem>
-                            );
-                        })}
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
-    );
+	function onSubmit(data: { attribute_name: string }) {
+		table.getColumn("attribute_name")?.setFilterValue(data.attribute_name);
+	}
+	return (
+		<div className="w-full flex justify-between gap-4 items-center">
+			<div>
+				<form onSubmit={handleSubmit(onSubmit)}>
+					<div className="relative">
+						<Search
+							className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+							width={18}
+						/>
+						<Input
+							placeholder="Search attributes"
+							className="w-full pl-8"
+							id="search"
+							disabled={disabled}
+							{...register("attribute_name")}
+						/>
+					</div>
+					<Button type="submit" className="hidden">
+						Search
+					</Button>
+				</form>
+			</div>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button
+						variant="outline"
+						size="sm"
+						className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
+						disabled={disabled}
+					>
+						<Settings2 />
+						<span className="hidden md:inline">Columns</span>
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" className="w-[150px]">
+					<DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+					<DropdownMenuSeparator />
+					{table
+						.getAllColumns()
+						.filter(
+							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide(),
+						)
+						.map((column: any) => {
+							return (
+								<DropdownMenuCheckboxItem
+									key={column.id}
+									className="cursor-pointer"
+									checked={column.getIsVisible()}
+									onCheckedChange={(value) => column.toggleVisibility(!!value)}
+								>
+									{column.id}
+								</DropdownMenuCheckboxItem>
+							);
+						})}
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</div>
+	);
 }

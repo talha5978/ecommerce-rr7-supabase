@@ -1,29 +1,45 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ActionFunctionArgs, useActionData, useNavigate, useNavigation, useParams, useSubmit } from "react-router";
+import {
+	ActionFunctionArgs,
+	useActionData,
+	useNavigate,
+	useNavigation,
+	useParams,
+	useSubmit,
+} from "react-router";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { CategoryService } from "~/services/category.service";
 import { queryClient } from "~/lib/queryClient";
-import { SubCategoryActionDataSchema, SubCategoryInputSchema, type SubCategoryFormValues } from "~/schemas/category.schema";
+import {
+	SubCategoryActionDataSchema,
+	SubCategoryInputSchema,
+	type SubCategoryFormValues,
+} from "~/schemas/category.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
-import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { useEffect } from "react";
-import { TagsInput, TagsInputClear, TagsInputInput, TagsInputItem, TagsInputList } from "~/components/ui/tags-input";
+import {
+	TagsInput,
+	TagsInputClear,
+	TagsInputInput,
+	TagsInputItem,
+	TagsInputList,
+} from "~/components/ui/tags-input";
 import { defaults } from "~/constants";
 import { toast } from "sonner";
 import { ApiError } from "~/utils/ApiError";
 import { ActionResponse } from "~/types/action-data";
 
-export const action = async ({ request } : ActionFunctionArgs) => {
-    const formData = await request.formData();
+export const action = async ({ request }: ActionFunctionArgs) => {
+	const formData = await request.formData();
 	console.log("Form data: ", formData);
-	
+
 	const data = {
 		sub_category_name: formData.get("sub_category_name") as string,
 		description: formData.get("description") as string,
@@ -37,20 +53,20 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 		},
 	};
 
-    const parseResult = SubCategoryActionDataSchema.safeParse(data);
+	const parseResult = SubCategoryActionDataSchema.safeParse(data);
 	console.log("Parse result: ", parseResult?.error);
-	
-    if (!parseResult.success) {
-        return new Response(
-            JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }),
-            { status: 400, headers: { "Content-Type": "application/json" } }
-        );
-    }
-    const { sub_category_name, description, sort_order, meta_details, parent_id } = parseResult.data;
 
-    const categoryService = new CategoryService(request);
-	
-    try {
+	if (!parseResult.success) {
+		return new Response(JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+	const { sub_category_name, description, sort_order, meta_details, parent_id } = parseResult.data;
+
+	const categoryService = new CategoryService(request);
+
+	try {
 		await categoryService.createSubCategoryWithMeta({
 			sub_category_name,
 			description: description ?? null,
@@ -68,7 +84,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 		await queryClient.invalidateQueries({ queryKey: ["categories"] });
 
 		return { success: true };
-	} catch (error:any) {
+	} catch (error: any) {
 		console.error("Error in action:", error);
 		const errorMessage =
 			error instanceof ApiError ? error.message : error.message || "Failed to create sub category";
@@ -83,7 +99,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 	}
 };
 
-export default function CreateCategoryPage() {   
+export default function CreateCategoryPage() {
 	const navigate = useNavigate();
 	const submit = useSubmit();
 	const navigation = useNavigation();
@@ -91,7 +107,7 @@ export default function CreateCategoryPage() {
 
 	const actionData: ActionResponse = useActionData();
 
-    const form = useForm<SubCategoryFormValues>({
+	const form = useForm<SubCategoryFormValues>({
 		resolver: zodResolver(SubCategoryInputSchema),
 		mode: "onSubmit",
 		defaultValues: {
@@ -108,15 +124,11 @@ export default function CreateCategoryPage() {
 		},
 	});
 
-    const {
-        handleSubmit,
-        setError,
-        control
-    } = form;
+	const { handleSubmit, setError, control } = form;
 
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
-    async function onFormSubmit(values: SubCategoryFormValues) {
+	async function onFormSubmit(values: SubCategoryFormValues) {
 		const formData = new FormData();
 
 		formData.set("sub_category_name", values.sub_category_name.trim());
@@ -127,10 +139,12 @@ export default function CreateCategoryPage() {
 		formData.set("meta_details.meta_description", values.meta_details.meta_description.trim());
 		formData.set("meta_details.url_key", values.meta_details.url_key.trim().toLowerCase());
 		if (values.meta_details.meta_keywords) {
-			const stringifiedKeywords = values.meta_details.meta_keywords.map((keyword) => keyword.trim()).join(",");
+			const stringifiedKeywords = values.meta_details.meta_keywords
+				.map((keyword) => keyword.trim())
+				.join(",");
 			formData.set("meta_details.meta_keywords", stringifiedKeywords);
 		}
-		
+
 		submit(formData, { method: "POST", action: `/categories/${categoryId}/sub-categories/create` });
 	}
 
@@ -150,7 +164,7 @@ export default function CreateCategoryPage() {
 		}
 	}, [actionData, navigate]);
 
-    return (
+	return (
 		<>
 			<MetaDetails
 				metaTitle="Create Sub Category | Admin Panel"

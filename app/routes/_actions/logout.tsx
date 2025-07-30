@@ -6,7 +6,7 @@ import { AuthService } from "~/services/auth.service";
 
 export async function action({ request }: ActionFunctionArgs) {
 	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
-	
+
 	if (!user) {
 		return redirect("/login");
 	}
@@ -17,7 +17,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (error) {
 		return { error: error.message };
 	}
-	
+
 	await queryClient.invalidateQueries({ queryKey: ["current_user"] });
 
 	return redirect("/", { headers });

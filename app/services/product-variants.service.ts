@@ -1,8 +1,17 @@
 import { ApiError } from "~/utils/ApiError";
-import type { GetAllProductVariants, ProductVariantUpdationPayload, SingleProductVariantResponse, VariantConstraintsData } from "~/types/product-variants";
+import type {
+	GetAllProductVariants,
+	ProductVariantUpdationPayload,
+	SingleProductVariantResponse,
+	VariantConstraintsData,
+} from "~/types/product-variants";
 import { defaults, FilterOp, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
 import { MediaService } from "~/services/media.service";
-import type { DuplicateVariantActionData, ProductVariantActionData, ProductVariantUpdateActionData } from "~/schemas/product-variants.schema";
+import type {
+	DuplicateVariantActionData,
+	ProductVariantActionData,
+	ProductVariantUpdateActionData,
+} from "~/schemas/product-variants.schema";
 import { bolleanToStringConverter, stringToBooleanConverter } from "~/lib/utils";
 import { VariantsAttributesService } from "./variant-attributes.service";
 import type { VariantAttributeInput } from "~/types/variant-attributes";
@@ -19,7 +28,7 @@ export class ProductVariantsService extends Service {
 		pageIndex = 0,
 		pageSize = defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE,
 		productId: string,
-		filters: ProductVariantsFilters = {}
+		filters: ProductVariantsFilters = {},
 	): Promise<GetAllProductVariants> {
 		try {
 			const from = pageIndex * pageSize;
@@ -29,10 +38,9 @@ export class ProductVariantsService extends Service {
 				.from(this.PRODUCT_VARIANT_TABLE)
 				.select("*", { count: "exact" })
 				.eq("product_id", productId)
-				.order(
-					filters.sortBy || defaults.defaultProductVaraintsSortByFilter,
-					{ ascending: filters.sortType === "asc" }
-				);
+				.order(filters.sortBy || defaults.defaultProductVaraintsSortByFilter, {
+					ascending: filters.sortType === "asc",
+				});
 
 			// DRY numeric ops
 			const numericFields: Array<[keyof ProductVariantsFilters, keyof ProductVariantsFilters]> = [
@@ -40,10 +48,10 @@ export class ProductVariantsService extends Service {
 				["sale_price", "sale_price_op"],
 				["reorder_level", "reorder_level_op"],
 			];
-			
+
 			for (const [colKey, opKey] of numericFields) {
 				const columnName = colKey as string;
-				const op = ((filters as ProductVariantsFilters)[opKey] as FilterOp)|| defaultOp;
+				const op = ((filters as ProductVariantsFilters)[opKey] as FilterOp) || defaultOp;
 				const value = (filters as ProductVariantsFilters)[colKey] as number | undefined;
 				query = applyFilterOps(query, columnName, op, value);
 			}
@@ -142,14 +150,11 @@ export class ProductVariantsService extends Service {
 	}
 
 	async delProductVariantForRollback(varaintId: string) {
-		return await this.supabase
-			.from(this.PRODUCT_VARIANT_TABLE)
-			.delete()
-			.eq("id", varaintId);
+		return await this.supabase.from(this.PRODUCT_VARIANT_TABLE).delete().eq("id", varaintId);
 	}
 
 	/** Create Product Variant Row */
-	async createProductVaraint(productId:string, input: ProductVariantActionData): Promise<void> {
+	async createProductVaraint(productId: string, input: ProductVariantActionData): Promise<void> {
 		const {
 			images,
 			attributes,
@@ -160,7 +165,7 @@ export class ProductVariantsService extends Service {
 			sku,
 			status,
 			stock,
-			weight
+			weight,
 		} = input;
 
 		if (attributes.length !== REQUIRED_VARIANT_ATTRIBS.length) {
@@ -195,7 +200,7 @@ export class ProductVariantsService extends Service {
 			// console.log("No images in array");
 			throw new ApiError("Failed to upload image", 500, []);
 		}
-		
+
 		function delImages() {
 			images_arr.map(async (img) => {
 				await mediaSvc.deleteImage(img);
@@ -233,11 +238,13 @@ export class ProductVariantsService extends Service {
 		const finalAttributes = attributes.map((attribute_id) => {
 			return {
 				attribute_id: attribute_id,
-				variant_id: data.id
-			}
+				variant_id: data.id,
+			};
 		});
 
-		const { error: prodVarAttributeError } = await variantAttributesSvc.createBulkVariantAttributes(finalAttributes);
+		const { error: prodVarAttributeError } = await variantAttributesSvc.createBulkVariantAttributes(
+			finalAttributes,
+		);
 
 		if (prodVarAttributeError) {
 			await this.delProductVariantForRollback(data.id);
@@ -259,7 +266,7 @@ export class ProductVariantsService extends Service {
 			stock,
 			weight,
 			product_id,
-			id: current_variant_id
+			id: current_variant_id,
 		} = input;
 
 		if (images.length == 0) {
@@ -271,23 +278,19 @@ export class ProductVariantsService extends Service {
 		let attributes: VariantAttributeInput[] = [];
 
 		const { data: fetchedAttributes, error: attributesError } =
-			await variantAttributesSvc.getVariantAttributes(
-				current_variant_id as string
-			);
+			await variantAttributesSvc.getVariantAttributes(current_variant_id as string);
 
 		if (!fetchedAttributes && attributesError) {
-			throw new ApiError(
-				`Failed to get product variant attributes: ${attributesError.message}`,
-				500,
-				[attributesError.details]
-			);
+			throw new ApiError(`Failed to get product variant attributes: ${attributesError.message}`, 500, [
+				attributesError.details,
+			]);
 		}
 		// console.log(fetchedAttributes);
-		
+
 		if (fetchedAttributes == null && attributesError) {
 			throw new ApiError(`Failed to get product variant attributes: ${attributesError.message}`, 500, [
 				attributesError.details,
-			])
+			]);
 		}
 		const { error: variantError, data } = await this.supabase
 			.from(this.PRODUCT_VARIANT_TABLE)
@@ -303,7 +306,7 @@ export class ProductVariantsService extends Service {
 				// status set to false by default so that does not reflect in store front !!imediately
 				status: false,
 				stock,
-				weight: weight == 0 ? null : weight
+				weight: weight == 0 ? null : weight,
 			})
 			.select("id")
 			.single();
@@ -314,24 +317,24 @@ export class ProductVariantsService extends Service {
 			]);
 		}
 
-		attributes = fetchedAttributes?.map((row) => {
-			return {
-				attribute_id: row.attribute_id,
-				variant_id: data?.id as string
-			}
-		}) || [];
+		attributes =
+			fetchedAttributes?.map((row) => {
+				return {
+					attribute_id: row.attribute_id,
+					variant_id: data?.id as string,
+				};
+			}) || [];
 		// console.log(data.id, attributes);
-		
-		const { error: prodVarAttributeError } = await variantAttributesSvc
-			.createBulkVariantAttributes(attributes);
+
+		const { error: prodVarAttributeError } = await variantAttributesSvc.createBulkVariantAttributes(
+			attributes,
+		);
 
 		if (prodVarAttributeError) {
 			await this.delProductVariantForRollback(data.id);
-			throw new ApiError(
-				`Failed to duplicate product variant: ${prodVarAttributeError.message}`,
-				500,
-				[prodVarAttributeError.details]
-			);
+			throw new ApiError(`Failed to duplicate product variant: ${prodVarAttributeError.message}`, 500, [
+				prodVarAttributeError.details,
+			]);
 		}
 	}
 
@@ -362,8 +365,8 @@ export class ProductVariantsService extends Service {
 				is_default_variant_exists: data == null ? false : true || false,
 				default_variant_id: data == null ? null : data.id,
 				productName: productName == null ? null : productName,
-				error
-			}
+				error,
+			};
 		} catch (err: any) {
 			if (err instanceof ApiError) {
 				return {
@@ -387,18 +390,19 @@ export class ProductVariantsService extends Service {
 		try {
 			const { data, error: dbError } = await this.supabase
 				.from(this.PRODUCT_VARIANT_TABLE)
-				.select(`
+				.select(
+					`
 					*, ${this.VARIANT_ATTRIBUTES_TABLE}(${this.ATTRIBUTES_TABLE}(*))
-				`)
+				`,
+				)
 				.eq("id", variant_id)
 				.single();
 
-	
 			let error: null | ApiError = null;
 			if (dbError || data == null) {
 				error = new ApiError(dbError.message, 500, [dbError.details]);
 			}
-	
+
 			let extracted_attributes: ProductAttributeRow[] = [];
 			const attributes = data?.[this.VARIANT_ATTRIBUTES_TABLE] || [];
 
@@ -409,11 +413,11 @@ export class ProductVariantsService extends Service {
 					attribute_type: i.attribute_type,
 					value: i.value,
 					id: i.id,
-					name: i.name
-				})
+					name: i.name,
+				});
 			});
 			// console.log(extracted_attributes);
-			
+
 			return {
 				variant: {
 					id: data?.id as string,
@@ -426,13 +430,13 @@ export class ProductVariantsService extends Service {
 					sku: data?.sku as string,
 					status: bolleanToStringConverter(data!.status) as string,
 					stock: data?.stock.toString() as string,
-					weight: data?.weight == null ? "" : data?.weight.toString() as string,
+					weight: data?.weight == null ? "" : (data?.weight.toString() as string),
 					attributes: extracted_attributes,
-					createdAt: data?.createdAt ?? null as string | null
+					createdAt: data?.createdAt ?? (null as string | null),
 				},
-				error
-			}
-		} catch (err:any) {
+				error,
+			};
+		} catch (err: any) {
 			if (err instanceof ApiError) {
 				return { variant: null, error: err };
 			}
@@ -460,35 +464,35 @@ export class ProductVariantsService extends Service {
 			weight,
 		} = input;
 		// console.log("Added attributes", added_attributes);
-		
+
 		const variantAttributesSvc = new VariantsAttributesService(this.request);
 
 		// Delete removed attributes
-		if (
-			Array.isArray(removed_attributes) && removed_attributes.length > 0
-		) {
+		if (Array.isArray(removed_attributes) && removed_attributes.length > 0) {
 			await variantAttributesSvc.deleteBulkVariantAttributes({
 				variant_id,
-				attributes_ids: removed_attributes
-			})
+				attributes_ids: removed_attributes,
+			});
 		}
 
 		// Insert added attributes
-		if (
-			Array.isArray(added_attributes) && added_attributes.length > 0
-		) {
+		if (Array.isArray(added_attributes) && added_attributes.length > 0) {
 			const finalAttributes_toAdd = added_attributes.map((attribute_id) => {
 				return {
 					variant_id,
-					attribute_id: attribute_id
-				}
-			})
-			const { error: prodVarAttributeError } = await variantAttributesSvc.createBulkVariantAttributes(finalAttributes_toAdd);
+					attribute_id: attribute_id,
+				};
+			});
+			const { error: prodVarAttributeError } = await variantAttributesSvc.createBulkVariantAttributes(
+				finalAttributes_toAdd,
+			);
 
 			if (prodVarAttributeError) {
-				throw new ApiError(`Failed to update product variant: ${prodVarAttributeError.message}`, 500, [
-					prodVarAttributeError.details,
-				]);
+				throw new ApiError(
+					`Failed to update product variant: ${prodVarAttributeError.message}`,
+					500,
+					[prodVarAttributeError.details],
+				);
 			}
 		}
 
@@ -502,7 +506,7 @@ export class ProductVariantsService extends Service {
 		}
 		// console.log("Input in the service func. ::: \n");
 		// console.log(input);
-		
+
 		// return;
 		// handle new images
 		const hasImages = images && Array.isArray(images) && images.length > 0;
@@ -514,7 +518,7 @@ export class ProductVariantsService extends Service {
 			.select("images")
 			.eq("id", variant_id)
 			.single();
-		
+
 		if (imageFetchError) {
 			throw new ApiError(`Failed to update product variant: ${imageFetchError.message}`, 500, [
 				imageFetchError.details,
@@ -540,7 +544,7 @@ export class ProductVariantsService extends Service {
 				}
 			});
 
-			await Promise.all(imageUploadPromises);		
+			await Promise.all(imageUploadPromises);
 		}
 
 		if (hasImages && images_arr.length == 0) {
@@ -571,11 +575,7 @@ export class ProductVariantsService extends Service {
 
 		if (images_arr.length > 0) {
 			prodUpdate.images = [...existingImages, ...images_arr];
-		} else if (
-			removed_images 
-			&& Array.isArray(removed_images) 
-			&& removed_images.length > 0
-		) {
+		} else if (removed_images && Array.isArray(removed_images) && removed_images.length > 0) {
 			prodUpdate.images = existingImages;
 		}
 
@@ -589,4 +589,3 @@ export class ProductVariantsService extends Service {
 		}
 	}
 }
-

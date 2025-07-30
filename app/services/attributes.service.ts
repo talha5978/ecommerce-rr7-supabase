@@ -1,7 +1,17 @@
-
 import { ApiError } from "~/utils/ApiError";
-import type { AllProductAttributesResponse, AttributeType, AttributeUpdationPayload, GroupedProductAttributes, HighLevelProductAttributesResponse, ProductAttributesResponse, SingleProductAttributeResponse } from "~/types/attributes.d";
-import { ProductAttributeActionData, ProductAttributesUpdateActionData } from "~/schemas/product-attributes.schema";
+import type {
+	AllProductAttributesResponse,
+	AttributeType,
+	AttributeUpdationPayload,
+	GroupedProductAttributes,
+	HighLevelProductAttributesResponse,
+	ProductAttributesResponse,
+	SingleProductAttributeResponse,
+} from "~/types/attributes.d";
+import {
+	ProductAttributeActionData,
+	ProductAttributesUpdateActionData,
+} from "~/schemas/product-attributes.schema";
 import { OPTIONAL_PRODUCT_ATTRIBS, REQUIRED_VARIANT_ATTRIBS } from "~/constants";
 import { GetAllProductAttribsInput } from "~/types/attributes.d";
 import { Service } from "~/services/service";
@@ -41,7 +51,7 @@ export class ProductAttributesService extends Service {
 
 	/** Fetch all product attributes for the variants mutations */
 	async getAllProductAttributes(
-		input: GetAllProductAttribsInput = "all"
+		input: GetAllProductAttribsInput = "all",
 	): Promise<AllProductAttributesResponse> {
 		if (!["all", "for-variant", "for-product"].includes(input)) {
 			throw new ApiError("Invalid input", 400, []);
@@ -52,7 +62,7 @@ export class ProductAttributesService extends Service {
 				.from(this.ATTRIBUTES_TABLE)
 				.select("*")
 				.order("attribute_type", { ascending: true });
-			
+
 			if (input !== "all") {
 				if (input === "for-variant") {
 					query = query.in("attribute_type", REQUIRED_VARIANT_ATTRIBS as AttributeType[]);
@@ -69,16 +79,23 @@ export class ProductAttributesService extends Service {
 				error = new ApiError(queryError.message, 500, [queryError.details]);
 			}
 
-			const groupedData : GroupedProductAttributes | null = data?.reduce((acc: {
-				[key in AttributeType]?: any[]
-			}, current) => {
-				const { attribute_type, ...rest } = current;
-				if (!acc[attribute_type]) {
-					acc[attribute_type] = [];
-				}
-				acc[attribute_type].push(rest);
-				return acc;
-			}, {}) || null;
+			const groupedData: GroupedProductAttributes | null =
+				data?.reduce(
+					(
+						acc: {
+							[key in AttributeType]?: any[];
+						},
+						current,
+					) => {
+						const { attribute_type, ...rest } = current;
+						if (!acc[attribute_type]) {
+							acc[attribute_type] = [];
+						}
+						acc[attribute_type].push(rest);
+						return acc;
+					},
+					{},
+				) || null;
 
 			return {
 				product_attributes: groupedData,
@@ -135,21 +152,19 @@ export class ProductAttributesService extends Service {
 
 		const { data, error: attribError } = await this.supabase
 			.from(this.ATTRIBUTES_TABLE)
-			.insert(
-				{
-					attribute_type: attribute_type as AttributeType,
-					name,
-					value,
-				}
-			)
+			.insert({
+				attribute_type: attribute_type as AttributeType,
+				name,
+				value,
+			})
 			.select("id")
 			.single();
-		
+
 		if (attribError || !data.id) {
 			throw new ApiError(
 				`Failed to create product attribute: ${attribError?.message || "Unknown error"}`,
 				500,
-				[attribError?.details]
+				[attribError?.details],
 			);
 		}
 	}
@@ -157,10 +172,7 @@ export class ProductAttributesService extends Service {
 	/** Fetch single product attribute row based on the id of attribute that we have selected! This is used for the updation processs*/
 	async getSinlgeProductAttribute(attribute_id: string): Promise<SingleProductAttributeResponse> {
 		try {
-			const {
-				data,
-				error: queryError
-			} = await this.supabase
+			const { data, error: queryError } = await this.supabase
 				.from(this.ATTRIBUTES_TABLE)
 				.select("name, value, id")
 				.eq("id", attribute_id)
@@ -187,8 +199,11 @@ export class ProductAttributesService extends Service {
 	}
 
 	/** Update attribute row from db using ID*/
-	async updateProductAttribute(attribute_id: string, input: Partial<ProductAttributesUpdateActionData>): Promise<void> {
-		const {	attribute_type, name, value } = input;
+	async updateProductAttribute(
+		attribute_id: string,
+		input: Partial<ProductAttributesUpdateActionData>,
+	): Promise<void> {
+		const { attribute_type, name, value } = input;
 
 		const attribToUpdate: Partial<AttributeUpdationPayload> = {};
 
@@ -208,4 +223,3 @@ export class ProductAttributesService extends Service {
 		}
 	}
 }
-

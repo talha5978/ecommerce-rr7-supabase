@@ -1,74 +1,74 @@
 import type { ApiError } from "~/utils/ApiError";
-import type { Database } from "~/types/supabase"
+import type { Database } from "~/types/supabase";
 import type { MetaDetailsRow } from "~/types/meta_details";
 
-export type CategoryRow =  Database["public"]["Tables"]["category"]["Row"];
+export type CategoryRow = Database["public"]["Tables"]["category"]["Row"];
 
-export type SubCategoryRow =  Database["public"]["Tables"]["sub_category"]["Row"];
+export type SubCategoryRow = Database["public"]["Tables"]["sub_category"]["Row"];
 
 export type FullSubCategoryRow = Omit<SubCategoryRow, "meta_details"> & {
-    meta_details: MetaDetailsRow | null;
+	meta_details: MetaDetailsRow | null;
 };
 
 export type FullCategoryRow = Omit<CategoryRow, "meta_details"> & {
-    sub_category: FullSubCategoryRow[] | [];
-    meta_details: MetaDetailsRow | null;
-}
+	sub_category: FullSubCategoryRow[] | [];
+	meta_details: MetaDetailsRow | null;
+};
 
 export type HighLevelCategory = {
-    id: string;
-    category_name: string;
-    sub_category_count: number;
-    createdAt: string;
-    url_key: string | null;
-}
+	id: string;
+	category_name: string;
+	sub_category_count: number;
+	createdAt: string;
+	url_key: string | null;
+};
 
 export interface GetHighLevelCategoriesResponse {
-    categories: HighLevelCategory[] | null;
-    total: number;
-    error: ApiError | null;
+	categories: HighLevelCategory[] | null;
+	total: number;
+	error: ApiError | null;
 }
 
 export interface CategoryListRow {
-    id: string;
-    category_name: string;
-    sub_category: {
-        id: string;
-        sub_category_name: string;
-        parent_id: string;
-    }[];
+	id: string;
+	category_name: string;
+	sub_category: {
+		id: string;
+		sub_category_name: string;
+		parent_id: string;
+	}[];
 }
 
 export interface GetAllCategoriesResponse {
-    categories: CategoryListRow[] | null;
-    total: number;
-    error: ApiError | null;
+	categories: CategoryListRow[] | null;
+	total: number;
+	error: ApiError | null;
 }
 
 export type HighLevelSubCategory = {
-    id: string;
-    sub_category_name: string;
-    description: string;
-    createdAt: string;
-    url_key: string | null;
-}
+	id: string;
+	sub_category_name: string;
+	description: string;
+	createdAt: string;
+	url_key: string | null;
+};
 
 export interface GetHighLevelSubCategoriesResponse {
-    subCategories: HighLevelSubCategory[] | null;
-    total: number;
-    error: ApiError | null;
+	subCategories: HighLevelSubCategory[] | null;
+	total: number;
+	error: ApiError | null;
 }
 
 export interface GetCategoryResponse {
 	category: FullCategoryRow | null;
 	error: ApiError | null;
-};
+}
 
 export type CategoryUpdationPayload = Database["public"]["Tables"]["category"]["Update"];
 
 export interface GetSubCategoryResponse {
 	sub_category: FullSubCategoryRow | null;
 	error: ApiError | null;
-};
+}
 
 export type SubCategoryUpdationPayload = Database["public"]["Tables"]["sub_category"]["Update"];

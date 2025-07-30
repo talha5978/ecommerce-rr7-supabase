@@ -38,7 +38,6 @@ import { Label } from "~/components/ui/label";
 import type { Route } from "./+types/update-collection";
 import ImageInput from "~/components/Custom-Inputs/image-input";
 import {
-	CollectionActionDataSchema,
 	CollectionUpdateActionData,
 	CollectionUpdateActionDataSchema,
 	CollectionUpdateFormValues,
@@ -76,7 +75,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip
 import { Skeleton } from "~/components/ui/skeleton";
 import { bolleanToStringConverter, cn } from "~/lib/utils";
 import { CollectionsService } from "~/services/collections.service";
-import { getSanitizedMetaDetailsForAction, getSanitizedMetaDetailsForForm } from "~/utils/getSanitizedMetaDetails";
+import {
+	getSanitizedMetaDetailsForAction,
+	getSanitizedMetaDetailsForForm,
+} from "~/utils/getSanitizedMetaDetails";
 
 function getSimpleFields() {
 	return ["name", "description", "status", "sort_order"] as const;
@@ -87,7 +89,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	if (!collectionId || collectionId == "") {
 		throw new Response("Collection ID is required", { status: 400 });
 	}
-	
+
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
 
@@ -192,7 +194,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			...(productSearchQuery && { q: productSearchQuery }),
 			categoryPageIndex: categoryPageParam ? Math.max(0, categoryPageParam - 1) : 0,
 			productPageIndex: productPageParam ? Math.max(0, productPageParam - 1) : 0,
-		})
+		}),
 	);
 
 	return { collectionResp, collectionsDataItems };
@@ -203,7 +205,7 @@ export default function UpdateCollectionPage({
 		collectionResp: { collection, error: collectionError },
 		collectionsDataItems,
 	},
-	params
+	params,
 }: Route.ComponentProps) {
 	const navigate = useNavigate();
 	const submit = useSubmit();
@@ -449,17 +451,17 @@ export default function UpdateCollectionPage({
 		// Handle new product IDs
 		const existingProductIds = new Set(collection.products.map((p: { id: string }) => p.id));
 		const newProductIds = normalizedValues.selected_products.filter(
-			(productId) => !existingProductIds.has(productId)
+			(productId) => !existingProductIds.has(productId),
 		);
 
-		if(newProductIds.length > 0) {
+		if (newProductIds.length > 0) {
 			newProductIds.map((id) => formData.append("added_product_ids", id));
 			hasChanges = true;
 		}
 
 		// Handle removed product IDs
 		const removedProductIds: string[] = [];
-			existingProductIds.forEach((productId) => {
+		existingProductIds.forEach((productId) => {
 			if (!normalizedValues.selected_products.includes(productId)) {
 				removedProductIds.push(productId);
 			}
@@ -919,7 +921,7 @@ const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 												<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-2 border-l px-2.5 py-0.5">
 													{Array.from(
 														{ length: products },
-														(_, product_idx) => product_idx
+														(_, product_idx) => product_idx,
 													).map((product) => (
 														<Skeleton
 															className="h-4 w-[min(250px,100%)] rounded-sm ml-2 last:mb-1"
@@ -965,18 +967,21 @@ function ProductSelectionDialog({
 	}, [selectedProducts, open]);
 
 	useEffect(() => {
-		const initial = categories.reduce((acc, cat) => {
-			cat.sub_categories.forEach((sub) => {
-				acc[sub.id] = Math.min(productsPageSize, sub.product_count);
-			});
-			return acc;
-		}, {} as Record<string, number>);
+		const initial = categories.reduce(
+			(acc, cat) => {
+				cat.sub_categories.forEach((sub) => {
+					acc[sub.id] = Math.min(productsPageSize, sub.product_count);
+				});
+				return acc;
+			},
+			{} as Record<string, number>,
+		);
 		setProductsToShow(initial);
 	}, [categories]);
 
 	const isSearching = useMemo(
 		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname]
+		[navigation.state, navigation.location?.pathname, location.pathname],
 	);
 
 	let currentQuery = searchParams.get("prodSearch") || "";
@@ -1012,7 +1017,7 @@ function ProductSelectionDialog({
 			setTempSelected((prev) => prev.filter((p) => !productIds.includes(p.id)));
 		} else {
 			const allProducts = category.sub_categories.flatMap((sub) =>
-				sub.products.map((p) => ({ id: p.id, name: p.name }))
+				sub.products.map((p) => ({ id: p.id, name: p.name })),
 			);
 			setTempSelected((prev) => [
 				...prev,
@@ -1057,7 +1062,7 @@ function ProductSelectionDialog({
 					prev.set("catPage", (currentCategoryPage - 1).toString());
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 			navigate(`?${searchParams.toString()}`);
 		}
@@ -1070,7 +1075,7 @@ function ProductSelectionDialog({
 					prev.set("catPage", (currentCategoryPage + 1).toString());
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 			navigate(`?${searchParams.toString()}`);
 		}
@@ -1082,7 +1087,7 @@ function ProductSelectionDialog({
 				prev.delete("prodSearch");
 				return prev;
 			},
-			{ state: { suppressLoadingBar: true } }
+			{ state: { suppressLoadingBar: true } },
 		);
 	}
 
@@ -1098,7 +1103,7 @@ function ProductSelectionDialog({
 					prev.set("catPage", "1");
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 		} else {
 			setSearchParams(
@@ -1108,7 +1113,7 @@ function ProductSelectionDialog({
 					prev.set("catPage", "1");
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 		}
 	};
@@ -1206,11 +1211,11 @@ function ProductSelectionDialog({
 																					checked={tempSelected.some(
 																						(p) =>
 																							p.id ===
-																							product.id
+																							product.id,
 																					)}
 																					onCheckedChange={() =>
 																						handleProductToggle(
-																							product
+																							product,
 																						)
 																					}
 																					className="mr-2"

@@ -3,11 +3,11 @@ import type { Database } from "./supabase";
 
 export type ProductRAttributeInput = Database["public"]["Tables"]["product_attributes"]["Insert"];
 export type ProductRAttributeCreateResponse = {
-    error: null | ApiError
-}
+	error: null | ApiError;
+};
 
 export type ProductRAttributesRow = Database["public"]["Tables"]["product_attributes"]["Row"];
 export type GetVariantAttributesResponse = {
-    data: ProductRAttributesRow[] | null,
-    error: null | ApiError
-}
+	data: ProductRAttributesRow[] | null;
+	error: null | ApiError;
+};

@@ -28,8 +28,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		stock: parseNumber(formData.get("stock")),
 		weight: parseNumber(formData.get("weight")),
 		product_id: formData.get("product_id") as string,
-		id: formData.get("id") as string
-	}
+		id: formData.get("id") as string,
+	};
 
 	// console.log(data);
 
@@ -42,7 +42,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		});
 	}
 	console.log("Parsed data: ", parseResult.data);
-	
+
 	try {
 		const productVariantSvc = new ProductVariantsService(request);
 		await productVariantSvc.createProductVaraintDuplicate(data);
@@ -50,7 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		await queryClient.invalidateQueries({ queryKey: ["allProductUnits"] });
 		await queryClient.invalidateQueries({ queryKey: ["products"] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", data.product_id] });
-		
+
 		return { success: true };
 	} catch (error: any) {
 		console.error("Error in action:", error);

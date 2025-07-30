@@ -6,9 +6,11 @@ export interface RouteHandle {
 
 export function usePageTitle() {
 	const matches = useMatches();
-	return ([...matches]
-        .reverse()
-        .find((m) => (m.handle as RouteHandle)?.title) as { handle: RouteHandle | undefined })
-        ?.handle?.title 
-        ?? "App";
+	return (
+		(
+			[...matches].reverse().find((m) => (m.handle as RouteHandle)?.title) as {
+				handle: RouteHandle | undefined;
+			}
+		)?.handle?.title ?? "App"
+	);
 }

@@ -1,5 +1,12 @@
 import { ApiError } from "~/utils/ApiError";
-import type { FullProduct, GetAllProductsResponse, GetSingleProductResponse, ProductNameResponse, ProductNamesListResponse, ProductUpdationPayload } from "~/types/products";
+import type {
+	FullProduct,
+	GetAllProductsResponse,
+	GetSingleProductResponse,
+	ProductNameResponse,
+	ProductNamesListResponse,
+	ProductUpdationPayload,
+} from "~/types/products";
 import { defaults } from "~/constants";
 import type { ProductActionData, ProductUpdateActionData } from "~/schemas/product.schema";
 import { MetaDetailsService } from "~/services/meta-details.service";
@@ -12,41 +19,43 @@ import { Service } from "~/services/service";
 
 export class ProductsService extends Service {
 	/** Fetch product name to show on varaint creation and updation page as a disabled field! */
-	async getProductName(product_id:string): Promise<ProductNameResponse> {
-		const { data: fetchedProduct, error: productError } =
-			await this.supabase
-				.from(this.PRODUCTS_TABLE)
-				.select(`name`)
-				.eq("id", product_id)
-				.single();
+	async getProductName(product_id: string): Promise<ProductNameResponse> {
+		const { data: fetchedProduct, error: productError } = await this.supabase
+			.from(this.PRODUCTS_TABLE)
+			.select(`name`)
+			.eq("id", product_id)
+			.single();
 
 		return {
 			productName: fetchedProduct?.name ?? null,
-			error: productError ?? null
+			error: productError ?? null,
 		};
 	}
 
 	/** Fetch product names list to show in the dialoge on all product units page */
-	async getProductNamesList() : Promise<ProductNamesListResponse> {
+	async getProductNamesList(): Promise<ProductNamesListResponse> {
 		try {
 			const maxProductsAssumed = 100;
 
-			const { data, error: fetchError, count: ProductCount } =
-				await this.supabase
-					.from(this.PRODUCTS_TABLE)
-					.select("id, name", { count: "exact" })
-					.limit(maxProductsAssumed);
+			const {
+				data,
+				error: fetchError,
+				count: ProductCount,
+			} = await this.supabase
+				.from(this.PRODUCTS_TABLE)
+				.select("id, name", { count: "exact" })
+				.limit(maxProductsAssumed);
 
 			let error: null | ApiError = null;
-			
+
 			if (fetchError || data == null) {
 				error = new ApiError(fetchError.message, 500, [fetchError.details]);
 			}
-			
+
 			return {
 				products: data ?? null,
 				total: ProductCount ?? 0,
-				error: error ?? null
+				error: error ?? null,
 			};
 		} catch (err: any) {
 			if (err instanceof ApiError) {
@@ -69,7 +78,7 @@ export class ProductsService extends Service {
 		q = "",
 		pageIndex = defaults.DEFAULT_PRODUCTS_PAGE - 1,
 		pageSize = defaults.DEFAULT_PRODUCTS_PAGE_SIZE,
-		filters: ProductFilters = {}
+		filters: ProductFilters = {},
 	): Promise<GetAllProductsResponse> {
 		try {
 			const from = pageIndex * pageSize;
@@ -77,17 +86,19 @@ export class ProductsService extends Service {
 
 			let query = this.supabase
 				.from(this.PRODUCTS_TABLE)
-				.select(`
+				.select(
+					`
 					name, id, cover_image, is_featured, status, createdAt,
 					sub_category!inner(
 						sub_category_name, ${this.CATEGORY_TABLE}(category_name)
 					),
 					${this.PRODUCT_VARIANT_TABLE}(id)
-				`, { count: "exact" })
-				.order(
-					filters.sortBy || defaults.defaultProductSortByFilter,
-					{ ascending: filters.sortType === "asc" }
-				);
+				`,
+					{ count: "exact" },
+				)
+				.order(filters.sortBy || defaults.defaultProductSortByFilter, {
+					ascending: filters.sortType === "asc",
+				});
 
 			// Apply filters
 			if (filters.status != undefined) {
@@ -126,14 +137,15 @@ export class ProductsService extends Service {
 			}
 
 			return {
-				products: data?.map((product) => {
-					return {
-						...product,
-						variants_count: product[this.PRODUCT_VARIANT_TABLE].length ?? 0,
-						categoryName: product.sub_category?.category?.category_name || "",
-						subCategoryName: product.sub_category?.sub_category_name || "",
-					}
-				}) ?? [],
+				products:
+					data?.map((product) => {
+						return {
+							...product,
+							variants_count: product[this.PRODUCT_VARIANT_TABLE].length ?? 0,
+							categoryName: product.sub_category?.category?.category_name || "",
+							subCategoryName: product.sub_category?.sub_category_name || "",
+						};
+					}) ?? [],
 				total: count ?? 0,
 				error,
 			};
@@ -151,10 +163,7 @@ export class ProductsService extends Service {
 
 	/** DELETE A PRODUCT FOR ROLLBACK!! */
 	async delProdcutForRollback(productId: string) {
-		return await this.supabase
-			.from(this.PRODUCTS_TABLE)
-			.delete()
-			.eq("id", productId);
+		return await this.supabase.from(this.PRODUCTS_TABLE).delete().eq("id", productId);
 	}
 
 	/** Create Product Row and its meta details */
@@ -168,9 +177,9 @@ export class ProductsService extends Service {
 			is_featured,
 			status,
 			sub_category,
-			optional_attributes
+			optional_attributes,
 		} = input;
-		
+
 		const metaDetailsService = new MetaDetailsService(this.request);
 		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
@@ -186,7 +195,6 @@ export class ProductsService extends Service {
 				throw new ApiError("Failed to upload image", 500, []);
 			}
 		}
-
 
 		const { error: prodError, data } = await this.supabase
 			.from(this.PRODUCTS_TABLE)
@@ -215,21 +223,24 @@ export class ProductsService extends Service {
 
 		if (optional_attributes && Array.isArray(optional_attributes) && optional_attributes.length > 0) {
 			const productsRattribsSvc = new ProductRAttributesService(this.request);
-	
+
 			const finalAttributes = optional_attributes.map((attribute_id) => {
 				return {
 					attribute_id: attribute_id,
-					product_id: data.id
-				}
+					product_id: data.id,
+				};
 			});
-	
-			const { error: attribInsertError } = await productsRattribsSvc
-				.createBulkProductAttributes(finalAttributes);
+
+			const { error: attribInsertError } = await productsRattribsSvc.createBulkProductAttributes(
+				finalAttributes,
+			);
 
 			if (attribInsertError) {
 				rollback();
 				await this.delProdcutForRollback(data.id);
-				throw new ApiError(`Failed to create product attributes: ${attribInsertError.message}`, 500, [attribInsertError.details]);
+				throw new ApiError(`Failed to create product attributes: ${attribInsertError.message}`, 500, [
+					attribInsertError.details,
+				]);
 			}
 		}
 	}
@@ -239,11 +250,13 @@ export class ProductsService extends Service {
 		try {
 			let { data, error: queryError } = await this.supabase
 				.from(this.PRODUCTS_TABLE)
-				.select(`
+				.select(
+					`
 					*,
 					meta_details(*),
 					${this.PRODUCT_ATTRIBUTES_TABLE}(${this.ATTRIBUTES_TABLE}(*))	
-				`)
+				`,
+				)
 				.eq("id", productId)
 				.single();
 
@@ -262,8 +275,8 @@ export class ProductsService extends Service {
 					attribute_type: i.attribute_type,
 					value: i.value,
 					id: i.id,
-					name: i.name
-				})
+					name: i.name,
+				});
 			});
 
 			return {
@@ -296,7 +309,7 @@ export class ProductsService extends Service {
 			status,
 			sub_category,
 			added_attributes,
-			removed_attributes
+			removed_attributes,
 		} = input;
 
 		const { data: prodData, error: fetchError } = await this.supabase
@@ -313,28 +326,25 @@ export class ProductsService extends Service {
 		const variantAttributesSvc = new ProductRAttributesService(this.request);
 
 		// Delete removed attributes
-		if (
-			Array.isArray(removed_attributes) && removed_attributes.length > 0
-		) {
+		if (Array.isArray(removed_attributes) && removed_attributes.length > 0) {
 			await variantAttributesSvc.deleteBulkProductRAttributes({
 				product_id: productId,
-				attributes_ids: removed_attributes
-			})
+				attributes_ids: removed_attributes,
+			});
 		}
-		
+
 		// Insert added attributes
-		if (
-			Array.isArray(added_attributes) && added_attributes.length > 0
-		) {
+		if (Array.isArray(added_attributes) && added_attributes.length > 0) {
 			const finalAttributes_toAdd = added_attributes.map((attribute_id) => {
 				return {
 					product_id: productId,
-					attribute_id: attribute_id
-				}
+					attribute_id: attribute_id,
+				};
 			});
 
-			const { error: prodVarAttributeError } = await variantAttributesSvc
-				.createBulkProductAttributes(finalAttributes_toAdd);
+			const { error: prodVarAttributeError } = await variantAttributesSvc.createBulkProductAttributes(
+				finalAttributes_toAdd,
+			);
 
 			if (prodVarAttributeError) {
 				throw new ApiError(`Failed to update product: ${prodVarAttributeError.message}`, 500, [
@@ -395,4 +405,3 @@ export class ProductsService extends Service {
 		}
 	}
 }
-

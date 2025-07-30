@@ -17,16 +17,12 @@ export const CategoryInputSchema = z.object({
 			message: "Description is required.",
 		}),
 
-	sort_order: z
-		.string()
-		.optional()
-		.default("1"),
+	sort_order: z.string().optional().default("1"),
 
 	meta_details: MetaDetailsInputSchema,
 });
 
 export type CategoryFormValues = z.input<typeof CategoryInputSchema>;
-
 
 export const CategoryActionDataSchema = z.object({
 	category_name: z.string(),
@@ -44,7 +40,6 @@ export type CategoryActionData = z.infer<typeof CategoryActionDataSchema>;
 
 export type CategoryInput = Omit<z.infer<typeof CategoryInputSchema>, "sort_order"> & { sort_order: number };
 
-
 // For sub_categories creation
 export const SubCategoryInputSchema = z.object({
 	sub_category_name: z
@@ -60,15 +55,12 @@ export const SubCategoryInputSchema = z.object({
 		.refine((value) => value.trim().length > 0, {
 			message: "Description is required.",
 		}),
-	
+
 	parent_id: z
 		.string({ required_error: "Parent category is required." })
 		.min(1, "Parent category is required."),
 
-	sort_order: z
-		.string()
-		.optional()
-		.default("1"),
+	sort_order: z.string().optional().default("1"),
 
 	meta_details: MetaDetailsInputSchema,
 });
@@ -89,7 +81,6 @@ export const SubCategoryActionDataSchema = z.object({
 });
 
 export type SubCategoryActionData = z.infer<typeof SubCategoryActionDataSchema>;
-
 
 // for category updation
 
@@ -124,4 +115,3 @@ export const SubCategoryUpdateActionDataSchema = z.object({
 		.optional(),
 });
 export type SubCategoryUpdateActionData = z.infer<typeof SubCategoryUpdateActionDataSchema>;
-

@@ -1,39 +1,51 @@
-import type { AttributeType } from "./types/attributes";
 import { IconHelp, IconSettings } from "@tabler/icons-react";
-import { Archive, Box, Boxes, Gift, House, LinkIcon, Megaphone, TableProperties, Tag, Users } from "lucide-react";
+import {
+	Archive,
+	Box,
+	Boxes,
+	Gift,
+	House,
+	LinkIcon,
+	Megaphone,
+	TableProperties,
+	Tag,
+	Users,
+} from "lucide-react";
 import type { NavItem, NavSubItem } from "~/types/nav";
+import { Constants } from "~/types/supabase";
+import { DiscountType } from "~/types/coupons";
 
 class DefaultValues {
-    readonly DEFAULT_CATEGORY_PAGE = 1;
-    readonly DEFAULT_CATEGORY_PAGE_SIZE = 10;
+	readonly DEFAULT_CATEGORY_PAGE = 1;
+	readonly DEFAULT_CATEGORY_PAGE_SIZE = 10;
 
-    readonly DEFAULT_SUB_CATEGORY_PAGE = 1;
-    readonly DEFAULT_SUB_CATEGORY_PAGE_SIZE = 10;
+	readonly DEFAULT_SUB_CATEGORY_PAGE = 1;
+	readonly DEFAULT_SUB_CATEGORY_PAGE_SIZE = 10;
 
-    readonly DEFAULT_PRODUCTS_PAGE = 1;
-    readonly DEFAULT_PRODUCTS_PAGE_SIZE = 10;
+	readonly DEFAULT_PRODUCTS_PAGE = 1;
+	readonly DEFAULT_PRODUCTS_PAGE_SIZE = 10;
 
-    readonly DEFAULT_PRODUCTS_VARIANTS_PAGE = 1;
-    readonly DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE = 20;
+	readonly DEFAULT_PRODUCTS_VARIANTS_PAGE = 1;
+	readonly DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE = 20;
 
-    readonly META_KEYWORDS_VALUE = 25;
+	readonly META_KEYWORDS_VALUE = 25;
 
-    readonly defaultProductSortByFilter = "createdAt";
-    readonly defaultProductSortTypeFilter = "desc";
+	readonly defaultProductSortByFilter = "createdAt";
+	readonly defaultProductSortTypeFilter = "desc";
 
-    readonly defaultProductVaraintsSortByFilter = "createdAt";
-    readonly defaultProductVaraintsSortTypeFilter = "desc";
+	readonly defaultProductVaraintsSortByFilter = "createdAt";
+	readonly defaultProductVaraintsSortTypeFilter = "desc";
 
 	readonly MAX_STOCK_FILTER_DEFAULT_VAL = 1200;
-	
-    readonly DEFAULT_COLLECTIONS_PAGE = 1;
-    readonly DEFAULT_COLLECTIONS_PAGE_SIZE = 10;
+
+	readonly DEFAULT_COLLECTIONS_PAGE = 1;
+	readonly DEFAULT_COLLECTIONS_PAGE_SIZE = 10;
 
 	readonly DEFAULT_COLLECTIONS_PRODUCTS_PAGE_SIZE = 7;
 	readonly DEFAULT_COLLECTIONS_CATEGORY_PAGE_SIZE = 3;
 
 	readonly defaultCollectionSortByFilter = "createdAt";
-    readonly defaultCollectionSortTypeFilter = "desc";
+	readonly defaultCollectionSortTypeFilter = "desc";
 }
 
 export const defaults = new DefaultValues();
@@ -105,7 +117,7 @@ export const mainNavItems: NavItem[] = [
 		],
 	},
 	{
-		title: "Discounts & News",
+		title: "Promotion",
 		items: [
 			{
 				title: "Coupons",
@@ -135,7 +147,7 @@ export const secondaryNavItems: NavSubItem[] = [
 	},
 ];
 
-export const product_attributes_enum: AttributeType[] = ["color", "size", "material", "style", "brand"] as const;
+export const product_attributes_enum = Constants.public.Enums.attribute_type_enum;
 
 export const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
 export const ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/webp", "image/avif"];
@@ -148,34 +160,19 @@ export const PRODUCT_IMG_DIMENSIONS = {
 export const COLLECTION_IMG_DIMENSIONS = {
 	min: { width: 600, height: 400 },
 	max: { width: 1600, height: 1200 },
-}
+};
 
 export const REQUIRED_VARIANT_ATTRIBS = ["color", "size"];
 export const OPTIONAL_PRODUCT_ATTRIBS = ["material", "style", "brand"];
 
-export const DISABLED_DEFAULT_VARIANT_MESSAGE = "You cannot change this as other variant is currently set to default.";
-
-export const TABLE_NAMES = {
-	attributes: "attributes",
-	product: "product",
-	product_attributes: "product_attributes",
-	product_variant: "product_variant",
-	variant_attributes: "variant_attributes",
-	meta_details: "meta_details",
-	category: "category",
-	sub_category: "sub_category",
-	collection: "collections",
-	collection_products: "collection_products",
-	user_roles: "user_roles",
-	users: "app_users",
-} as const;
+export const DISABLED_DEFAULT_VARIANT_MESSAGE =
+	"You cannot change this as other variant is currently set to default.";
 
 export const STORAGE_BUCKETS = {
-    images: "images",
+	images: "images",
 } as const;
 
 export const SUPABASE_IMAGE_BUCKET_PATH = `https://xbpbnydexqzhespljrqi.supabase.co/storage/v1/object/public/${STORAGE_BUCKETS.images}/`;
-
 
 export const sortTypeEnums = ["asc", "desc"] as const;
 
@@ -197,16 +194,17 @@ export const productVariantsSortByEnums = [
 	"createdAt",
 ] as const;
 
-export const filterOps = ["eq","gt","gte","lt","lte"] as const;
-export type FilterOp = typeof filterOps[number];
+export const filterOps = ["eq", "gt", "gte", "lt", "lte"] as const;
+export type FilterOp = (typeof filterOps)[number];
 
-export const collectionsSelectionTypeEnum = ["null", "category_based", "product_based"] as const;
+export const collectionSortByEnums = ["status", "products_count", "name", "createdAt"] as const;
 
-export const collectionSortByEnums = [
-	"status",
-	"products_count",
-	"name",
-	"createdAt",
-] as const;
+export const COUPON_TYPE_ENUM = Constants.public.Enums.coupon_type_enum;
+export const ADDRESS_TYPE_ENUM = Constants.public.Enums.address_type_enum;
+export const DISCOUNT_TYPE_ENUM = Constants.public.Enums.discount_type;
+export const DISCOUNT_CUSTOMER_TYPE_ENUM = Constants.public.Enums.customer_type;
+export const PRODUCT_COND_OPERATOR_ENUM = Constants.public.Enums.condition_operator;
+export const DISCOUNT_COND_ROLE_ENUM = Constants.public.Enums.condition_role;
+export const DISCOUNT_COND_TYPE_ENUM = Constants.public.Enums.condition_type;
 
-export const ADDRESS_TYPE_ENUM = ["shipping", "billing", "both"] as const;
+export const DEFAULT_DICOUNT_TYPE: DiscountType = "fixed_order";

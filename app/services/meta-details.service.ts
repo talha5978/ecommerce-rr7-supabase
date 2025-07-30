@@ -23,7 +23,7 @@ export class MetaDetailsService extends Service {
 			throw new ApiError(
 				`Failed to create meta details: ${metaError?.message || "Unknown error"}`,
 				500,
-				[metaError?.details]
+				[metaError?.details],
 			);
 		}
 
@@ -61,7 +61,7 @@ export class MetaDetailsService extends Service {
 			.from(this.META_DETAILS_TABLE)
 			.delete()
 			.eq("id", metaDetailsId);
-		
+
 		if (metaError) {
 			throw new ApiError(`Failed to delete meta details: ${metaError.message}`, 500, []);
 		}

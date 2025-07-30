@@ -9,7 +9,7 @@ export const ProductInputSchema = z.object({
 		.refine((file) => file.size <= MAX_IMAGE_SIZE, "Image must be less than 1MB.")
 		.refine(
 			(file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
-			"Only JPEG, PNG, or WebP image formats are allowed."
+			"Only JPEG, PNG, or WebP image formats are allowed.",
 		),
 
 	description: z
@@ -66,31 +66,32 @@ export type ProductActionData = z.infer<typeof ProductActionDataSchema>;
 // For updation
 
 export const ProductUpdateInputSchema = z.object({
-    cover_image: z.union([
-        z.instanceof(File, { message: "Cover image is required." })
-            .refine((file) => file.size <= MAX_IMAGE_SIZE, "Image must be less than 1MB.")
-            .refine(
-                (file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
-                "Only JPEG, PNG, or WebP image formats are allowed."
-            ),
-        z.string().min(1, "Cover image path is required."),
-    ]),
-    description: z
-        .string({ required_error: "Description is required." })
-        .min(50, "Description must be at least 50 characters long.")
-        .refine((value) => value.trim().length > 0, { message: "Description is required." }),
-    free_shipping: z.string().default("false"),
-    is_featured: z.string().default("false"),
-    meta_details: MetaDetailsInputSchema,
-    name: z
-        .string({ required_error: "Name is required." })
-        .min(1, "Name is required.")
-        .refine((value) => value.trim().length > 0, { message: "Name is required." }),
-    status: z.string().default("true"),
-    category: z.string({ required_error: "Category is required." }).min(1, "Category is required."),
-    sub_category: z
-        .string({ required_error: "Sub category is required." })
-        .min(1, "Sub category is required."),
+	cover_image: z.union([
+		z
+			.instanceof(File, { message: "Cover image is required." })
+			.refine((file) => file.size <= MAX_IMAGE_SIZE, "Image must be less than 1MB.")
+			.refine(
+				(file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
+				"Only JPEG, PNG, or WebP image formats are allowed.",
+			),
+		z.string().min(1, "Cover image path is required."),
+	]),
+	description: z
+		.string({ required_error: "Description is required." })
+		.min(50, "Description must be at least 50 characters long.")
+		.refine((value) => value.trim().length > 0, { message: "Description is required." }),
+	free_shipping: z.string().default("false"),
+	is_featured: z.string().default("false"),
+	meta_details: MetaDetailsInputSchema,
+	name: z
+		.string({ required_error: "Name is required." })
+		.min(1, "Name is required.")
+		.refine((value) => value.trim().length > 0, { message: "Name is required." }),
+	status: z.string().default("true"),
+	category: z.string({ required_error: "Category is required." }).min(1, "Category is required."),
+	sub_category: z
+		.string({ required_error: "Sub category is required." })
+		.min(1, "Sub category is required."),
 
 	optional_attributes: z.array(z.string().nullable()),
 });
@@ -119,11 +120,10 @@ export const ProductUpdateActionDataSchema = z.object({
 
 export type ProductUpdateActionData = z.infer<typeof ProductUpdateActionDataSchema>;
 
-
 // SCHEMA FOR UPDATION OF STATUS
 export const ProductStatusUpdateInputSchema = z.object({
-    is_featured: z.enum(["true", "false"]).default("false"),
-    status: z.enum(["true", "false"]).default("true"),
+	is_featured: z.enum(["true", "false"]).default("false"),
+	status: z.enum(["true", "false"]).default("true"),
 });
 
 export type ProductStatusUpdateFormValues = z.input<typeof ProductStatusUpdateInputSchema>;

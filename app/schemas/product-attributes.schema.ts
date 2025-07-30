@@ -23,7 +23,6 @@ export const ProductAttributesInputSchema = z.object({
 export type ProductAttributesFormValues = z.input<typeof ProductAttributesInputSchema>;
 export type ProductAttributeActionData = z.infer<typeof ProductAttributesInputSchema>;
 
-
 // For updation
 
 export const ProductAttributesUpdateActionSchema = z.object({

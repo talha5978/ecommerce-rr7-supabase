@@ -1,9 +1,26 @@
-import { Await, Form, Link, LoaderFunctionArgs, useFetcher, useLoaderData, useLocation, useSearchParams } from "react-router";
+import {
+	Await,
+	Form,
+	Link,
+	LoaderFunctionArgs,
+	useFetcher,
+	useLoaderData,
+	useLocation,
+	useSearchParams,
+} from "react-router";
 import { Route } from "./+types/all-product-units";
 import { Button } from "~/components/ui/button";
-import { ChevronsUpDown, CircleCheck, Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { ChevronsUpDown, Loader2, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
@@ -23,14 +40,34 @@ import { toast } from "sonner";
 import CopyField from "~/components/Table/TableId";
 import handleDuplicateClick from "~/utils/handleDuplicateProrductVaraint";
 import { productNamesQuery } from "~/queries/products.q";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "~/components/ui/dialog";
 
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form as ShadcnUiForm } from "~/components/ui/form";
-import { Label } from "~/components/ui/label";
+import {
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+	Form as ShadcnUiForm,
+} from "~/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "~/components/ui/command";
+import {
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from "~/components/ui/command";
 import { z } from "zod";
 import { useNavigate } from "react-router";
 
@@ -41,18 +78,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		defaultPageSize: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE,
 	});
 
-	const data = await queryClient.fetchQuery(
-		allProductUnitsQuery({ request, q, pageIndex, pageSize })
-	);
+	const data = await queryClient.fetchQuery(allProductUnitsQuery({ request, q, pageIndex, pageSize }));
 
 	const productsList = queryClient.fetchQuery(productNamesQuery({ request }));
-	
+
 	return {
 		data,
 		query: q,
 		pageIndex,
 		pageSize,
-		productsList
+		productsList,
 	};
 };
 
@@ -63,7 +98,7 @@ export default function ProductVariantsPage({
 		throw new Response("Error fetching variants", { status: 404 });
 	}
 	// console.log(data);
-	
+
 	const navigation = useNavigation();
 	const location = useLocation();
 
@@ -75,13 +110,15 @@ export default function ProductVariantsPage({
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
 	const fetcher = useFetcher();
-			
+
 	// Handle fetcher state for toasts
 	useEffect(() => {
 		if (fetcher.data) {
 			if (fetcher.data.success) {
 				toast.success("Variant Duplicated successfully");
-				toast.warning("Variant is using the same images as the original variant, please change the images.");
+				toast.warning(
+					"Variant is using the same images as the original variant, please change the images.",
+				);
 			} else if (fetcher.data.error) {
 				toast.error(fetcher.data.error);
 			} else {
@@ -114,11 +151,9 @@ export default function ProductVariantsPage({
 								classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
 							/>
 						</div>
-					)
+					);
 				} else {
-					return (
-						<Skeleton className="h-16 w-16 rounded-sm" />
-					)
+					return <Skeleton className="h-16 w-16 rounded-sm" />;
 				}
 			},
 			header: () => "Image",
@@ -127,7 +162,7 @@ export default function ProductVariantsPage({
 			id: "SKU",
 			enableHiding: false,
 			accessorKey: "sku",
-			cell: (info: any) => <CopyField id={info.row.original.sku} message="SKU copied"/>,
+			cell: (info: any) => <CopyField id={info.row.original.sku} message="SKU copied" />,
 			header: () => "SKU",
 		},
 		{
@@ -216,7 +251,7 @@ export default function ProductVariantsPage({
 	];
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPage: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE
+		defaultPage: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE,
 	});
 
 	const table = useReactTable({
@@ -229,8 +264,8 @@ export default function ProductVariantsPage({
 			pagination: {
 				pageIndex,
 				pageSize,
-			}
-		}
+			},
+		},
 	});
 
 	const handleCreateNewUnitClick = () => setProductDialogState(true);
@@ -280,22 +315,25 @@ export default function ProductVariantsPage({
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<ProductVariantRow>) {
-    const [searchParams] = useSearchParams();
-    let currentQuery = searchParams.get("q") ?? "";
-	
-    return (
+	const [searchParams] = useSearchParams();
+	let currentQuery = searchParams.get("q") ?? "";
+
+	return (
 		<div className="w-full flex justify-between gap-4 items-center">
 			<div>
 				<Form method="get">
 					<div className="relative">
-						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
+						<Search
+							className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+							width={18}
+						/>
 						<Input
 							placeholder="Search SKU"
 							name="q"
 							className="w-full pl-8"
 							id="search"
 							defaultValue={currentQuery}
-                            disabled={disabled}
+							disabled={disabled}
 						/>
 					</div>
 					{/* Invisible submit button: Enter in input triggers submit */}
@@ -322,7 +360,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Pro
 					{table
 						.getAllColumns()
 						.filter(
-							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide()
+							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide(),
 						)
 						.map((column: any) => {
 							return (
@@ -349,9 +387,7 @@ export function ProductsDialog({ open, setOpen }: { open: boolean; setOpen: (ope
 	type CreateProductUnitForm = { product: string };
 
 	const form = useForm<CreateProductUnitForm>({
-		resolver: zodResolver(
-			z.object({ product: z.string().min(1, "Select a product") })
-		),
+		resolver: zodResolver(z.object({ product: z.string().min(1, "Select a product") })),
 		defaultValues: { product: "" },
 	});
 
@@ -372,9 +408,7 @@ export function ProductsDialog({ open, setOpen }: { open: boolean; setOpen: (ope
 			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
 					<DialogTitle>Select Product</DialogTitle>
-					<DialogDescription>
-						Select a product you want to create a variant for.
-					</DialogDescription>
+					<DialogDescription>Select a product you want to create a variant for.</DialogDescription>
 				</DialogHeader>
 				{/* TODO: CREATE A fallback for the products dialog suspense */}
 				<Suspense fallback={<div className="text-lg text-red-700">Loading...</div>}>
@@ -403,7 +437,7 @@ export function ProductsDialog({ open, setOpen }: { open: boolean; setOpen: (ope
 																			className={cn(
 																				"w-full justify-between",
 																				!selected &&
-																					"text-muted-foreground"
+																					"text-muted-foreground",
 																			)}
 																		>
 																			{selected
@@ -434,11 +468,11 @@ export function ProductsDialog({ open, setOpen }: { open: boolean; setOpen: (ope
 																								products.find(
 																									(p) =>
 																										p.name ===
-																										value
+																										value,
 																								);
 																							if (match)
 																								field.onChange(
-																									match.id
+																									match.id,
 																								);
 																						}}
 																					>

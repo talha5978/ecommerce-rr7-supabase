@@ -1,22 +1,26 @@
 import { queryOptions } from "@tanstack/react-query";
 import { ProductVariantsFilters } from "~/schemas/product-variants-filter.schema";
 import { ProductVariantsService } from "~/services/product-variants.service";
-import type { GetAllProductVariants, SingleProductVariantResponse, VariantConstraintsData } from "~/types/product-variants";
+import type {
+	GetAllProductVariants,
+	SingleProductVariantResponse,
+	VariantConstraintsData,
+} from "~/types/product-variants";
 
 interface productVariantsQueryArgs {
-    request: Request;
+	request: Request;
 	productId: string;
-    q: string;
-    pageIndex?: number;
-    pageSize?: number;
-	filters?: ProductVariantsFilters
+	q: string;
+	pageIndex?: number;
+	pageSize?: number;
+	filters?: ProductVariantsFilters;
 }
 
 interface allProductUnitsQueryArgs {
-    request: Request;
-    q: string;
-    pageIndex?: number;
-    pageSize?: number;
+	request: Request;
+	q: string;
+	pageIndex?: number;
+	pageSize?: number;
 }
 
 interface singleVariantQueryArgs {
@@ -36,13 +40,17 @@ export const productVariantsQuery = ({
 	pageSize,
 	productId,
 	filters,
-} : productVariantsQueryArgs) => {
+}: productVariantsQueryArgs) => {
 	return queryOptions<GetAllProductVariants>({
 		queryKey: ["productVariants", productId, q, pageIndex, pageSize, filters],
 		queryFn: async () => {
 			const prodVariantsService = new ProductVariantsService(request);
 			const result = await prodVariantsService.getProductVariants(
-				q, pageIndex, pageSize, productId, filters
+				q,
+				pageIndex,
+				pageSize,
+				productId,
+				filters,
 			);
 			return result;
 		},

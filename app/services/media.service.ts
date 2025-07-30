@@ -21,7 +21,7 @@ export class MediaService extends Service {
 		}
 
 		return {
-			data
+			data,
 		};
 	}
 
@@ -36,4 +36,3 @@ export class MediaService extends Service {
 		}
 	}
 }
-

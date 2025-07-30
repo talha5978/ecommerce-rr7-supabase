@@ -3,8 +3,21 @@ import { Route } from "./+types/product-attributes";
 import { Button } from "~/components/ui/button";
 import { ArrowRight, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
-import { ColumnDef, ColumnFiltersState, getCoreRowModel, getFilteredRowModel, useReactTable } from "@tanstack/react-table";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import {
+	ColumnDef,
+	ColumnFiltersState,
+	getCoreRowModel,
+	getFilteredRowModel,
+	useReactTable,
+} from "@tanstack/react-table";
 import { toast } from "sonner";
 import { useNavigation } from "react-router";
 import type { HighLevelProductAttribute } from "~/types/attributes.d";
@@ -19,13 +32,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const data = await queryClient.fetchQuery(highLevelProductAttributesQuery({ request }));
 
 	return {
-		data
+		data,
 	};
 };
 
-export default function ProductsAttributesPage({
-	loaderData: { data },
-}: Route.ComponentProps) {
+export default function ProductsAttributesPage({ loaderData: { data } }: Route.ComponentProps) {
 	const navigation = useNavigation();
 	const location = useLocation();
 
@@ -37,7 +48,7 @@ export default function ProductsAttributesPage({
 	useEffect(() => {
 		if (data.error != null && data.error.message) {
 			console.log(data);
-			
+
 			toast.error(`${data.error.statusCode} - ${data.error.message}`);
 		}
 	}, [data.error]);
@@ -98,7 +109,7 @@ export default function ProductsAttributesPage({
 			columnFilters,
 		},
 	});
-	
+
 	return (
 		<>
 			<MetaDetails
@@ -148,12 +159,15 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 		table.getColumn("attribute_type")?.setFilterValue(data.attribute_type);
 	}
 
-    return (
+	return (
 		<div className="w-full flex justify-between gap-4 items-center">
 			<div>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="relative">
-						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
+						<Search
+							className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+							width={18}
+						/>
 						<Input
 							placeholder="Search attributes"
 							className="w-full pl-8"
@@ -185,7 +199,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 					{table
 						.getAllColumns()
 						.filter(
-							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide()
+							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide(),
 						)
 						.map((column: any) => {
 							return (

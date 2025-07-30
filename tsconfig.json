@@ -1,5 +1,6 @@
 {
 	"include": ["**/*", "**/.server/**/*", "**/.client/**/*", ".react-router/types/**/*"],
+	"exclude": ["node_modules", "build", "dist"],
 	"compilerOptions": {
 		"lib": ["DOM", "DOM.Iterable", "ES2022"],
 		"types": ["node", "vite/client"],
@@ -10,13 +11,15 @@
 		"rootDirs": [".", "./.react-router/types"],
 		"baseUrl": ".",
 		"paths": {
-			"~/*": ["./app/*"],
+			"~/*": ["./app/*"]
 		},
 		"esModuleInterop": true,
 		"verbatimModuleSyntax": false,
 		"noEmit": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
-		"strict": true,
+		"strict": true
+		// "noUnusedLocals": true, // Report errors on unused locals
+		// "noUnusedParameters": true // Report errors on unused parameters
 	}
 }

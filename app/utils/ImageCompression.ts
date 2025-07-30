@@ -14,15 +14,15 @@ export const compressImage = async (file: File) => {
 			.resize({ width: 1024, height: 1024, fit: "inside" }) // Max 1024px
 			.webp({ quality: 90 }) // 90% quality
 			.toBuffer();
-		
+
 		return compressedBuffer;
 	} catch (error) {
 		throw new ApiError(`Failed to compress image: ${error}`, 500, []);
 	}
-    
-    // console.log("Original size:", buffer.byteLength / 1024, "KB");
-    // console.log("Compressed size:", compressedBuffer.length / 1024, "KB");
 
-    // Test
-    // 74kb -> 13kb
-}
+	// console.log("Original size:", buffer.byteLength / 1024, "KB");
+	// console.log("Compressed size:", compressedBuffer.length / 1024, "KB");
+
+	// Test
+	// 74kb -> 13kb
+};

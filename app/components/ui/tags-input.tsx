@@ -25,7 +25,7 @@ const TagsInputLabel = React.forwardRef<
 		ref={ref}
 		className={cn(
 			"font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-			className
+			className,
 		)}
 		{...props}
 	/>
@@ -43,7 +43,7 @@ const TagsInputList = React.forwardRef<
 			"flex min-h-9 w-full flex-wrap items-center gap-2 rounded-md border border-input selection:bg-primary selection:text-primary-foreground px-3 py-3 shadow-xs transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30 dark:text-foreground dark:placeholder:text-muted-foreground md:text-sm",
 			"focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
 			ariaInvalid && "border-destructive ring-destructive/20 dark:ring-destructive/40",
-			className
+			className,
 		)}
 		aria-invalid={ariaInvalid}
 		{...props}
@@ -60,7 +60,7 @@ const TagsInputInput = React.forwardRef<
 		ref={ref}
 		className={cn(
 			"flex-1 bg-transparent outline-hidden placeholder:text-muted-foreground text-base md:text-sm selection:bg-primary selection:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50",
-			className
+			className,
 		)}
 		{...props}
 	/>
@@ -76,7 +76,7 @@ const TagsInputItem = React.forwardRef<
 		ref={ref}
 		className={cn(
 			"inline-flex max-w-[calc(100%-8px)] items-center gap-1.5 rounded border bg-transparent px-2.5 text-sm focus:outline-hidden data-disabled:cursor-not-allowed data-editable:select-none data-editing:bg-transparent data-disabled:opacity-50 data-editing:ring-1 data-editing:ring-ring [&:not([data-editing])]:pr-1.5 [&[data-highlighted]:not([data-editing])]:bg-accent [&[data-highlighted]:not([data-editing])]:text-accent-foreground",
-			className
+			className,
 		)}
 		{...props}
 	>
@@ -108,13 +108,19 @@ const CustomTagsInputClear = React.forwardRef<
 	>
 		<div className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointe border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 size-9 max-sm:w-full cursor-pointer">
 			<RefreshCcw className="h-4 w-4" />
-			<span className="sm:hidden inline">
-				Clear
-			</span>
+			<span className="sm:hidden inline">Clear</span>
 		</div>
 	</TagsInputPrimitive.Clear>
-))
+));
 
 CustomTagsInputClear.displayName = TagsInputPrimitive.Clear.displayName;
 
-export { TagsInput, TagsInputLabel, TagsInputList, TagsInputInput, TagsInputItem, TagsInputClear, CustomTagsInputClear };
+export {
+	TagsInput,
+	TagsInputLabel,
+	TagsInputList,
+	TagsInputInput,
+	TagsInputItem,
+	TagsInputClear,
+	CustomTagsInputClear,
+};

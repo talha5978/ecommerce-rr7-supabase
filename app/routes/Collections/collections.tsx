@@ -1,9 +1,41 @@
-import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useNavigate, useSearchParams } from "react-router";
+import {
+	Form,
+	Link,
+	LoaderFunctionArgs,
+	useFetcher,
+	useLocation,
+	useNavigate,
+	useSearchParams,
+} from "react-router";
 import { Route } from "./+types/collections";
 import { Button } from "~/components/ui/button";
-import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpNarrowWide, Loader2, MoreHorizontal, PlusCircle, Search, Settings2, TriangleAlert } from "lucide-react";
+import {
+	ArrowDownWideNarrow,
+	ArrowUpDown,
+	ArrowUpNarrowWide,
+	Loader2,
+	MoreHorizontal,
+	PlusCircle,
+	Search,
+	Settings2,
+	TriangleAlert,
+} from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuPortal,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
@@ -12,24 +44,24 @@ import { queryClient } from "~/lib/queryClient";
 import { useEffect, useMemo, useState } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
-import { defaults, SUPABASE_IMAGE_BUCKET_PATH, sortTypeEnums } from "~/constants";
+import { defaults, sortTypeEnums } from "~/constants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { bolleanToStringConverter, GetFormattedDate } from "~/lib/utils";
 import StatusBadge from "~/components/status-badge";
-import { Skeleton } from "~/components/ui/skeleton";
-import ImageViewer from "~/components/ImageViewer/image-viewer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { FormControl, FormField, FormItem, FormLabel, Form as ShadcnForm } from "~/components/ui/form";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Checkbox } from "~/components/ui/checkbox";
-import { ProductsFilterFormData, ProductFilterFormSchema } from "~/schemas/products-filter.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { ProductStatusUpdateFormValues, ProductStatusUpdateInputSchema } from "~/schemas/product.schema";
 import { collectionsQuery } from "~/queries/collections.q";
 import { HighLevelCollection } from "~/types/collections";
-import { CollectionFilers, CollectionFilterFormSchema, CollectionsFilterFormData } from "~/schemas/collections-filter.schema";
-import { getProductsFiltersPayload } from "~/utils/getProductsFiltersPayload";
+import {
+	CollectionFilers,
+	CollectionFilterFormSchema,
+	CollectionsFilterFormData,
+} from "~/schemas/collections-filter.schema";
 import { getCollectionsFiltersPayload } from "~/utils/getCollectionssFiltersPayload";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -41,33 +73,35 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const collectionFilters: CollectionFilers = getCollectionsFiltersPayload({ request });
 
-	const data = await queryClient.fetchQuery(collectionsQuery({
-		request,
-		q,
-		pageIndex,
-		pageSize,
-		filters: collectionFilters
-	}));
+	const data = await queryClient.fetchQuery(
+		collectionsQuery({
+			request,
+			q,
+			pageIndex,
+			pageSize,
+			filters: collectionFilters,
+		}),
+	);
 
 	return {
 		data,
 		query: q,
 		pageIndex,
-		pageSize
+		pageSize,
 	};
 };
 
 export default function CollectionsPage({
-	loaderData: { data, query, pageIndex, pageSize }
+	loaderData: { data, query, pageIndex, pageSize },
 }: Route.ComponentProps) {
 	const navigation = useNavigation();
 	const location = useLocation();
 
 	const pageCount = Math.ceil(data.total / pageSize);
-	
+
 	const isFetchingThisRoute = useMemo(
 		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname]
+		[navigation.state, navigation.location?.pathname, location.pathname],
 	);
 	// console.log(data);
 
@@ -78,7 +112,7 @@ export default function CollectionsPage({
 	}, [data.error]);
 
 	console.log("Re rendered");
-	
+
 	const columns: ColumnDef<HighLevelCollection, unknown>[] = [
 		{
 			id: "select",
@@ -167,7 +201,10 @@ export default function CollectionsPage({
 							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 								<DropdownMenuItem>Update</DropdownMenuItem>
 							</Link>
-							<UpdateStatusForm inputStatus={rowData.status as boolean} collectionId={rowData.id} />
+							<UpdateStatusForm
+								inputStatus={rowData.status as boolean}
+								collectionId={rowData.id}
+							/>
 							<Link to={`${rowData.id}/update`}>
 								<DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
 							</Link>
@@ -181,7 +218,7 @@ export default function CollectionsPage({
 	const tableColumns = useMemo(() => columns, []);
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPage: defaults.DEFAULT_COLLECTIONS_PAGE
+		defaultPage: defaults.DEFAULT_COLLECTIONS_PAGE,
 	});
 
 	const table = useReactTable({
@@ -194,8 +231,8 @@ export default function CollectionsPage({
 			pagination: {
 				pageIndex,
 				pageSize,
-			}
-		}
+			},
+		},
 	});
 
 	return (
@@ -241,9 +278,9 @@ export default function CollectionsPage({
 	);
 }
 
-function UpdateStatusForm({ inputStatus, collectionId }: { inputStatus: boolean, collectionId: string }) {
+function UpdateStatusForm({ inputStatus, collectionId }: { inputStatus: boolean; collectionId: string }) {
 	const defaultValues = {
-		status: bolleanToStringConverter(inputStatus) as "true" | "false"
+		status: bolleanToStringConverter(inputStatus) as "true" | "false",
 	};
 
 	const { control, reset } = useForm<ProductStatusUpdateFormValues>({
@@ -255,9 +292,9 @@ function UpdateStatusForm({ inputStatus, collectionId }: { inputStatus: boolean,
 	const status = useWatch({ control, name: "status" });
 
 	const [isSubmitting, setSubmitting] = useState<boolean>(false);
-	
+
 	const fetcher = useFetcher();
-	
+
 	// Handle fetcher state for toasts and state updates
 	useEffect(() => {
 		if (fetcher.data) {
@@ -268,7 +305,7 @@ function UpdateStatusForm({ inputStatus, collectionId }: { inputStatus: boolean,
 						? bolleanToStringConverter(fetcher.data?.status)
 						: (status as "true" | "false");
 				reset({
-					status: newStatus as "true" | "false"
+					status: newStatus as "true" | "false",
 				});
 				setSubmitting(false);
 			} else if (fetcher.data.error) {
@@ -299,9 +336,9 @@ function UpdateStatusForm({ inputStatus, collectionId }: { inputStatus: boolean,
 			{ label: "Active", value: "true" },
 			{ label: "Inactive", value: "false" },
 		],
-		[]
+		[],
 	);
-	
+
 	return (
 		<>
 			<DropdownMenuSub>
@@ -400,7 +437,7 @@ function SortSelector() {
 										<SelectContent>
 											<SelectItem value="createdAt">Date Created</SelectItem>
 											<SelectItem value="status">Status</SelectItem>
-											<SelectItem value="products_count">Products	Count</SelectItem>
+											<SelectItem value="products_count">Products Count</SelectItem>
 											<SelectItem value="name">Name</SelectItem>
 										</SelectContent>
 									</Select>
@@ -461,8 +498,8 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 	const [searchParams] = useSearchParams();
 	const currentQuery = searchParams.get("q") ?? "";
 	console.log("FDsa");
-	
-    return (
+
+	return (
 		<>
 			<div className="w-full flex justify-between gap-4 items-center">
 				<div className="flex gap-2 items-center">
@@ -505,7 +542,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
-				
+
 				{/* Columns toggle */}
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -526,7 +563,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 							.getAllColumns()
 							.filter(
 								(column: any) =>
-									typeof column.accessorFn !== "undefined" && column.getCanHide()
+									typeof column.accessorFn !== "undefined" && column.getCanHide(),
 							)
 							.map((column: any) => {
 								return (

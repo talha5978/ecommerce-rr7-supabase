@@ -20,15 +20,7 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
-import {
-	ChevronUp,
-	Loader2,
-	PlusCircle,
-	RefreshCcw,
-	Search,
-	Trash2,
-	X,
-} from "lucide-react";
+import { ChevronUp, Loader2, PlusCircle, RefreshCcw, Search, Trash2, X } from "lucide-react";
 import { memo, Suspense, useEffect, useMemo, useState } from "react";
 import {
 	TagsInput,
@@ -45,9 +37,19 @@ import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import type { Route } from "./+types/create-collection";
 import ImageInput from "~/components/Custom-Inputs/image-input";
-import { CollectionActionDataSchema, CollectionFormValues, CollectionInputSchema } from "~/schemas/collections.schema";
+import {
+	CollectionActionDataSchema,
+	CollectionFormValues,
+	CollectionInputSchema,
+} from "~/schemas/collections.schema";
 import { DataTable } from "~/components/Table/data-table";
-import { type ColumnDef, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
+import {
+	type ColumnDef,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	useReactTable,
+} from "@tanstack/react-table";
 import {
 	Dialog,
 	DialogContent,
@@ -72,7 +74,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip
 import { Skeleton } from "~/components/ui/skeleton";
 import { cn } from "~/lib/utils";
 import { CollectionsService } from "~/services/collections.service";
-
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -132,14 +133,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const productPageParam = Number(searchParams.get("prodPage"));
 	const productSearchQuery = searchParams.get("prodSearch") || "";
 	// console.log(Math.max(0, categoryPageParam - 1), Math.max(0, productPageParam - 1));
-	
+
 	const collectionsDataItems = queryClient.fetchQuery(
 		collectionDataItemsQuery({
 			request,
 			...(productSearchQuery && { q: productSearchQuery }),
 			categoryPageIndex: categoryPageParam ? Math.max(0, categoryPageParam - 1) : 0,
-			productPageIndex: productPageParam ? Math.max(0, productPageParam - 1) : 0
-		})
+			productPageIndex: productPageParam ? Math.max(0, productPageParam - 1) : 0,
+		}),
 	);
 
 	return { collectionsDataItems };
@@ -213,16 +214,16 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 				const rows = table.getRowCount();
 				return rows > 0 ? (
 					<div className="flex items-center justify-center">
-					<Checkbox
-						checked={
-							table.getIsAllPageRowsSelected() ||
-							(table.getIsSomePageRowsSelected() && "indeterminate")
-						}
-						onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-						aria-label="Select all"
-					/>
+						<Checkbox
+							checked={
+								table.getIsAllPageRowsSelected() ||
+								(table.getIsSomePageRowsSelected() && "indeterminate")
+							}
+							onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+							aria-label="Select all"
+						/>
 					</div>
-				) : null
+				) : null;
 			},
 			cell: ({ row }) => (
 				<div className="flex items-center justify-center">
@@ -297,7 +298,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 		setValue("selections", updatedSelections);
 		table.resetRowSelection();
 	};
-	
+
 	const table = useReactTable({
 		data: selections,
 		columns: tableColumns,
@@ -309,11 +310,10 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 			pagination,
 		},
 	});
-	
 
 	async function onFormSubmit(values: CollectionFormValues) {
 		// toast.info("Creating collection...");
-		console.log("Form values: ",values);
+		console.log("Form values: ", values);
 
 		if (values.selections.length === 0) {
 			toast.error("Please select at least one product.");
@@ -351,7 +351,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 			encType: "multipart/form-data",
 		});
 	}
-	
+
 	return (
 		<>
 			<MetaDetails
@@ -382,10 +382,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 											<FormItem>
 												<FormLabel>Product Name</FormLabel>
 												<FormControl>
-													<Input
-														placeholder="e.g. New Arrivals"
-														{...field}
-													/>
+													<Input placeholder="e.g. New Arrivals" {...field} />
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -417,7 +414,10 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 											<FormItem>
 												<FormLabel>Image</FormLabel>
 												<FormControl>
-													<ImageInput name="image" dimensions={COLLECTION_IMG_DIMENSIONS}/>
+													<ImageInput
+														name="image"
+														dimensions={COLLECTION_IMG_DIMENSIONS}
+													/>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -466,8 +466,8 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 																</div>
 															</RadioGroup>
 															<span className="text-muted-foreground text-sm">
-																If inactive, the collection will not be visible
-																in the store
+																If inactive, the collection will not be
+																visible in the store
 															</span>
 														</div>
 													</FormControl>
@@ -512,11 +512,14 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 											<span>Remove</span>
 										</Button>
 									</div>
-
 								)}
 							</CardHeader>
 							<CardContent className="space-y-6">
-								<DataTable table={table} customEmptyMessage="No products selected :)" cellClassName="**:data-[slot=table-cell]:last:bg-transparent"/>
+								<DataTable
+									table={table}
+									customEmptyMessage="No products selected :)"
+									cellClassName="**:data-[slot=table-cell]:last:bg-transparent"
+								/>
 								<div className="flex items-center justify-between">
 									<div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
 										{table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -653,7 +656,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 																		>
 																			{item}
 																		</TagsInputItem>
-																))
+																  ))
 																: null}
 															<TagsInputInput
 																placeholder="Add meta keywords..."
@@ -739,7 +742,7 @@ type ProductSelectionDialogProps = {
 const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 	main_skeletons = 3,
 	sub_skeletons = 2,
-	products = 3
+	products = 3,
 }: {
 	main_skeletons?: number;
 	sub_skeletons?: number;
@@ -759,7 +762,6 @@ const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 								<Label className="flex items-center px-2 py-2 cursor-pointer">
 									<Skeleton className="h-4 w-4 rounded-sm" />
 									<Skeleton className="h-4 min-w-[250px] rounded-sm" />
-
 								</Label>
 								<ChevronUp className="h-4 w-4 transition-transform duration-200 group-data-expanded:-rotate-180" />
 							</div>
@@ -783,8 +785,14 @@ const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 											</AccordionTrigger>
 											<AccordionContent>
 												<div className="border-sidebar-border mx-3 flex min-w-0 translate-x-px flex-col gap-2 border-l px-2.5 py-0.5">
-													{Array.from({ length: products }, (_, product_idx) => product_idx).map((product) => (
-														<Skeleton className="h-4 w-[min(250px,100%)] rounded-sm ml-2 last:mb-1" key={product}/>
+													{Array.from(
+														{ length: products },
+														(_, product_idx) => product_idx,
+													).map((product) => (
+														<Skeleton
+															className="h-4 w-[min(250px,100%)] rounded-sm ml-2 last:mb-1"
+															key={product}
+														/>
 													))}
 												</div>
 											</AccordionContent>
@@ -808,7 +816,7 @@ function ProductSelectionDialog({
 	selectedProducts,
 }: ProductSelectionDialogProps) {
 	const [tempSelected, setTempSelected] = useState<SelectedProduct[]>(selectedProducts);
-	
+
 	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const navigation = useNavigation();
@@ -825,18 +833,21 @@ function ProductSelectionDialog({
 	}, [selectedProducts, open]);
 
 	useEffect(() => {
-		const initial = categories.reduce((acc, cat) => {
-			cat.sub_categories.forEach((sub) => {
-				acc[sub.id] = Math.min(productsPageSize, sub.product_count);
-			});
-			return acc;
-		}, {} as Record<string, number>);
+		const initial = categories.reduce(
+			(acc, cat) => {
+				cat.sub_categories.forEach((sub) => {
+					acc[sub.id] = Math.min(productsPageSize, sub.product_count);
+				});
+				return acc;
+			},
+			{} as Record<string, number>,
+		);
 		setProductsToShow(initial);
 	}, [categories]);
 
 	const isSearching = useMemo(
 		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname]
+		[navigation.state, navigation.location?.pathname, location.pathname],
 	);
 
 	let currentQuery = searchParams.get("prodSearch") || "";
@@ -872,7 +883,7 @@ function ProductSelectionDialog({
 			setTempSelected((prev) => prev.filter((p) => !productIds.includes(p.id)));
 		} else {
 			const allProducts = category.sub_categories.flatMap((sub) =>
-				sub.products.map((p) => ({ id: p.id, name: p.name }))
+				sub.products.map((p) => ({ id: p.id, name: p.name })),
 			);
 			setTempSelected((prev) => [
 				...prev,
@@ -917,7 +928,7 @@ function ProductSelectionDialog({
 					prev.set("catPage", (currentCategoryPage - 1).toString());
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 			navigate(`?${searchParams.toString()}`);
 		}
@@ -930,7 +941,7 @@ function ProductSelectionDialog({
 					prev.set("catPage", (currentCategoryPage + 1).toString());
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 			navigate(`?${searchParams.toString()}`);
 		}
@@ -942,7 +953,7 @@ function ProductSelectionDialog({
 				prev.delete("prodSearch");
 				return prev;
 			},
-			{ state: { suppressLoadingBar: true } }
+			{ state: { suppressLoadingBar: true } },
 		);
 	}
 
@@ -958,7 +969,7 @@ function ProductSelectionDialog({
 					prev.set("catPage", "1");
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 		} else {
 			setSearchParams(
@@ -968,11 +979,11 @@ function ProductSelectionDialog({
 					prev.set("catPage", "1");
 					return prev;
 				},
-				{ state: { suppressLoadingBar: true } }
+				{ state: { suppressLoadingBar: true } },
 			);
 		}
 	};
-	
+
 	//TODO: Show a sheet where we display the information of product when we click on the name of product in the table list
 
 	const showMoreProducts = (subId: string) => {
@@ -989,7 +1000,7 @@ function ProductSelectionDialog({
 
 	const ProductsArea = () => {
 		if (isSearching) {
-			return <ProductSelectionDialogSkeleton />
+			return <ProductSelectionDialogSkeleton />;
 		} else {
 			return categories.length > 0 ? (
 				categories.map((cat) => (
@@ -1029,7 +1040,7 @@ function ProductSelectionDialog({
 												transition={{ duration: 0.2, ease: "easeInOut" }}
 												className="flex w-full flex-col divide-y divide-secondary dark:divide-secondary/50"
 											>
-												<AccordionItem value={sub.id} >
+												<AccordionItem value={sub.id}>
 													<AccordionTrigger className="w-full text-left hover:underline underline-offset-4">
 														<div className="flex items-center justify-between">
 															<Label className="flex items-center px-2 py-1 cursor-pointer">
@@ -1066,11 +1077,11 @@ function ProductSelectionDialog({
 																					checked={tempSelected.some(
 																						(p) =>
 																							p.id ===
-																							product.id
+																							product.id,
 																					)}
 																					onCheckedChange={() =>
 																						handleProductToggle(
-																							product
+																							product,
 																						)
 																					}
 																					className="mr-2"
@@ -1089,7 +1100,9 @@ function ProductSelectionDialog({
 																		}
 																		className={cn("m-0 p-0")}
 																	>
-																		<p className="text-muted-foreground text-sm">Show More</p>
+																		<p className="text-muted-foreground text-sm">
+																			Show More
+																		</p>
 																	</Button>
 																)}
 															</div>
@@ -1123,7 +1136,7 @@ function ProductSelectionDialog({
 				</div>
 			);
 		}
-	}
+	};
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>

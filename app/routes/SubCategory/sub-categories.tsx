@@ -1,9 +1,17 @@
-import { Form, Link, LoaderFunctionArgs, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Form, Link, LoaderFunctionArgs, useLocation, useSearchParams } from "react-router";
 import { Route } from "./+types/sub-categories";
 import { Button } from "~/components/ui/button";
 import { MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
@@ -31,7 +39,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	});
 
 	const data = await queryClient.fetchQuery(
-		subCategoriesQuery({request, categoryId, q, pageIndex, pageSize})
+		subCategoriesQuery({ request, categoryId, q, pageIndex, pageSize }),
 	);
 
 	return {
@@ -50,7 +58,7 @@ export default function SubCategoriesPage({
 		throw new Response("Error fetching categories", { status: 404 });
 	}
 	// console.log(data);
-	
+
 	const navigation = useNavigation();
 	const location = useLocation();
 
@@ -63,7 +71,7 @@ export default function SubCategoriesPage({
 		{
 			accessorKey: "ID",
 			header: "ID",
-			cell: (info: any) => <TableId id={info.row.original.id} message="Sub category ID copied"/>,
+			cell: (info: any) => <TableId id={info.row.original.id} message="Sub category ID copied" />,
 		},
 		{
 			id: "Name",
@@ -76,7 +84,7 @@ export default function SubCategoriesPage({
 			id: "Url Key",
 			accessorKey: "url_key",
 			cell: (info: any) => "/" + info.row.original.url_key,
-			header: () => "Url Key"
+			header: () => "Url Key",
 		},
 		{
 			id: "Description",
@@ -140,10 +148,10 @@ export default function SubCategoriesPage({
 			pagination: {
 				pageIndex,
 				pageSize,
-			}
-		}
+			},
+		},
 	});
-	
+
 	return (
 		<>
 			<MetaDetails
@@ -158,7 +166,11 @@ export default function SubCategoriesPage({
 							<BackButton href={"/categories"} />
 							<h1 className="text-2xl font-semibold">Sub Categories</h1>
 						</div>
-						<Link to={`/categories/${categoryId}/sub-categories/create`} viewTransition className="ml-auto">
+						<Link
+							to={`/categories/${categoryId}/sub-categories/create`}
+							viewTransition
+							className="ml-auto"
+						>
 							<Button size={"sm"} className="ml-auto">
 								<PlusCircle width={18} />
 								<span>Create New</span>
@@ -191,22 +203,25 @@ export default function SubCategoriesPage({
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelSubCategory>) {
-    const [searchParams] = useSearchParams();
-    let currentQuery = searchParams.get("q") ?? "";
-	
-    return (
+	const [searchParams] = useSearchParams();
+	let currentQuery = searchParams.get("q") ?? "";
+
+	return (
 		<div className="w-full flex justify-between gap-4 items-center">
 			<div>
 				<Form method="get">
 					<div className="relative">
-						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
+						<Search
+							className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+							width={18}
+						/>
 						<Input
 							placeholder="Search sub categories"
 							name="q"
 							className="w-full pl-8"
 							id="search"
 							defaultValue={currentQuery}
-                            disabled={disabled}
+							disabled={disabled}
 						/>
 					</div>
 					{/* Invisible submit button: Enter in input triggers submit */}
@@ -233,7 +248,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 					{table
 						.getAllColumns()
 						.filter(
-							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide()
+							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide(),
 						)
 						.map((column: any) => {
 							return (

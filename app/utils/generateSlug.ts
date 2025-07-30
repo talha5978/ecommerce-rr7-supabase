@@ -19,5 +19,4 @@ const generateFilePath = (file: File) => {
 	return filePath;
 };
 
-
 export { generateFilePath };

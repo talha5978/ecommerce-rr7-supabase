@@ -4,12 +4,14 @@ import { Button } from "~/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuItem,
+	DropdownMenuCheckboxItem,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
+const Themes = ["light", "dark", "system"] as const;
+
 export function ThemeToggleButton() {
-	const { setTheme } = useTheme();
+	const { setTheme, theme: currentTheme } = useTheme();
 
 	return (
 		<DropdownMenu>
@@ -21,9 +23,15 @@ export function ThemeToggleButton() {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
-				<DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
+				{Themes.map((theme: (typeof Themes)[number], index) => (
+					<DropdownMenuCheckboxItem
+						key={theme + index}
+						onCheckedChange={() => setTheme(theme)}
+						checked={theme === currentTheme}
+					>
+						{theme.charAt(0).toUpperCase() + String(theme).slice(1)}
+					</DropdownMenuCheckboxItem>
+				))}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

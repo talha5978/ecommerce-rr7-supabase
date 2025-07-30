@@ -1,10 +1,7 @@
-import { type RouteConfig, route, index, prefix, layout } from "@react-router/dev/routes";
+import { type RouteConfig, route, index, prefix } from "@react-router/dev/routes";
 
 export default [
-	...prefix("/login", [
-		index("./routes/Auth/login.tsx"),
-		route("otp", "./routes/Auth/otp.tsx"),
-	]),
+	...prefix("/login", [index("./routes/Auth/login.tsx"), route("otp", "./routes/Auth/otp.tsx")]),
 
 	route("/logout", "./routes/_actions/logout.tsx"),
 
@@ -26,15 +23,19 @@ export default [
 
 		...prefix("/product-attributes", [
 			route("", "./routes/ProductAttributes/product-attributes.tsx", [
-				route("create", "./routes/ProductAttributes/create-product-attributes.tsx", { id: "create-attribute-main" }),
+				route("create", "./routes/ProductAttributes/create-product-attributes.tsx", {
+					id: "create-attribute-main",
+				}),
 			]),
 
 			route(":attributeType/values", "./routes/ProductAttributes/product-attributes-values.tsx", [
-				route("create", "./routes/ProductAttributes/create-product-attributes.tsx", { id: "create-attribute-values" }),
+				route("create", "./routes/ProductAttributes/create-product-attributes.tsx", {
+					id: "create-attribute-values",
+				}),
 				route(":attributeId/update", "./routes/ProductAttributes/update-product-attributes.tsx"),
 			]),
 		]),
-		
+
 		...prefix("/products", [
 			index("./routes/Products/products.tsx"),
 			route("create", "./routes/Products/create-product.tsx"),
@@ -45,7 +46,7 @@ export default [
 					route("create", "./routes/ProductVariants/create-product-variant.tsx"),
 					route("duplicate", "./routes/_actions/create-product-variant-duplicate.tsx"),
 					route(":variantId/update", "./routes/ProductVariants/update-product-variant.tsx"),
-				])
+				]),
 			]),
 		]),
 
@@ -55,7 +56,13 @@ export default [
 			index("./routes/Collections/collections.tsx"),
 			route("create", "./routes/Collections/create-collection.tsx"),
 			route(":collectionId/update", "./routes/Collections/update-collection.tsx"),
-			
+		]),
+
+		...prefix("/coupons", [
+			index("./routes/Coupons/coupons.tsx"),
+			route("create/:couponType", "./routes/Coupons/create-coupon.tsx"),
 		]),
 	]),
+
+	route("*", "./routes/Error/404.tsx"),
 ] satisfies RouteConfig;

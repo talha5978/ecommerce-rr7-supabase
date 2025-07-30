@@ -11,8 +11,12 @@ interface FilterPayloadParams {
 export function getCollectionsFiltersPayload({ request }: FilterPayloadParams) {
 	const url = new URL(request.url);
 
-	const sortBy = (url.searchParams.get("sortBy") as CollectionFilers["sortBy"]) || defaults.defaultCollectionSortByFilter;
-	const sortType = (url.searchParams.get("sortType") as CollectionFilers["sortType"]) || defaults.defaultCollectionSortTypeFilter;
+	const sortBy =
+		(url.searchParams.get("sortBy") as CollectionFilers["sortBy"]) ||
+		defaults.defaultCollectionSortByFilter;
+	const sortType =
+		(url.searchParams.get("sortType") as CollectionFilers["sortType"]) ||
+		defaults.defaultCollectionSortTypeFilter;
 
 	const filters: CollectionFilers = {
 		// sort fields

@@ -1,9 +1,43 @@
-import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useNavigate, useSearchParams } from "react-router";
+import {
+	Form,
+	Link,
+	LoaderFunctionArgs,
+	useFetcher,
+	useLocation,
+	useNavigate,
+	useSearchParams,
+} from "react-router";
 import { Route } from "./+types/product-variants";
 import { Button } from "~/components/ui/button";
-import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpNarrowWide, ListFilter, Loader2, MoreHorizontal, PlusCircle, RotateCcw, Search, Settings2 } from "lucide-react";
+import {
+	ArrowDownWideNarrow,
+	ArrowUpDown,
+	ArrowUpNarrowWide,
+	DollarSign,
+	ListFilter,
+	Loader2,
+	MoreHorizontal,
+	PlusCircle,
+	RotateCcw,
+	Search,
+	Settings2,
+} from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuPortal,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Input } from "~/components/ui/input";
 import { useNavigation } from "react-router";
@@ -25,21 +59,42 @@ import CopyField from "~/components/Table/TableId";
 import handleDuplicateClick from "~/utils/handleDuplicateProrductVaraint";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
+import {
+	Sheet,
+	SheetClose,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from "~/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Label } from "~/components/ui/label";
-import { Form as ShadcnForm, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import {
+	Form as ShadcnForm,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "~/components/ui/form";
 import DateRangePicker from "~/components/Custom-Inputs/date-range-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "~/components/ui/command";
-import { defaultOp, ProductVaraintsFilterFormData, ProductVariantsFilterFormSchema, ProductVariantsFilters } from "~/schemas/product-variants-filter.schema";
+import {
+	defaultOp,
+	ProductVaraintsFilterFormData,
+	ProductVariantsFilterFormSchema,
+	ProductVariantsFilters,
+} from "~/schemas/product-variants-filter.schema";
 import { getProductVariantsFiltersPayload } from "~/utils/getProductVariantsFiltersPayload";
 import { Slider } from "~/components/ui/slider";
 import { FilterOp } from "~/constants";
 import { getActiveVaraintsFiltersCount } from "~/utils/getActiveVaraintsFiltersCount";
 import { getVariantsResetFiltersUrl } from "~/utils/getVariantsResetFiltersUrl";
 import { useIsMobile } from "~/hooks/use-mobile";
-import { VariantStatusUpdateFormValues, VariantStatusUpdateInputSchema } from "~/schemas/product-variants.schema";
+import {
+	VariantStatusUpdateFormValues,
+	VariantStatusUpdateInputSchema,
+} from "~/schemas/product-variants.schema";
 
 const defaultPage = (defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE - 1).toString();
 const defaultSize = defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE.toString();
@@ -49,7 +104,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	if (!productId || productId == "") {
 		throw new Response("Product ID is required", { status: 400 });
 	}
-	
+
 	const filters: ProductVariantsFilters = getProductVariantsFiltersPayload({ request });
 
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
@@ -66,14 +121,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			pageIndex,
 			pageSize,
 			filters,
-		})
+		}),
 	);
 
 	return {
 		data,
 		query: q,
 		pageIndex,
-		pageSize
+		pageSize,
 	};
 };
 
@@ -84,7 +139,7 @@ export default function ProductVariantsPage({
 		throw new Response("Error fetching variants", { status: 404 });
 	}
 	// console.log(data);
-	
+
 	const navigation = useNavigation();
 	const location = useLocation();
 
@@ -92,9 +147,9 @@ export default function ProductVariantsPage({
 
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
-	
-		console.log("Rer red");
-		
+
+	console.log("Rer red");
+
 	const columns: ColumnDef<ProductVariantRow, unknown>[] = [
 		{
 			id: "Sr. No.",
@@ -118,11 +173,9 @@ export default function ProductVariantsPage({
 								classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
 							/>
 						</div>
-					)
+					);
 				} else {
-					return (
-						<Skeleton className="h-20 w-18 rounded-sm" />
-					)
+					return <Skeleton className="h-20 w-18 rounded-sm" />;
 				}
 			},
 			header: () => "Image",
@@ -131,7 +184,7 @@ export default function ProductVariantsPage({
 			id: "SKU",
 			enableHiding: false,
 			accessorKey: "sku",
-			cell: (info: any) => <CopyField id={info.row.original.sku} message="SKU copied"/>,
+			cell: (info: any) => <CopyField id={info.row.original.sku} message="SKU copied" />,
 			header: () => "SKU",
 		},
 		{
@@ -195,7 +248,7 @@ export default function ProductVariantsPage({
 								<Link to={`${rowData.id}/update`}>
 									<DropdownMenuItem>Update</DropdownMenuItem>
 								</Link>
-								<UpdateStatusForm product_variant={rowData as ProductVariantRow}/>
+								<UpdateStatusForm product_variant={rowData as ProductVariantRow} />
 								<DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
@@ -205,10 +258,10 @@ export default function ProductVariantsPage({
 		},
 	];
 
-	const tableColumns = useMemo(() => columns, [])
+	const tableColumns = useMemo(() => columns, []);
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPage: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE
+		defaultPage: defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE,
 	});
 
 	const table = useReactTable({
@@ -221,8 +274,8 @@ export default function ProductVariantsPage({
 			pagination: {
 				pageIndex,
 				pageSize,
-			}
-		}
+			},
+		},
 	});
 
 	return (
@@ -282,9 +335,9 @@ function UpdateStatusForm({ product_variant }: { product_variant: ProductVariant
 	const status = useWatch({ control, name: "status" });
 
 	const [isSubmitting, setSubmitting] = useState<boolean>(false);
-	
+
 	const fetcher = useFetcher();
-	
+
 	// Handle fetcher state for toasts and state updates
 	useEffect(() => {
 		if (fetcher.data) {
@@ -295,7 +348,7 @@ function UpdateStatusForm({ product_variant }: { product_variant: ProductVariant
 						? bolleanToStringConverter(fetcher.data.status)
 						: (status as "true" | "false");
 				reset({
-					status: newStatus as "true" | "false"
+					status: newStatus as "true" | "false",
 				});
 				setSubmitting(false);
 			} else if (fetcher.data.error) {
@@ -326,9 +379,9 @@ function UpdateStatusForm({ product_variant }: { product_variant: ProductVariant
 			{ label: "Active", value: "true", id: Math.floor(Math.random() * 99999).toString() },
 			{ label: "Inactive", value: "false", id: Math.floor(Math.random() * 99999).toString() },
 		],
-		[]
+		[],
 	);
-	
+
 	return (
 		<>
 			<DropdownMenuSub>
@@ -371,15 +424,17 @@ function UpdateStatusForm({ product_variant }: { product_variant: ProductVariant
 	);
 }
 
-function DuplicateVariantItem({ variant } : { variant: ProductVariantRow }) {
+function DuplicateVariantItem({ variant }: { variant: ProductVariantRow }) {
 	const fetcher = useFetcher();
-			
+
 	// Handle fetcher state for toasts and query invalidation
 	useEffect(() => {
 		if (fetcher.data) {
 			if (fetcher.data.success) {
 				toast.success("Variant Duplicated successfully");
-				toast.warning("Variant is using the same images as the original variant, please change the images.");
+				toast.warning(
+					"Variant is using the same images as the original variant, please change the images.",
+				);
 			} else if (fetcher.data.error) {
 				toast.error(fetcher.data.error);
 			} else {
@@ -387,18 +442,16 @@ function DuplicateVariantItem({ variant } : { variant: ProductVariantRow }) {
 			}
 		}
 	}, [fetcher.data, queryClient]);
-	
+
 	return (
 		<DropdownMenuItem
 			disabled={fetcher.state === "submitting"}
 			onClick={() => handleDuplicateClick({ fetcher, input: variant })}
 		>
-			{fetcher.state === "submitting" ? (
-				<Loader2 className="animate-spin" color="white" />
-			) : null}
+			{fetcher.state === "submitting" ? <Loader2 className="animate-spin" color="white" /> : null}
 			Duplicate
 		</DropdownMenuItem>
-	)
+	);
 }
 
 function SortSelector() {
@@ -427,7 +480,7 @@ function SortSelector() {
 	// Handle form submission
 	const onSortSubmit = (values: sortFormData) => {
 		const currentParams = new URLSearchParams(location.search);
-		
+
 		// Remove old sort params if they exist
 		currentParams.delete("sortBy");
 		currentParams.delete("sortType");
@@ -435,7 +488,7 @@ function SortSelector() {
 		// Add new sort params
 		if (values.sortBy) currentParams.set("sortBy", values.sortBy);
 		if (values.sortType) currentParams.set("sortType", values.sortType);
-		
+
 		navigate(`?${currentParams.toString()}`);
 	};
 
@@ -518,9 +571,9 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Pro
 	const navigate = useNavigate();
 	const location = useLocation();
 	const isMobile = useIsMobile({ customBreakpoint: 400 });
-	
-    const [searchParams] = useSearchParams();
-    let currentQuery = searchParams.get("q") ?? "";
+
+	const [searchParams] = useSearchParams();
+	let currentQuery = searchParams.get("q") ?? "";
 
 	const activeFiltersCount = getActiveVaraintsFiltersCount(searchParams);
 	const [filtersMenuOpen, setFiltersMenuOpen] = useState<boolean>(false);
@@ -530,15 +583,18 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Pro
 	}
 
 	function handleResetFilters() {
-		navigate(getVariantsResetFiltersUrl({
-			defaultPage,
-			defaultSize,
-			pathname: location.pathname,
-			search: location.search
-		}), { replace: true });
+		navigate(
+			getVariantsResetFiltersUrl({
+				defaultPage,
+				defaultSize,
+				pathname: location.pathname,
+				search: location.search,
+			}),
+			{ replace: true },
+		);
 	}
 
-    return (
+	return (
 		<>
 			<div className="w-full flex justify-between gap-4 items-center">
 				<div className="flex gap-2 items-center">
@@ -628,7 +684,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Pro
 								.getAllColumns()
 								.filter(
 									(column: any) =>
-										typeof column.accessorFn !== "undefined" && column.getCanHide()
+										typeof column.accessorFn !== "undefined" && column.getCanHide(),
 								)
 								.map((column: any) => {
 									return (
@@ -677,14 +733,18 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 			q: currentQuery,
 			page: currentPageIndex,
 			size: currentPageSize,
-			status: searchParams.get("status") == null ? "null" : (searchParams.get("status") as BoolVals) || "null",
+			status:
+				searchParams.get("status") == null
+					? "null"
+					: (searchParams.get("status") as BoolVals) || "null",
 			original_price: searchParams.get("original_price") || "",
 			original_price_op: (searchParams.get("original_price_op") as FilterOp) ?? defaultOp,
 			sale_price: searchParams.get("sale_price") || "",
 			sale_price_op: (searchParams.get("sale_price_op") as FilterOp) ?? defaultOp,
-			stock: maxStockParam && minStockParam ?
-				[maxStockParam, minStockParam].map((val) => Number(val))
-				: [0, maxStockFilterDefaultVal],
+			stock:
+				maxStockParam && minStockParam
+					? [maxStockParam, minStockParam].map((val) => Number(val))
+					: [0, maxStockFilterDefaultVal],
 			reorder_level: searchParams.get("reorder_level") || "",
 			reorder_level_op: (searchParams.get("reorder_level_op") as FilterOp) ?? defaultOp,
 			createdAt:
@@ -692,11 +752,11 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 					? {
 							from: new Date(createdFromParam),
 							to: new Date(createdToParam),
-					}
-					: null
+					  }
+					: null,
 		},
 	});
-	
+
 	const { handleSubmit, control, reset } = form;
 
 	// Handle form submission
@@ -707,7 +767,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		// Append only explicitly set or changed values
 		if (values.q) params.set("q", values.q);
 		if (values.status && values.status !== "null") params.set("status", values.status);
-		
+
 		// for each numeric field
 		if (values.original_price) {
 			params.set("original_price", values.original_price);
@@ -728,7 +788,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 			}
 			if (values.stock[1] !== maxStockFilterDefaultVal) {
 				params.set("max_stock", String(values.stock[1]));
-			}	
+			}
 		}
 
 		if (values.createdAt) {
@@ -752,7 +812,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		const sortType = searchParams.get("sortType");
 		if (sortBy) params.set("sortBy", sortBy);
 		if (sortType) params.set("sortType", sortType);
-		
+
 		navigate(`?${params.toString()}`);
 	};
 
@@ -763,12 +823,15 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 
 	function handleReset() {
 		reset(); // Resets the form state
-		navigate(getVariantsResetFiltersUrl({
-			defaultPage,
-			defaultSize,
-			pathname: location.pathname,
-			search: location.search
-		}), { replace: true });
+		navigate(
+			getVariantsResetFiltersUrl({
+				defaultPage,
+				defaultSize,
+				pathname: location.pathname,
+				search: location.search,
+			}),
+			{ replace: true },
+		);
 		setOpen(false);
 	}
 
@@ -783,7 +846,9 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 					<ShadcnForm {...form}>
 						<div className="flex justify-between gap-2 items-center">
 							<h2 className="text-xl mt-0 font-bold">Filter</h2>
-							<Button variant="link" onClick={handleReset}>Reset All</Button>
+							<Button variant="link" onClick={handleReset}>
+								Reset All
+							</Button>
 						</div>
 						{/* Status Filter */}
 						<FormField
@@ -855,7 +920,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 														{...field}
 													/>
 													<Button variant="outline" size="icon" tabIndex={-1}>
-														Rs.
+														<DollarSign className="h-4 w-4" />
 													</Button>
 												</div>
 											</FormControl>
@@ -911,7 +976,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 														{...field}
 													/>
 													<Button variant="outline" size="icon" tabIndex={-1}>
-														Rs.
+														<DollarSign className="h-4 w-4" />
 													</Button>
 												</div>
 											</FormControl>
@@ -1065,13 +1130,15 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 	);
 }
 
-
 // 	const productsList = queryClient.fetchQuery(productNamesQuery({ request }));
 
 // const { productsList } = useLoaderData<typeof loader>();
 
-{/* Parent Product */}
-{/* <Suspense fallback={<div className="text-lg text-red-700">Loading...</div>}>
+{
+	/* Parent Product */
+}
+{
+	/* <Suspense fallback={<div className="text-lg text-red-700">Loading...</div>}>
 	<Await resolve={productsList}>
 		{({ products }) => (
 			<Controller
@@ -1151,4 +1218,5 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 			/>
 		)}
 	</Await>
-</Suspense> */}
+</Suspense> */
+}

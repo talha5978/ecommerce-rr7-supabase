@@ -1,40 +1,20 @@
-import {
-	IconChevronLeft,
-	IconChevronRight,
-	IconChevronsLeft,
-	IconChevronsRight,
-	IconTrendingUp,
-} from "@tabler/icons-react";
-import {
-	ColumnDef,
-	flexRender,
-	getCoreRowModel,
-	Row,
-	type Table,
-	useReactTable,
-} from "@tanstack/react-table";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { z } from "zod";
+import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from "@tabler/icons-react";
+import { ColumnDef, flexRender, getCoreRowModel, type Table, useReactTable } from "@tanstack/react-table";
 
-import { useIsMobile } from "~/hooks/use-mobile";
 import { Button } from "~/components/ui/button";
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/chart";
-import {
-	Drawer,
-	DrawerClose,
-	DrawerContent,
-	DrawerDescription,
-	DrawerFooter,
-	DrawerHeader,
-	DrawerTitle,
-	DrawerTrigger,
-} from "~/components/ui/drawer";
-import { Input } from "~/components/ui/input";
+
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { Separator } from "~/components/ui/separator";
-import { Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import {
+	Table as TableComponent,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "~/components/ui/table";
 import { Skeleton } from "~/components/ui/skeleton";
+import { cn } from "~/lib/utils";
 
 interface DataTableProps<T> {
 	table: Table<T>;
@@ -44,6 +24,7 @@ interface DataTableProps<T> {
 	total?: number;
 	customEmptyMessage?: string;
 	cellClassName?: string;
+	headerClassName?: string;
 }
 
 export interface DataTableViewOptionsProps<T> {
@@ -63,7 +44,8 @@ export function DataTable<T>({
 	pageSize,
 	total,
 	customEmptyMessage,
-	cellClassName = "**:data-[slot=table-cell]:last:bg-background"
+	cellClassName = "**:data-[slot=table-cell]:last:bg-background",
+	headerClassName = "bg-muted",
 }: DataTableProps<T>) {
 	if (!table) {
 		return (
@@ -80,15 +62,24 @@ export function DataTable<T>({
 	return (
 		<section>
 			<TableComponent>
-				<TableHeader className={`bg-muted sticky top-0 z-10`}>
+				<TableHeader className={`sticky top-0 z-10`}>
 					{table.getHeaderGroups().map((headerGroup) => (
 						<TableRow
 							key={headerGroup.id}
 							className="[&>*]:whitespace-nowrap sticky top-0 bg-background after:content-[''] after:inset-x-0 after:h-px after:bg-border after:absolute after:bottom-0"
 						>
-							{headerGroup.headers.map((header) => {
+							{headerGroup.headers.map((header, index) => {
+								const isFirst = index === 0;
+								const isLast = index === headerGroup.headers.length - 1;
+
 								return (
-									<TableHead key={header.id} className="bg-muted">
+									<TableHead
+										key={header.id}
+										className={`
+											${cn(headerClassName)}
+											${isFirst && "rounded-tl-lg"}
+											${isLast && "rounded-tr-lg"}`}
+									>
 										{header.isPlaceholder
 											? null
 											: flexRender(header.column.columnDef.header, header.getContext())}
@@ -98,7 +89,9 @@ export function DataTable<T>({
 						</TableRow>
 					))}
 				</TableHeader>
-				<TableBody className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}>
+				<TableBody
+					className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}
+				>
 					{table.getRowModel().rows?.length > 0 ? (
 						table.getRowModel().rows.map((row) => (
 							<TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
@@ -202,8 +195,7 @@ export function DataTable<T>({
 	);
 }
 
-export function DataTableSkeleton({ noOfSkeletons = 8, columns } : DataTableSkeletonProps) {
-
+export function DataTableSkeleton({ noOfSkeletons = 8, columns }: DataTableSkeletonProps) {
 	const table = useReactTable({
 		data: [],
 		columns,

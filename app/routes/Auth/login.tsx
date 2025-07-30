@@ -1,7 +1,15 @@
 import { Loader2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { ActionFunctionArgs, Link, LoaderFunctionArgs, redirect, useActionData, useNavigate, useNavigation } from "react-router";
+import {
+	ActionFunctionArgs,
+	Link,
+	LoaderFunctionArgs,
+	redirect,
+	useActionData,
+	useNavigate,
+	useNavigation,
+} from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
@@ -27,22 +35,19 @@ export async function action({ request }: ActionFunctionArgs) {
 		}
 
 		const authSvc = new AuthService(request);
-		const { error, headers } = await authSvc.getCode({ email });	
+		const { error, headers } = await authSvc.getCode({ email });
 
 		if (error) {
 			return { error: error.message || "Failed to send code" };
 		}
 
-		return new Response(
-			JSON.stringify({ success: true, email }),
-			{
-				status: 200,
-				headers: {
-					"Content-Type": "application/json",
-					"Set-Cookie": headers.get("Set-Cookie") || "",
-				},
-			}
-		);
+		return new Response(JSON.stringify({ success: true, email }), {
+			status: 200,
+			headers: {
+				"Content-Type": "application/json",
+				"Set-Cookie": headers.get("Set-Cookie") || "",
+			},
+		});
 	} catch (error: any) {
 		const errorMessage =
 			error instanceof ApiError ? error.message : error.message || "Failed to send code";
@@ -60,7 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export async function loader({ request }: LoaderFunctionArgs) {
 	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
 	console.log(user);
-	
+
 	if (user) {
 		return redirect("/");
 	}
@@ -70,13 +75,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 function Login() {
 	const actionData: (ActionResponse & { email?: string }) | undefined = useActionData();
-	
+
 	const navigation = useNavigation();
 	const navigate = useNavigate();
 
-	const isSubmitting =
-		navigation.state === "submitting" &&
-		navigation.formMethod === "POST";
+	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
 	const form = useForm<LoginFormData>({
 		resolver: zodResolver(loginSchema),
@@ -87,7 +90,9 @@ function Login() {
 		if (actionData) {
 			if (actionData.success && actionData.email) {
 				toast.success("OTP sent successfully to your e-mail");
-				navigate(`/login/otp?email=${encodeURIComponent(actionData.email)}&sent=true`, { replace: true });
+				navigate(`/login/otp?email=${encodeURIComponent(actionData.email)}&sent=true`, {
+					replace: true,
+				});
 			} else if (actionData.error) {
 				toast.error(actionData.error);
 			}

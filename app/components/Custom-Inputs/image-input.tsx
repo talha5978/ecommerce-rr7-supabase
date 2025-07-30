@@ -1,6 +1,6 @@
 import { cn } from "~/lib/utils";
 import { ImageIcon, XCircleIcon } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Dropzone, { FileRejection } from "react-dropzone";
 import { useFormContext } from "react-hook-form";
 import { ALLOWED_IMAGE_FORMATS, MAX_IMAGE_SIZE, SUPABASE_IMAGE_BUCKET_PATH } from "~/constants";
@@ -14,17 +14,17 @@ export type ImgDimensions = {
 		width: number;
 		height: number;
 	};
-}
+};
 
 type ImageInputProps = {
 	name: string;
 	dimensions: ImgDimensions;
-}
+};
 
 type ImagePreviewProps = {
 	url: string;
 	onRemove: () => void;
-}
+};
 
 const formatFileSize = (sizeInBytes: number) => {
 	const sizeInMB = sizeInBytes / (1024 * 1024);
@@ -35,7 +35,7 @@ const formatDimensions = (dimensions: { width: number; height: number }) => {
 	return `${dimensions.width}×${dimensions.height}`;
 };
 
-const getAcceptedFormats = () : { [key: string]: string[] } => {
+const getAcceptedFormats = (): { [key: string]: string[] } => {
 	const formats = ALLOWED_IMAGE_FORMATS;
 	const accept: { [key: string]: string[] } = {};
 
@@ -51,9 +51,9 @@ const getAcceptedFormats = () : { [key: string]: string[] } => {
 };
 
 export const getSimpleImgFormats = () => {
-	const formats = ALLOWED_IMAGE_FORMATS.map(format => format.split('/')[1].toUpperCase());
-	return formats.join(', ');
-}
+	const formats = ALLOWED_IMAGE_FORMATS.map((format) => format.split("/")[1].toUpperCase());
+	return formats.join(", ");
+};
 
 const ImagePreview = ({ url, onRemove }: ImagePreviewProps) => (
 	<div className="relative">
@@ -74,43 +74,43 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [uploadError, setUploadError] = useState<string | null>(null);
 
-	const validateImage = useCallback((file: File): Promise<string | null> => {
-		return new Promise((resolve) => {
-			if (!ALLOWED_IMAGE_FORMATS.includes(file.type)) {
-				return resolve(`Invalid image format. Only ${getSimpleImgFormats()} are allowed.`);
-			}
-			if (file.size > MAX_IMAGE_SIZE) {
-				console.log(file.size);
-				
-				return resolve(`File image exceeds ${formatFileSize(MAX_IMAGE_SIZE)}.`);
-			}
-			const img = new Image();
-			const objectUrl = URL.createObjectURL(file);
-			img.onload = () => {
-				URL.revokeObjectURL(objectUrl);
-				const { width, height } = img;
-				if (width < dimensions.min.width || height < dimensions.min.height) {
-					resolve(
-						`Dimensions must be at least ${dimensions.min.width}x${dimensions.min.height}px.`
-					);
-				} else if (
-					width > dimensions.max.width ||
-					height > dimensions.max.height
-				) {
-					resolve(
-						`Dimensions must not exceed ${dimensions.max.width}x${dimensions.max.height}px.`
-					);
-				} else {
-					resolve(null);
+	const validateImage = useCallback(
+		(file: File): Promise<string | null> => {
+			return new Promise((resolve) => {
+				if (!ALLOWED_IMAGE_FORMATS.includes(file.type)) {
+					return resolve(`Invalid image format. Only ${getSimpleImgFormats()} are allowed.`);
 				}
-			};
-			img.onerror = () => {
-				URL.revokeObjectURL(objectUrl);
-				resolve(`Failed to load image.`);
-			};
-			img.src = objectUrl;
-		});
-	}, [dimensions]);
+				if (file.size > MAX_IMAGE_SIZE) {
+					console.log(file.size);
+
+					return resolve(`File image exceeds ${formatFileSize(MAX_IMAGE_SIZE)}.`);
+				}
+				const img = new Image();
+				const objectUrl = URL.createObjectURL(file);
+				img.onload = () => {
+					URL.revokeObjectURL(objectUrl);
+					const { width, height } = img;
+					if (width < dimensions.min.width || height < dimensions.min.height) {
+						resolve(
+							`Dimensions must be at least ${dimensions.min.width}x${dimensions.min.height}px.`,
+						);
+					} else if (width > dimensions.max.width || height > dimensions.max.height) {
+						resolve(
+							`Dimensions must not exceed ${dimensions.max.width}x${dimensions.max.height}px.`,
+						);
+					} else {
+						resolve(null);
+					}
+				};
+				img.onerror = () => {
+					URL.revokeObjectURL(objectUrl);
+					resolve(`Failed to load image.`);
+				};
+				img.src = objectUrl;
+			});
+		},
+		[dimensions],
+	);
 
 	useEffect(() => {
 		// Handle existing Supabase URL only
@@ -169,7 +169,6 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 		setPreviewUrl(null);
 		setUploadError(null);
 	}, [setValue, name, clearErrors, previewUrl]);
-	
 
 	const acceptedFormats = getAcceptedFormats();
 
@@ -193,19 +192,22 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 									{
 										"border-primary bg-secondary": isDragActive && isDragAccept,
 										"border-destructive bg-destructive/20": isDragActive && isDragReject,
-									}
+									},
 								)}
 							>
 								<input {...getInputProps()} id={name} />
 								<div className="flex flex-col items-center gap-2">
-									<ImageIcon className="h-16 w-16 text-muted-foreground" strokeWidth={0.85} />
+									<ImageIcon
+										className="h-16 w-16 text-muted-foreground"
+										strokeWidth={0.85}
+									/>
 									<div className="px-2 flex flex-col gap-1 justify-center items-center">
 										<span className="text-sm text-muted-foreground">
 											Drag and drop or click to upload
 										</span>
 										<span className="text-xs text-muted-foreground">
 											{ALLOWED_IMAGE_FORMATS.map(
-												(fmt) => `.${fmt.split("/")[1].toUpperCase()}`
+												(fmt) => `.${fmt.split("/")[1].toUpperCase()}`,
 											).join(", ")}
 										</span>
 										<span className="text-xs text-muted-foreground">
@@ -215,7 +217,6 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 											{formatDimensions(dimensions.min)} to{" "}
 											{formatDimensions(dimensions.max)}px
 										</span>
-										
 									</div>
 								</div>
 							</div>
@@ -223,9 +224,7 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 					</Dropzone>
 				)}
 			</div>
-			{uploadError && (
-				<span className="text-sm text-destructive">{uploadError}</span>
-			)}
+			{uploadError && <span className="text-sm text-destructive">{uploadError}</span>}
 		</>
 	);
 }

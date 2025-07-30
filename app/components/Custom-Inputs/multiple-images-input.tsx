@@ -4,7 +4,7 @@ import { cn } from "~/lib/utils";
 
 type MultipleImagesInputProps = {
 	name: string;
-	dimensions: ImgDimensions
+	dimensions: ImgDimensions;
 };
 
 export default function MultipleImagesInput({ name, dimensions }: MultipleImagesInputProps) {
@@ -18,7 +18,7 @@ export default function MultipleImagesInput({ name, dimensions }: MultipleImages
 					<div
 						key={index}
 						className={cn(
-							"flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm"
+							"flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm",
 						)}
 					>
 						<Label htmlFor={`${name}[${index}]`}>Image {index + 1}</Label>

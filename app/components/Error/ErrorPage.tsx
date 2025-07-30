@@ -1,22 +1,22 @@
 import { Link } from "react-router";
-import { useRouteError, isRouteErrorResponse } from 'react-router';
+import { useRouteError, isRouteErrorResponse } from "react-router";
 import { Button } from "../ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Badge } from "../ui/badge";
 
 export default function ErrorPage() {
-    const error = useRouteError();
-    // console.log(error);
-    let errorText = "";
+	const error = useRouteError();
+	// console.log(error);
+	let errorText = "";
 	const isProdEnv: boolean = import.meta!.env!.VITE_ENV === "production";
 
-    if (isRouteErrorResponse(error)) {
-        if (error.status === 404) {
-            errorText = "The requested page could not be found.";
-        } else if (error.status === 400) {
-            errorText = error?.data || "Something went wrong. Please try again.";
-        }
-    }
+	if (isRouteErrorResponse(error)) {
+		if (error.status === 404) {
+			errorText = error?.statusText ?? "The requested page could not be found.";
+		} else if (error.status === 400) {
+			errorText = error?.data || "Something went wrong. Please try again.";
+		}
+	}
 
 	return (
 		<section className="grid h-screen place-items-center px-6 py-14 sm:py-24 lg:px-8">

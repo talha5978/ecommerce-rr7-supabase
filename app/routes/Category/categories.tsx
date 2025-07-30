@@ -3,7 +3,15 @@ import { Route } from "./+types/categories";
 import { Button } from "~/components/ui/button";
 import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2, TriangleAlert } from "lucide-react";
 import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
@@ -17,7 +25,7 @@ import { useEffect } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import TableId from "~/components/Table/TableId";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
-import {GetPaginationControls} from "~/utils/getPaginationControls";
+import { GetPaginationControls } from "~/utils/getPaginationControls";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
@@ -26,9 +34,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		defaultPageSize: defaults.DEFAULT_CATEGORY_PAGE_SIZE,
 	});
 
-	const data = await queryClient.fetchQuery(highLevelCategoriesQuery({
-		request, q, pageIndex, pageSize
-	}));
+	const data = await queryClient.fetchQuery(
+		highLevelCategoriesQuery({
+			request,
+			q,
+			pageIndex,
+			pageSize,
+		}),
+	);
 
 	return {
 		data, // { categories: [...], total, error: null }
@@ -52,7 +65,7 @@ export default function CategoriesPage({
 	useEffect(() => {
 		if (data.error != null && data.error.message) {
 			console.log(data);
-			
+
 			toast.error(`${data.error.statusCode} - ${data.error.message}`);
 		}
 	}, [data.error]);
@@ -70,7 +83,6 @@ export default function CategoriesPage({
 			}
 		}
 		console.log(fetcher.data);
-		
 	}, [fetcher.data, queryClient]);
 
 	const handleDeleteClick = (categoryId: string) => {
@@ -86,7 +98,7 @@ export default function CategoriesPage({
 		{
 			accessorKey: "ID",
 			header: "ID",
-			cell: (info) => <TableId id={info.row.original.id} message="Category ID Copied"/>,
+			cell: (info) => <TableId id={info.row.original.id} message="Category ID Copied" />,
 		},
 		{
 			id: "Name",
@@ -99,7 +111,7 @@ export default function CategoriesPage({
 			id: "Url Key",
 			accessorKey: "url_key",
 			cell: (info: any) => "/" + info.row.original.url_key,
-			header: () => "Url Key"
+			header: () => "Url Key",
 		},
 		{
 			id: "Sub Categories",
@@ -110,9 +122,7 @@ export default function CategoriesPage({
 				const isZeroLen = len === 0;
 				return (
 					<div className={`${isZeroLen ? "flex gap-2 items-center" : ""}`}>
-						<p className={`${isZeroLen ? "text-destructive" : ""}`}>
-							{len}
-						</p>
+						<p className={`${isZeroLen ? "text-destructive" : ""}`}>{len}</p>
 						{isZeroLen && <TriangleAlert className="w-4 h-4 text-destructive" />}
 					</div>
 				);
@@ -143,7 +153,11 @@ export default function CategoriesPage({
 								<Link to={`${rowData.id}/sub-categories`} viewTransition prefetch="intent">
 									<DropdownMenuItem>View Sub Categories</DropdownMenuItem>
 								</Link>
-								<Link to={`${rowData.id}/sub-categories/create`} viewTransition prefetch="intent">
+								<Link
+									to={`${rowData.id}/sub-categories/create`}
+									viewTransition
+									prefetch="intent"
+								>
 									<DropdownMenuItem>Create Sub Category</DropdownMenuItem>
 								</Link>
 								<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
@@ -168,7 +182,7 @@ export default function CategoriesPage({
 	];
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
-		defaultPage: defaults.DEFAULT_CATEGORY_PAGE
+		defaultPage: defaults.DEFAULT_CATEGORY_PAGE,
 	});
 
 	const table = useReactTable({
@@ -181,10 +195,10 @@ export default function CategoriesPage({
 			pagination: {
 				pageIndex,
 				pageSize,
-			}
-		}
+			},
+		},
 	});
-	
+
 	return (
 		<>
 			<MetaDetails
@@ -229,22 +243,25 @@ export default function CategoriesPage({
 }
 
 function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelCategory>) {
-    const [searchParams] = useSearchParams();
-    let currentQuery = searchParams.get("q") ?? "";
+	const [searchParams] = useSearchParams();
+	let currentQuery = searchParams.get("q") ?? "";
 
-    return (
+	return (
 		<div className="w-full flex justify-between gap-4 items-center">
 			<div>
 				<Form method="get" action="/categories">
 					<div className="relative">
-						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" width={18} />
+						<Search
+							className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+							width={18}
+						/>
 						<Input
 							placeholder="Search categories"
 							name="q"
 							className="w-full pl-8"
 							id="search"
 							defaultValue={currentQuery}
-                            disabled={disabled}
+							disabled={disabled}
 						/>
 					</div>
 					{/* Invisible submit button: Enter in input triggers submit */}
@@ -271,7 +288,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 					{table
 						.getAllColumns()
 						.filter(
-							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide()
+							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide(),
 						)
 						.map((column: any) => {
 							return (

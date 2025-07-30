@@ -22,7 +22,7 @@ export class CollectionsService extends Service {
 		q = "",
 		pageIndex = defaults.DEFAULT_COLLECTIONS_PAGE - 1,
 		pageSize = defaults.DEFAULT_COLLECTIONS_PAGE_SIZE,
-		filters: CollectionFilers = {}
+		filters: CollectionFilers = {},
 	): Promise<GetHighLevelCollectionsResp> {
 		try {
 			const { data, error: queryError } = await this.supabase.rpc("get_high_level_collections", {
@@ -37,7 +37,7 @@ export class CollectionsService extends Service {
 			if (queryError) {
 				error = new ApiError(queryError.message, 500, [queryError.details]);
 			}
-			
+
 			return {
 				collections:
 					data?.map((item) => {
@@ -48,7 +48,7 @@ export class CollectionsService extends Service {
 							status: item.status,
 							createdAt: item.created_at,
 							url_key: item.url_key,
-							products_count: item.products_count
+							products_count: item.products_count,
 						} as HighLevelCollection;
 					}) ?? [],
 				total: data![0].total_count ?? 0,
@@ -113,7 +113,7 @@ export class CollectionsService extends Service {
 							)
 						)
 					`,
-					{ count: "exact" }
+					{ count: "exact" },
 				)
 				.eq("status", true) // Filter active products
 				.eq(`${this.PRODUCT_VARIANT_TABLE}.status`, true); // Filter products with active variants
@@ -253,24 +253,21 @@ export class CollectionsService extends Service {
 				}
 			}
 
-			const { error } = await this.supabase
-				.rpc("create_collection", {
-					p_name: name,
-					p_description: description,
-					p_image_url: uploaded_img_url,
-					p_url_key: meta_details.url_key,
-					p_meta_title: meta_details.meta_title,
-					p_meta_description: meta_details.meta_description,
-					p_meta_keywords: meta_details.meta_keywords || "",
-					p_sort_order: Number(sort_order),
-					p_status: stringToBooleanConverter(status),
-					p_product_ids: product_ids
-				});
+			const { error } = await this.supabase.rpc("create_collection", {
+				p_name: name,
+				p_description: description,
+				p_image_url: uploaded_img_url,
+				p_url_key: meta_details.url_key,
+				p_meta_title: meta_details.meta_title,
+				p_meta_description: meta_details.meta_description,
+				p_meta_keywords: meta_details.meta_keywords || "",
+				p_sort_order: Number(sort_order),
+				p_status: stringToBooleanConverter(status),
+				p_product_ids: product_ids,
+			});
 
 			if (error) {
-				throw new ApiError(`${error.message}`, 500, [
-					error.details || [],
-				]);
+				throw new ApiError(`${error.message}`, 500, [error.details || []]);
 			}
 		} catch (error) {
 			if (uploaded_img_url) {
@@ -285,26 +282,28 @@ export class CollectionsService extends Service {
 		try {
 			const { data, error: queryError } = await this.supabase
 				.from("collections")
-				.select(`
+				.select(
+					`
 					*,
 					meta_details(*),
 					${this.COLLECTION_PRODUCTS_TABLE}!${this.COLLECTION_PRODUCTS_TABLE}_collection_id_fkey(${this.PRODUCTS_TABLE}(id, name))
-				`)
+				`,
+				)
 				.eq("id", collection_id)
 				.single();
-			
+
 			let error: null | ApiError = null;
 			if (queryError) {
 				error = new ApiError(queryError.message, 500, [queryError.details]);
 			}
-			
+
 			return {
 				collection: {
 					...data,
 					products: data?.collection_products?.map((item) => ({
 						id: item.product.id,
-						name: item.product.name
-					}))
+						name: item.product.name,
+					})),
 				} as FullCollection | null,
 				error,
 			};
@@ -320,7 +319,10 @@ export class CollectionsService extends Service {
 	}
 
 	/** Update collection */
-	async updateCollection(collection_id: string, input: CollectionUpdateActionData): Promise<{ error: ApiError | null }> {
+	async updateCollection(
+		collection_id: string,
+		input: CollectionUpdateActionData,
+	): Promise<{ error: ApiError | null }> {
 		const {
 			added_product_ids,
 			removed_product_ids,
@@ -330,13 +332,13 @@ export class CollectionsService extends Service {
 			description,
 			sort_order,
 			status,
-			removed_image
+			removed_image,
 		} = input;
 
 		if (typeof image === "string") {
 			throw new ApiError("Inavalid image input provided.", 400, []);
 		}
-		
+
 		let newImagePath: string | null = null;
 		const mediaSvc = new MediaService(this.request);
 
@@ -396,7 +398,7 @@ export class CollectionsService extends Service {
 				if (newImagePath) {
 					await mediaSvc.deleteImage(newImagePath);
 				}
-				
+
 				error = new ApiError(`Failed to update collection: ${updateError.message}`, 500, [
 					updateError.details,
 				]);

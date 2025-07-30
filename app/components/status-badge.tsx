@@ -1,8 +1,8 @@
-import * as React from "react";
+import { HTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
-import { Check, Dot, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { IconPointFilled } from "@tabler/icons-react";
 
 const Default_Icon = "dot";
@@ -13,34 +13,28 @@ const statusBadgeVariants = cva(
 		variants: {
 			variant: {
 				default:
-					"bg-muted-foreground/10 dark:bg-muted-foreground/20 hover:bg-muted-foreground/10 text-muted-foreground shadow-none",
-				success:
-					"bg-emerald-600/10 dark:bg-emerald-600/20 hover:bg-emerald-600/10 text-green-500 shadow-none",
-				destructive:
-					"bg-red-600/10 dark:bg-red-600/20 hover:bg-red-600/10 text-destructive shadow-none",
-				warning:
-					"bg-yellow-600/10 dark:bg-yellow-600/20 hover:bg-yellow-600/10 text-yellow-500 shadow-none",
+					"bg-muted-foreground/10 dark:bg-muted-foreground/20 text-muted-foreground shadow-none",
+				success: "bg-emerald-600/30 dark:bg-emerald-600/40 text-primary-foreground shadow-none",
+				destructive: "bg-red-600/30 dark:bg-red-600/40 text-primary-foreground shadow-none",
+				warning: "bg-yellow-600/30 dark:bg-yellow-600/30 text-primary-foreground shadow-none",
 			},
 			icon: {
-				dot: "bg-muted-foreground",
-				tick: "bg-green-500",
-				cross: "bg-destructive",
+				dot: "text-muted-foreground dark:text-muted-foreground",
+				tick: "text-green-500",
+				cross: "text-destructive",
 			},
 		},
 		defaultVariants: {
 			variant: "default",
 			icon: Default_Icon,
 		},
-	}
+	},
 );
 
-interface StatusBadgeProps
-	extends 
-		React.HTMLAttributes<HTMLDivElement>,
-		VariantProps<typeof statusBadgeVariants> {
-			variant: "default" | "success" | "destructive" | "warning";
-			icon?: "dot" | "tick" | "cross";
-		}
+interface StatusBadgeProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof statusBadgeVariants> {
+	variant: "default" | "success" | "destructive" | "warning";
+	icon?: "dot" | "tick" | "cross";
+}
 
 const StatusBadge = ({ className, variant, icon = Default_Icon, children, ...props }: StatusBadgeProps) => {
 	const iconType = icon;
