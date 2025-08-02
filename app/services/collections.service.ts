@@ -4,6 +4,7 @@ import {
 	CollectionDataCategory,
 	CollectionDataItemsResponse,
 	CollectionDataSubCategory,
+	CollectionsNamesListResponse,
 	FullCollection,
 	GetFullCollection,
 	GetHighLevelCollectionsResp,
@@ -15,6 +16,7 @@ import { MediaService } from "./media.service";
 import { stringToBooleanConverter } from "~/lib/utils";
 import { CollectionFilers } from "~/schemas/collections-filter.schema";
 import { Service } from "~/services/service";
+import { COLLECTIONS_PAGE_SIZE } from "~/components/Coupons/BuyXGetYCard";
 
 export class CollectionsService extends Service {
 	/** Fetch collections for index page */
@@ -416,6 +418,65 @@ export class CollectionsService extends Service {
 				await mediaSvc.deleteImage(newImagePath);
 			}
 			return { error: new ApiError(err.message, 500, [err]) };
+		}
+	}
+
+	/** Fetch all collections names list (abi to bs coupons k leye use ho rha hai bad ka pta ni) */
+	async getCollectionsNamesList(
+		pageIndex: number = 0,
+		searchQuery?: string,
+	): Promise<CollectionsNamesListResponse> {
+		try {
+			let query = this.supabase
+				.from(this.COLLECTION_TABLE)
+				.select(`id, name, ${this.COLLECTION_PRODUCTS_TABLE}!inner(product_id)`, { count: "exact" });
+
+			if (searchQuery) {
+				query = query.ilike("name", `%${searchQuery}%`);
+			}
+
+			query = query.order("createdAt", { ascending: false });
+
+			const smallPageSize = COLLECTIONS_PAGE_SIZE;
+			const from = pageIndex * smallPageSize;
+			const to = from + smallPageSize - 1;
+
+			query = query.range(from, to);
+
+			const { data, error: fetchError, count } = await query;
+
+			let error: null | ApiError = null;
+
+			if (fetchError || data == null) {
+				error = new ApiError(fetchError.message, 500, [fetchError.details]);
+			}
+
+			return {
+				collections:
+					data
+						?.filter((collection) => collection.collection_products?.length > 0)
+						.map((collection) => {
+							return {
+								id: collection.id,
+								name: collection.name,
+							};
+						}) ?? null,
+				total: count ?? 0,
+				error: error ?? null,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return {
+					collections: null,
+					total: 0,
+					error: err,
+				};
+			}
+			return {
+				collections: null,
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
 		}
 	}
 }

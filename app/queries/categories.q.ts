@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import type { GroupOptions } from "~/components/Coupons/BuyXGetYCard";
 import { CategoryService } from "~/services/category.service";
 import type {
 	GetAllCategoriesResponse,
@@ -33,6 +34,15 @@ interface singleSubCategoryQueryArgs {
 	subCategoryId: string;
 }
 
+interface categoriesQueryArgs {
+	request: Request;
+	autoRun?: boolean;
+	group?: GroupOptions;
+	pageIndex?: number;
+	productCount?: boolean;
+	searchQuery?: string;
+}
+
 export const highLevelCategoriesQuery = ({
 	request,
 	q,
@@ -49,14 +59,27 @@ export const highLevelCategoriesQuery = ({
 	});
 };
 
-export const categoriesQuery = ({ request, pageIndex }: { request: Request; pageIndex?: number }) => {
+// Ye query coupons mien use ho ri hai is leye autoRun aur group wagera props pass krr rhy hain aur baqi jaghon pr bi use ho ri hai is leye group aur autoRun optional hain
+export const categoriesQuery = ({
+	request,
+	autoRun = false,
+	group,
+	pageIndex,
+	productCount,
+	searchQuery,
+}: categoriesQueryArgs) => {
 	return queryOptions<GetAllCategoriesResponse>({
-		queryKey: ["categories", pageIndex],
+		queryKey: [group ? "categories" : `${group}_categories`, pageIndex, productCount, searchQuery],
 		queryFn: async () => {
 			const categoryService = new CategoryService(request);
-			const result = await categoryService.getAllCategories(pageIndex);
+			const result = await categoryService.getAllCategories({
+				pageIndex,
+				productCount,
+				searchQuery,
+			});
 			return result;
 		},
+		enabled: !!autoRun,
 	});
 };
 

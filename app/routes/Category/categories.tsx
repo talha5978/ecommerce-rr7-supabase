@@ -2,7 +2,12 @@ import { Form, Link, LoaderFunctionArgs, useFetcher, useLocation, useSearchParam
 import { Route } from "./+types/categories";
 import { Button } from "~/components/ui/button";
 import { Loader2, MoreHorizontal, PlusCircle, Search, Settings2, TriangleAlert } from "lucide-react";
-import { DataTable, DataTableSkeleton, DataTableViewOptionsProps } from "~/components/Table/data-table";
+import {
+	DataTable,
+	DataTableSkeleton,
+	DataTableViewOptionsProps,
+	TableColumnsToggle,
+} from "~/components/Table/data-table";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
@@ -270,40 +275,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 					</Button>
 				</Form>
 			</div>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						variant="outline"
-						size="sm"
-						className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-						disabled={disabled}
-					>
-						<Settings2 />
-						<span className="hidden md:inline">Columns</span>
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-[150px]">
-					<DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-					<DropdownMenuSeparator />
-					{table
-						.getAllColumns()
-						.filter(
-							(column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide(),
-						)
-						.map((column: any) => {
-							return (
-								<DropdownMenuCheckboxItem
-									key={column.id}
-									className="cursor-pointer"
-									checked={column.getIsVisible()}
-									onCheckedChange={(value) => column.toggleVisibility(!!value)}
-								>
-									{column.id}
-								</DropdownMenuCheckboxItem>
-							);
-						})}
-				</DropdownMenuContent>
-			</DropdownMenu>
+			<TableColumnsToggle table={table} />
 		</div>
 	);
 }

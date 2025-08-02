@@ -23,11 +23,32 @@ import { Service } from "~/services/service";
 
 export class CategoryService extends Service {
 	/** Fetch categoreies list where each category has at least one sub category (to be used for mutations and other tasks like in product creation page, updation page, theri filters and more...) */
-	async getAllCategories(pageIndex?: number): Promise<GetAllCategoriesResponse> {
+	async getAllCategories({
+		pageIndex,
+		productCount,
+		searchQuery,
+	}: {
+		pageIndex?: number;
+		productCount?: boolean;
+		searchQuery?: string;
+	}): Promise<GetAllCategoriesResponse> {
 		try {
-			let query = this.supabase
-				.from(this.CATEGORY_TABLE)
-				.select(
+			const productCountExists = productCount !== undefined || productCount !== null;
+			let query;
+
+			if (productCountExists) {
+				query = this.supabase.from(this.CATEGORY_TABLE).select(
+					`
+					id, category_name,
+					${this.SUB_CATEGORY_TABLE}!inner(
+						id, sub_category_name, parent_id,
+						${this.PRODUCTS_TABLE}(count)
+					)
+				`,
+					{ count: "exact" },
+				);
+			} else {
+				query = this.supabase.from(this.CATEGORY_TABLE).select(
 					`
 					id, category_name,
 					${this.SUB_CATEGORY_TABLE}!inner(
@@ -35,8 +56,12 @@ export class CategoryService extends Service {
 					)
 				`,
 					{ count: "exact" },
-				)
-				.order("createdAt", { ascending: false });
+				);
+			}
+
+			if (searchQuery && searchQuery.length > 0) {
+				query = query.ilike("category_name", `%${searchQuery}%`);
+			}
 
 			if (pageIndex && pageIndex != undefined) {
 				// fetch 5 categories at a time in each operation!
@@ -47,6 +72,8 @@ export class CategoryService extends Service {
 			} else if (!pageIndex) {
 				query = query.range(0, 50);
 			}
+
+			query = query.order("createdAt", { ascending: false });
 
 			const { data: categoriesList, error: queryError, count } = await query;
 
@@ -66,6 +93,7 @@ export class CategoryService extends Service {
 									id: subCategory.id,
 									sub_category_name: subCategory.sub_category_name,
 									parent_id: subCategory.parent_id ?? category.id,
+									products_count: (subCategory as any)?.product![0]?.count ?? undefined,
 								};
 							}),
 						};

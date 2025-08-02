@@ -73,3 +73,11 @@ export type GetFullCollection = {
 	collection: FullCollection | null;
 	error: ApiError | null;
 };
+
+export type CollectionNameListRow = { id: string; name: string };
+
+export type CollectionsNamesListResponse = {
+	collections: CollectionNameListRow[] | null;
+	total: number;
+	error: ApiError | null;
+};

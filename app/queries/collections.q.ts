@@ -1,8 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
+import type { GroupOptions } from "~/components/Coupons/BuyXGetYCard";
 import { CollectionFilers } from "~/schemas/collections-filter.schema";
 import { CollectionsService } from "~/services/collections.service";
 import {
 	CollectionDataItemsResponse,
+	CollectionsNamesListResponse,
 	GetFullCollection,
 	GetHighLevelCollectionsResp,
 } from "~/types/collections";
@@ -28,6 +30,14 @@ type collectionsDataItemsArgs = {
 type fullCollectionQueryArgs = {
 	request: Request;
 	collection_id: string;
+};
+
+type collectionsNameQueryArgs = {
+	request: Request;
+	pageIndex?: number;
+	searchQuery?: string;
+	autoRun?: boolean;
+	group: GroupOptions;
 };
 
 export const collectionsQuery = ({ request, q, pageIndex, pageSize, filters }: collectionsQueryArgs) => {
@@ -69,5 +79,23 @@ export const FullCollectionQuery = ({ request, collection_id }: fullCollectionQu
 			const result = await collectionSvc.getFullCollection(collection_id);
 			return result;
 		},
+	});
+};
+
+export const collectionsNameQuery = ({
+	request,
+	pageIndex,
+	searchQuery,
+	autoRun,
+	group,
+}: collectionsNameQueryArgs) => {
+	return queryOptions<CollectionsNamesListResponse>({
+		queryKey: [`${group}_collectionNames`, pageIndex, searchQuery],
+		queryFn: async () => {
+			const collectionSvc = new CollectionsService(request);
+			const result = await collectionSvc.getCollectionsNamesList(pageIndex, searchQuery);
+			return result;
+		},
+		enabled: !!autoRun,
 	});
 };

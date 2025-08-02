@@ -51,3 +51,11 @@ export type ProductNamesListResponse = {
 	total: number;
 	error: ApiError | null;
 };
+
+export type SKUsNameListRow = { id: string; sku: string };
+
+export type SKUsNamesListResponse = {
+	skus: SKUsNameListRow[] | null;
+	total: number;
+	error: ApiError | null;
+};

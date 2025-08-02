@@ -19,18 +19,19 @@ export default function ErrorPage() {
 	}
 
 	return (
-		<section className="grid h-screen place-items-center px-6 py-14 sm:py-24 lg:px-8">
+		<section className="bg-current grid h-screen place-items-center px-6 py-14 sm:py-24 lg:px-8">
 			{isRouteErrorResponse(error) ? (
 				<div className="text-center">
 					<Badge variant="destructive">
 						<p className="font-semibold">{error.status || "500"}</p>
 					</Badge>
-					<h1 className="mt-4 text-5xl font-semibold tracking-tight text-balanc sm:text-5xl">
+					<h1 className="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-5xl text-primary-foreground">
 						Unexpected Error
 					</h1>
 					<p className="mt-6 text-lg font-medium text-pretty text-muted-foreground sm:text-xl/8">
 						{errorText}
 					</p>
+					e
 					<div className="mt-10 flex items-center justify-center gap-x-6">
 						<Link to="/">
 							<Button>
@@ -45,7 +46,7 @@ export default function ErrorPage() {
 					<Badge variant="destructive">
 						<p className="font-semibold">500</p>
 					</Badge>
-					<h1 className="mt-4 text-5xl font-semibold tracking-tight text-balanc sm:text-5xl">
+					<h1 className="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-5xl text-primary-foreground">
 						{error.name}
 					</h1>
 					<p className="mt-6 text-lg font-medium text-pretty text-muted-foreground sm:text-xl/8">

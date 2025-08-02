@@ -1,5 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Control, Controller, useFieldArray, useForm, UseFormSetValue, useWatch } from "react-hook-form";
+import {
+	Control,
+	Controller,
+	ControllerRenderProps,
+	useFieldArray,
+	useForm,
+	useFormContext,
+	UseFormSetValue,
+	useWatch,
+} from "react-hook-form";
 import {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
@@ -7,6 +16,10 @@ import {
 	useNavigate,
 	useNavigation,
 	useSubmit,
+	Form as RouterForm,
+	useSearchParams,
+	useLoaderData,
+	Await,
 } from "react-router";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
@@ -16,12 +29,14 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
 import {
+	ChevronUp,
 	DollarSign,
 	Info,
 	Loader2,
 	Percent,
 	PlusCircle,
 	RefreshCcw,
+	Search,
 	Settings2,
 	Trash2,
 	UserCog,
@@ -29,7 +44,7 @@ import {
 	UserRoundCheck,
 	Users,
 } from "lucide-react";
-import { JSX, useEffect, useMemo } from "react";
+import { JSX, memo, Suspense, useEffect, useMemo, useState } from "react";
 import {
 	TagsInput,
 	TagsInputClear,
@@ -37,24 +52,32 @@ import {
 	TagsInputItem,
 	TagsInputList,
 } from "~/components/ui/tags-input";
-import { DEFAULT_DICOUNT_TYPE, DISCOUNT_COND_TYPE_ENUM, DISCOUNT_CUSTOMER_TYPE_ENUM } from "~/constants";
+import {
+	COUPON_TYPE_ENUM,
+	DEFAULT_DICOUNT_TYPE,
+	DISCOUNT_COND_TYPE_ENUM,
+	DISCOUNT_CUSTOMER_TYPE_ENUM,
+} from "~/constants";
 import { toast } from "sonner";
 import type { ActionResponse } from "~/types/action-data";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import type { Route } from "./+types/create-coupon";
-import { DataTable } from "~/components/Table/data-table";
+import { DataTable, TableColumnsToggle } from "~/components/Table/data-table";
 import {
 	type ColumnDef,
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
+	Row,
 	Table,
 	useReactTable,
 } from "@tanstack/react-table";
 import { Checkbox } from "~/components/ui/checkbox";
 import { CouponFormValues, CouponInputSchema } from "~/schemas/coupons.schema";
 import type {
+	BuyMinType,
+	CouponType,
 	DiscountCondOperator,
 	DiscountCondType,
 	DiscountCustomerGrps,
@@ -70,6 +93,26 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import DateTimePicker from "~/components/Custom-Inputs/date-time-picker";
+import {
+	ConditionOperatorCell,
+	ConditionValueCell,
+	TableRowSelector,
+	TypeCell,
+} from "~/components/Coupons/TableComponents";
+import { CondTypeLabels, CustomerGroupsLabels, discount_type_fields } from "~/utils/couponsConstants";
+import { queryClient } from "~/lib/queryClient";
+import { categoriesQuery } from "~/queries/categories.q";
+import type {
+	CategoryListRow,
+	GetAllCategoriesResponse,
+	GetHighLevelCategoriesResponse,
+	SubCategoryListRow,
+} from "~/types/category";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
+import { ApiError } from "~/utils/ApiError";
+import { BuyXGetYCard } from "~/components/Coupons/BuyXGetYCard";
+import { skuNamesQuery } from "~/queries/products.q";
+import { collectionsNameQuery } from "~/queries/collections.q";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -127,26 +170,125 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const couponType = params.couponType;
 
-	if (!couponType || couponType == null) {
+	if (!couponType || couponType == null || !COUPON_TYPE_ENUM.includes(couponType as CouponType)) {
 		throw new Response("Invalid Coupon Type", { status: 404 });
 	}
-	// const { searchParams } = new URL(request.url);
-	// const categoryPageParam = Number(searchParams.get("catPage"));
-	// const productPageParam = Number(searchParams.get("prodPage"));
-	// const productSearchQuery = searchParams.get("prodSearch") || "";
-	// // console.log(Math.max(0, categoryPageParam - 1), Math.max(0, productPageParam - 1));
 
-	// const collectionsDataItems = queryClient.fetchQuery(
-	// 	collectionDataItemsQuery({
-	// 		request,
-	// 		...(productSearchQuery && { q: productSearchQuery }),
-	// 		categoryPageIndex: categoryPageParam ? Math.max(0, categoryPageParam - 1) : 0,
-	// 		productPageIndex: productPageParam ? Math.max(0, productPageParam - 1) : 0
-	// 	})
-	// );
+	const { searchParams } = new URL(request.url);
 
-	// return { collectionsDataItems };
+	// Define entity requests with group-specific flags
+	const entityRequests = {
+		buy_categories: searchParams.get("buy_categories") ?? null,
+		buy_collections: searchParams.get("buy_collections") ?? null,
+		buy_skus: searchParams.get("buy_skus") ?? null,
+		get_categories: searchParams.get("get_categories") ?? null,
+		get_collections: searchParams.get("get_collections") ?? null,
+		get_skus: searchParams.get("get_skus") ?? null,
+	};
+
+	// "Buy" group parameters
+	const buyCategorySearch = searchParams.get("buy_category_search") || "";
+	const buyCategoryPage = Number(searchParams.get("buy_category_page")) || 1;
+	const buySkuSearch = searchParams.get("buy_sku_search") || "";
+	const buySkuPage = Number(searchParams.get("buy_sku_page")) || 1;
+	const buyCollectionSearch = searchParams.get("buy_collection_search") || "";
+	const buyCollectionPage = Number(searchParams.get("buy_collection_page")) || 1;
+
+	// "Get" group parameters
+	const getCategorySearch = searchParams.get("get_category_search") || "";
+	const getCategoryPage = Number(searchParams.get("get_category_page")) || 1;
+	const getSkuSearch = searchParams.get("get_sku_search") || "";
+	const getSkuPage = Number(searchParams.get("get_sku_page")) || 1;
+	const getCollectionSearch = searchParams.get("get_collection_search") || "";
+	const getCollectionPage = Number(searchParams.get("get_collection_page")) || 1;
+
+	// Fetch data for "buy" group
+	const buyCategoriesData = entityRequests.buy_categories
+		? queryClient.fetchQuery(
+				categoriesQuery({
+					request,
+					autoRun: entityRequests.buy_categories === "true",
+					group: "buy",
+					productCount: true,
+					pageIndex: Math.max(0, buyCategoryPage - 1),
+					searchQuery: buyCategorySearch.trim(),
+				}),
+		  )
+		: null;
+
+	const buySkusData = entityRequests.buy_skus
+		? queryClient.fetchQuery(
+				skuNamesQuery({
+					request,
+					autoRun: entityRequests.buy_skus === "true",
+					group: "buy",
+					pageIndex: Math.max(0, buySkuPage - 1),
+					searchQuery: buySkuSearch.trim(),
+				}),
+		  )
+		: null;
+
+	const buyCollectionsData = entityRequests.buy_collections
+		? queryClient.fetchQuery(
+				collectionsNameQuery({
+					request,
+					autoRun: entityRequests.buy_collections === "true",
+					group: "buy",
+					pageIndex: Math.max(0, buyCollectionPage - 1),
+					searchQuery: buyCollectionSearch.trim(),
+				}),
+		  )
+		: null;
+
+	// Fetch data for "get" group
+	const getCategoriesData = entityRequests.get_categories
+		? queryClient.fetchQuery(
+				categoriesQuery({
+					request,
+					autoRun: entityRequests.get_categories === "true",
+					group: "get",
+					productCount: true,
+					pageIndex: Math.max(0, getCategoryPage - 1),
+					searchQuery: getCategorySearch.trim(),
+				}),
+		  )
+		: null;
+
+	const getSkusData = entityRequests.get_skus
+		? queryClient.fetchQuery(
+				skuNamesQuery({
+					request,
+					autoRun: entityRequests.get_skus === "true",
+					group: "get",
+					pageIndex: Math.max(0, getSkuPage - 1),
+					searchQuery: getSkuSearch.trim(),
+				}),
+		  )
+		: null;
+
+	const getCollectionsData = entityRequests.get_collections
+		? queryClient.fetchQuery(
+				collectionsNameQuery({
+					request,
+					autoRun: entityRequests.get_collections === "true",
+					group: "get",
+					pageIndex: Math.max(0, getCollectionPage - 1),
+					searchQuery: getCollectionSearch.trim(),
+				}),
+		  )
+		: null;
+
+	return {
+		buyCategoriesData,
+		buySkusData,
+		buyCollectionsData,
+		getCategoriesData,
+		getSkusData,
+		getCollectionsData,
+	};
 };
+
+export type CreateCouponsLoader = typeof loader;
 
 function getDefaultDates(): { start_timestamp: Date; end_timestamp: Date } {
 	const today = new Date();
@@ -161,124 +303,7 @@ function getDefaultDates(): { start_timestamp: Date; end_timestamp: Date } {
 	};
 }
 
-const discount_type_fields: { label: string; value: DiscountType; example: string }[] = [
-	{
-		label: "Fixed discount to entire order",
-		value: "fixed_order",
-		example: "e.g., $25 off the entire order",
-	},
-	{
-		label: "Percentage discount to entire order",
-		value: "percentage_order",
-		example: "e.g., 20% off the entire order",
-	},
-	{
-		label: "Fixed discount to specific products",
-		value: "fixed_product",
-		example: "e.g., $6 off each selected product",
-	},
-	{
-		label: "Percentage discount to specific products",
-		value: "percentage_product",
-		example: "e.g., 15% off each selected product",
-	},
-	{
-		label: "Buy X get Y",
-		value: "buy_x_get_y",
-		example: "e.g., Buy 2 get 1 free on selected products",
-	},
-];
-
-const CondTypeLabels: Record<DiscountCondType, Record<string, string>> = {
-	category: {
-		singular: "Category",
-		plural: "Categories",
-	},
-	sub_category: {
-		singular: "Sub Category",
-		plural: "Sub Categories",
-	},
-	collection: {
-		singular: "Collection",
-		plural: "Collections",
-	},
-	price: {
-		singular: "Price",
-		plural: "Prices",
-	},
-	sku: {
-		singular: "SKU",
-		plural: "SKUs",
-	},
-};
-
-const CondOperatorLabels: Record<DiscountCondOperator, string> = {
-	equal: "Equal To",
-	not_equal: "Not Equal To",
-	greater: "Greater Than",
-	greater_or_equal: "Greater Than Or Equal To",
-	smaller: "Smaller Than",
-	smaller_or_equal: "Smaller Than Or Equal To",
-	in: "In",
-	not_in: "Not In",
-};
-
-const CustomerGroupsLabels: Record<DiscountCustomerGrps, { label: string; icon: JSX.Element }> = {
-	all: { label: "All", icon: <UserRoundCheck /> },
-	admins: { label: "Admins", icon: <UserLock /> },
-	employee: { label: "Employees", icon: <UserCog /> },
-	consumer: { label: "General Customers", icon: <Users /> },
-};
-
 type Condition = CouponFormValues["conditions"];
-
-type TypeCellProps = {
-	index: number;
-	control: Control<CouponFormValues>;
-	setValue: UseFormSetValue<CouponFormValues>;
-	name: "conditions" | "fixed_products";
-};
-
-const TypeCell = ({ index, control, setValue, name }: TypeCellProps): JSX.Element => {
-	// Reset other order_fields in the row based on the new type
-	const ResetOtherFields = ({ newType, index }: { newType: DiscountCondType; index: number }) => {
-		setValue(`${name}.${index}.operator`, newType === "price" ? "equal" : "in");
-		setValue(`${name}.${index}.value_text`, "");
-		setValue(`${name}.${index}.value_decimal`, "");
-		if (name === "conditions") {
-			setValue(`${name}.${index}.min_quantity`, "1");
-		}
-	};
-
-	return (
-		<FormField
-			control={control}
-			name={`${name}.${index}.type`}
-			render={({ field }) => (
-				<Select
-					value={field.value}
-					onValueChange={(newType: DiscountCondType) => {
-						field.onChange(newType);
-						ResetOtherFields({ newType, index });
-					}}
-				>
-					<SelectTrigger className="w-full">
-						<SelectValue placeholder="Select type" />
-					</SelectTrigger>
-					<SelectContent>
-						{DISCOUNT_COND_TYPE_ENUM.map((type) => (
-							<SelectItem key={type} value={type}>
-								{CondTypeLabels[type].singular}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-			)}
-		/>
-	);
-};
-
-// TODO: IMPLEMENT THE TABLE FOR BUY X GET Y PRODUCTS AND THEN WORK ON VALIDATIONS
 
 export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 	const navigate = useNavigate();
@@ -308,6 +333,20 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			conditions: [], // by default no conditions
 			customer_groups: null,
 			customer_emails: [],
+			buy_x_get_y: {
+				buy_min_type: "quantity",
+				buy_min_value: "1",
+				get_quantity: "2",
+				get_discount_percent: "100",
+				buy_group: {
+					type: "sku",
+					selected_ids: [],
+				},
+				get_group: {
+					type: "sku",
+					selected_ids: [],
+				},
+			},
 		},
 	});
 
@@ -347,30 +386,8 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 	const orderConditionCols: ColumnDef<Condition, unknown>[] = [
 		{
 			id: "select",
-			header: ({ table }) => {
-				const rows = table.getRowCount();
-				return rows > 0 ? (
-					<div className="flex items-center justify-center">
-						<Checkbox
-							checked={
-								table.getIsAllPageRowsSelected() ||
-								(table.getIsSomePageRowsSelected() && "indeterminate")
-							}
-							onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-							aria-label="Select all"
-						/>
-					</div>
-				) : null;
-			},
-			cell: ({ row }) => (
-				<div className="flex items-center justify-center">
-					<Checkbox
-						checked={row.getIsSelected()}
-						onCheckedChange={(value) => row.toggleSelected(!!value)}
-						aria-label="Select row"
-					/>
-				</div>
-			),
+			header: ({ table }) => TableRowSelector({ name: "conditions" }).header({ table }),
+			cell: ({ row }) => TableRowSelector({ name: "conditions" }).cell({ row }),
 			enableSorting: false,
 			enableHiding: false,
 		},
@@ -387,70 +404,15 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			id: "Operator",
 			accessorKey: "operator",
 			header: "Operator",
-			cell: ({ row }) => {
-				const index = row.index;
-				const type = useWatch({ control, name: `conditions.${index}.type` });
-				const operators: DiscountCondOperator[] =
-					type === "price"
-						? ["equal", "not_equal", "greater", "greater_or_equal", "smaller", "smaller_or_equal"]
-						: ["in", "not_in"];
-
-				return (
-					<FormField
-						control={control}
-						name={`conditions.${index}.operator`}
-						render={({ field }) => (
-							<Select value={field.value} onValueChange={field.onChange}>
-								<SelectTrigger className="w-full">
-									<SelectValue placeholder="Select operator" />
-								</SelectTrigger>
-								<SelectContent>
-									{operators.map((op) => (
-										<SelectItem key={op} value={op}>
-											{CondOperatorLabels[op]}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						)}
-					/>
-				);
-			},
+			cell: ({ row }) => (
+				<ConditionOperatorCell control={control} index={row.index} name="conditions" />
+			),
 		},
 		{
 			id: "Value",
 			header: "Value",
 			accessorKey: "value",
-			cell: ({ row }) => {
-				const index = row.index;
-				const type: DiscountCondType = useWatch({ control, name: `conditions.${index}.type` });
-
-				if (type === "price") {
-					return (
-						<FormField
-							control={control}
-							name={`conditions.${index}.value_decimal`}
-							render={({ field }) => (
-								<Input type="number" placeholder="e.g. 50.00" {...field} />
-							)}
-						/>
-					);
-				} else {
-					return (
-						<FormField
-							control={control}
-							name={`conditions.${index}.value_text`}
-							render={({ field }) => (
-								<p className="text-sm text-primary hover:underline cursor-pointer underline-offset-4 text-ellipsis truncate max-w-[10rem]">
-									{field.value
-										? field.value
-										: `Select ${CondTypeLabels[type].plural.toLowerCase() || "values"}`}
-								</p>
-							)}
-						/>
-					);
-				}
-			},
+			cell: ({ row }) => <ConditionValueCell control={control} index={row.index} name="conditions" />,
 		},
 		{
 			id: "Min. Quantity",
@@ -515,30 +477,8 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 	const fixedProductsCols: ColumnDef<Condition, unknown>[] = [
 		{
 			id: "select",
-			header: ({ table }) => {
-				const rows = table.getRowCount();
-				return rows > 0 ? (
-					<div className="flex items-center justify-center">
-						<Checkbox
-							checked={
-								table.getIsAllPageRowsSelected() ||
-								(table.getIsSomePageRowsSelected() && "indeterminate")
-							}
-							onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-							aria-label="Select all"
-						/>
-					</div>
-				) : null;
-			},
-			cell: ({ row }) => (
-				<div className="flex items-center justify-center">
-					<Checkbox
-						checked={row.getIsSelected()}
-						onCheckedChange={(value) => row.toggleSelected(!!value)}
-						aria-label="Select row"
-					/>
-				</div>
-			),
+			header: ({ table }) => TableRowSelector({ name: "fixed_products" }).header({ table }),
+			cell: ({ row }) => TableRowSelector({ name: "fixed_products" }).cell({ row }),
 			enableSorting: false,
 			enableHiding: false,
 		},
@@ -555,71 +495,17 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			id: "Operator",
 			accessorKey: "operator",
 			header: "Operator",
-			cell: ({ row }) => {
-				const index = row.index;
-				const type = useWatch({ control, name: `fixed_products.${index}.type` });
-				const operators: DiscountCondOperator[] =
-					type === "price"
-						? ["equal", "not_equal", "greater", "greater_or_equal", "smaller", "smaller_or_equal"]
-						: ["in", "not_in"];
-
-				return (
-					<FormField
-						control={control}
-						name={`fixed_products.${index}.operator`}
-						render={({ field }) => (
-							<Select value={field.value} onValueChange={field.onChange}>
-								<SelectTrigger className="w-full">
-									<SelectValue placeholder="Select operator" />
-								</SelectTrigger>
-								<SelectContent>
-									{operators.map((op) => (
-										<SelectItem key={op} value={op}>
-											{CondOperatorLabels[op]}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						)}
-					/>
-				);
-			},
+			cell: ({ row }) => (
+				<ConditionOperatorCell control={control} index={row.index} name="fixed_products" />
+			),
 		},
 		{
 			id: "Value",
 			header: "Value",
 			accessorKey: "value",
-			cell: ({ row }) => {
-				const index = row.index;
-				const type: DiscountCondType = useWatch({ control, name: `fixed_products.${index}.type` });
-				console.log(type);
-
-				if (type === "price") {
-					return (
-						<FormField
-							control={control}
-							name={`fixed_products.${index}.value_decimal`}
-							render={({ field }) => (
-								<Input type="number" placeholder="e.g. 50.00" {...field} />
-							)}
-						/>
-					);
-				} else {
-					return (
-						<FormField
-							control={control}
-							name={`fixed_products.${index}.value_text`}
-							render={({ field }) => (
-								<p className="text-sm text-primary hover:underline cursor-pointer underline-offset-4 text-ellipsis truncate max-w-[10rem]">
-									{field.value
-										? field.value
-										: `Select ${CondTypeLabels[type]?.plural?.toLowerCase() || "values"}`}
-								</p>
-							)}
-						/>
-					);
-				}
-			},
+			cell: ({ row }) => (
+				<ConditionValueCell control={control} index={row.index} name="fixed_products" />
+			),
 		},
 		{
 			id: "actions",
@@ -682,14 +568,26 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 
 	const getDiscountAmntConstraint = (comp: "label" | "icon") => {
 		if (watchedDiscountType === "fixed_order" || watchedDiscountType === "fixed_product") {
-			return comp === "label" ? "Amount" : <DollarSign className="h-4 w-4" />;
+			return comp === "label" ? (
+				"Amount"
+			) : (
+				<DollarSign className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground  " />
+			);
 		} else if (
 			watchedDiscountType === "percentage_order" ||
 			watchedDiscountType === "percentage_product"
 		) {
-			return comp === "label" ? "Percentage" : <Percent className="h-4 w-4" />;
+			return comp === "label" ? (
+				"Percentage"
+			) : (
+				<Percent className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground  " />
+			);
 		} else {
-			return comp === "label" ? "Value" : <PlusCircle className="h-4 w-4 rotate-45" />;
+			return comp === "label" ? (
+				"Value"
+			) : (
+				<PlusCircle className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground   rotate-45" />
+			);
 		}
 	};
 
@@ -737,9 +635,9 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		}
 	};
 
-	// useEffect(() => {
-	// 	console.log(errors);
-	// }, [errors]);
+	useEffect(() => {
+		console.log("Errors: ", errors);
+	}, [errors]);
 
 	return (
 		<>
@@ -941,20 +839,14 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 													Discount {getDiscountAmntConstraint("label")}
 												</FormLabel>
 												<FormControl>
-													<div className="flex gap-2">
+													<div className="relative">
 														<Input
 															type="number"
 															placeholder="e.g. 10"
+															className="pr-9"
 															{...field}
 														/>
-														<Button
-															variant="outline"
-															size="icon"
-															className="pointer-events-none"
-															tabIndex={-1}
-														>
-															{getDiscountAmntConstraint("icon")}
-														</Button>
+														{getDiscountAmntConstraint("icon")}
 													</div>
 												</FormControl>
 												<FormMessage />
@@ -968,7 +860,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 										<Label className="text-md font-semibold">Target Products</Label>
 										<div className="flex flex-col gap-3">
 											<div className="flex justify-end">
-												<TableColumnsToggle table={fixedProductsTable as any} />
+												<TableColumnsToggle table={fixedProductsTable} />
 											</div>
 											<DataTable
 												table={fixedProductsTable}
@@ -1003,8 +895,14 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 											</div>
 										</div>
 									</section>
-								) : (
-									<></>
+								) : isBuyXGetYEnabled ? (
+									<BuyXGetYCard
+										control={control}
+										disabled={watchedDiscountType !== "buy_x_get_y" || isSubmitting}
+									/>
+								) : null}
+								{errors?.buy_x_get_y && (
+									<p className="text-sm text-destructive">{errors.buy_x_get_y.message}</p>
 								)}
 							</CardContent>
 						</Card>
@@ -1024,7 +922,18 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 											<FormItem>
 												<FormLabel>Minimum Purchase Ammount</FormLabel>
 												<FormControl>
-													<Input type="number" placeholder="e.g. $250" {...field} />
+													<div className="relative">
+														<Input
+															type="number"
+															placeholder="e.g. $250"
+															className="pr-9"
+															{...field}
+														/>
+														<DollarSign
+															className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground  "
+															width={18}
+														/>
+													</div>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -1349,41 +1258,3 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		</>
 	);
 }
-
-const TableColumnsToggle = ({ table }: { table: Table<Condition> }) => {
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="outline"
-					size="sm"
-					className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-				>
-					<Settings2 />
-					<span className="hidden md:inline">Columns</span>
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-[150px]">
-				<DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-				<DropdownMenuSeparator />
-				{table
-					.getAllColumns()
-					.filter((column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide())
-					.map((column: any) => {
-						return (
-							<DropdownMenuCheckboxItem
-								key={column.id}
-								className="cursor-pointer"
-								checked={column.getIsVisible()}
-								onCheckedChange={(value) => column.toggleVisibility(!!value)}
-							>
-								{column.id}
-							</DropdownMenuCheckboxItem>
-						);
-					})}
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
-};
-
-const BuyGetYCard = () => {};

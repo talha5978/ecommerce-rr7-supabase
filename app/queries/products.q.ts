@@ -1,10 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
+import type { GroupOptions } from "~/components/Coupons/BuyXGetYCard";
 import { ProductFilters } from "~/schemas/products-filter.schema";
 import { ProductsService } from "~/services/products.service";
 import type {
 	GetAllProductsResponse,
 	GetSingleProductResponse,
 	ProductNamesListResponse,
+	SKUsNamesListResponse,
 } from "~/types/products";
 
 interface productsQueryArgs {
@@ -16,6 +18,13 @@ interface productsQueryArgs {
 }
 
 type productNamesQueryArgs = { request: Request };
+type skuNamesQueryArgs = {
+	request: Request;
+	pageIndex?: number;
+	searchQuery?: string;
+	autoRun?: boolean;
+	group: GroupOptions;
+};
 type singleProductQueryArgs = { request: Request; productId: string };
 
 export const productsQuery = ({ request, q, pageIndex, pageSize, filters }: productsQueryArgs) => {
@@ -37,6 +46,18 @@ export const productNamesQuery = ({ request }: productNamesQueryArgs) => {
 			const result = await prodService.getProductNamesList();
 			return result;
 		},
+	});
+};
+
+export const skuNamesQuery = ({ request, pageIndex, searchQuery, autoRun, group }: skuNamesQueryArgs) => {
+	return queryOptions<SKUsNamesListResponse>({
+		queryKey: [`${group}_skuNames`, pageIndex, searchQuery],
+		queryFn: async () => {
+			const prodService = new ProductsService(request);
+			const result = await prodService.getSKUsNamesList(pageIndex, searchQuery);
+			return result;
+		},
+		enabled: !!autoRun,
 	});
 };
 

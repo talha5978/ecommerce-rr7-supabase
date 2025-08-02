@@ -29,14 +29,17 @@ export interface GetHighLevelCategoriesResponse {
 	error: ApiError | null;
 }
 
+export interface SubCategoryListRow {
+	id: string;
+	sub_category_name: string;
+	parent_id: string;
+	products_count?: number;
+}
+
 export interface CategoryListRow {
 	id: string;
 	category_name: string;
-	sub_category: {
-		id: string;
-		sub_category_name: string;
-		parent_id: string;
-	}[];
+	sub_category: SubCategoryListRow[];
 }
 
 export interface GetAllCategoriesResponse {

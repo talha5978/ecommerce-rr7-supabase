@@ -15,6 +15,15 @@ import {
 } from "~/components/ui/table";
 import { Skeleton } from "~/components/ui/skeleton";
 import { cn } from "~/lib/utils";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { Settings2 } from "lucide-react";
 
 interface DataTableProps<T> {
 	table: Table<T>;
@@ -233,5 +242,41 @@ export function DataTableSkeleton({ noOfSkeletons = 8, columns }: DataTableSkele
 				))}
 			</TableBody>
 		</TableComponent>
+	);
+}
+
+export function TableColumnsToggle<T>({ table }: { table: Table<T> }) {
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant="outline"
+					size="sm"
+					className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
+				>
+					<Settings2 />
+					<span className="hidden md:inline">Columns</span>
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="w-[150px]">
+				<DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				{table
+					.getAllColumns()
+					.filter((column: any) => typeof column.accessorFn !== "undefined" && column.getCanHide())
+					.map((column: any) => {
+						return (
+							<DropdownMenuCheckboxItem
+								key={column.id}
+								className="cursor-pointer"
+								checked={column.getIsVisible()}
+								onCheckedChange={(value) => column.toggleVisibility(!!value)}
+							>
+								{column.id}
+							</DropdownMenuCheckboxItem>
+						);
+					})}
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }

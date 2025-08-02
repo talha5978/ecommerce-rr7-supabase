@@ -157,32 +157,32 @@ export type Database = {
 			};
 			buy_x_get_y_details: {
 				Row: {
-					buy_group_id: number;
-					buy_quantity: number;
+					buy_group_id: number | null;
+					buy_min_type: Database["public"]["Enums"]["buy_min_type_enum"];
+					buy_min_value: number | null;
 					coupon_id: number;
-					get_discount_percent: number;
-					get_group_id: number;
-					get_max_quantity: number;
+					get_discount_percent: number | null;
+					get_group_id: number | null;
 					get_quantity: number;
 					id: number;
 				};
 				Insert: {
-					buy_group_id: number;
-					buy_quantity: number;
+					buy_group_id?: number | null;
+					buy_min_type?: Database["public"]["Enums"]["buy_min_type_enum"];
+					buy_min_value?: number | null;
 					coupon_id: number;
-					get_discount_percent: number;
-					get_group_id: number;
-					get_max_quantity: number;
+					get_discount_percent?: number | null;
+					get_group_id?: number | null;
 					get_quantity: number;
 					id?: never;
 				};
 				Update: {
-					buy_group_id?: number;
-					buy_quantity?: number;
+					buy_group_id?: number | null;
+					buy_min_type?: Database["public"]["Enums"]["buy_min_type_enum"];
+					buy_min_value?: number | null;
 					coupon_id?: number;
-					get_discount_percent?: number;
-					get_group_id?: number;
-					get_max_quantity?: number;
+					get_discount_percent?: number | null;
+					get_group_id?: number | null;
 					get_quantity?: number;
 					id?: never;
 				};
@@ -312,6 +312,114 @@ export type Database = {
 						columns: ["meta_details"];
 						isOneToOne: false;
 						referencedRelation: "meta_details";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			condition_group_collections: {
+				Row: {
+					collection_id: string;
+					condition_group_id: number;
+					created_at: string;
+					id: number;
+				};
+				Insert: {
+					collection_id: string;
+					condition_group_id: number;
+					created_at?: string;
+					id?: number;
+				};
+				Update: {
+					collection_id?: string;
+					condition_group_id?: number;
+					created_at?: string;
+					id?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "condition_group_collections_collection_id_fkey";
+						columns: ["collection_id"];
+						isOneToOne: false;
+						referencedRelation: "collections";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "condition_group_collections_condition_group_id_fkey";
+						columns: ["condition_group_id"];
+						isOneToOne: false;
+						referencedRelation: "condition_groups";
+						referencedColumns: ["group_id"];
+					},
+				];
+			};
+			condition_group_skus: {
+				Row: {
+					condition_group_id: number;
+					created_at: string;
+					id: number;
+					sku_id: string;
+				};
+				Insert: {
+					condition_group_id: number;
+					created_at?: string;
+					id?: number;
+					sku_id: string;
+				};
+				Update: {
+					condition_group_id?: number;
+					created_at?: string;
+					id?: number;
+					sku_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "condition_group_skus_condition_group_id_fkey";
+						columns: ["condition_group_id"];
+						isOneToOne: false;
+						referencedRelation: "condition_groups";
+						referencedColumns: ["group_id"];
+					},
+					{
+						foreignKeyName: "condition_group_skus_sku_id_fkey";
+						columns: ["sku_id"];
+						isOneToOne: false;
+						referencedRelation: "product_variant";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			condition_group_sub_categories: {
+				Row: {
+					condition_group_id: number;
+					created_at: string;
+					id: number;
+					sub_category_id: string;
+				};
+				Insert: {
+					condition_group_id: number;
+					created_at?: string;
+					id?: number;
+					sub_category_id: string;
+				};
+				Update: {
+					condition_group_id?: number;
+					created_at?: string;
+					id?: number;
+					sub_category_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "condition_group_sub_categories_condition_group_id_fkey";
+						columns: ["condition_group_id"];
+						isOneToOne: false;
+						referencedRelation: "condition_groups";
+						referencedColumns: ["group_id"];
+					},
+					{
+						foreignKeyName: "condition_group_sub_categories_sub_category_id_fkey";
+						columns: ["sub_category_id"];
+						isOneToOne: false;
+						referencedRelation: "sub_category";
 						referencedColumns: ["id"];
 					},
 				];
@@ -828,6 +936,7 @@ export type Database = {
 		Enums: {
 			address_type_enum: "shipping" | "billing" | "both";
 			attribute_type_enum: "color" | "size" | "material" | "style" | "brand";
+			buy_min_type_enum: "quantity" | "amount";
 			condition_operator:
 				| "in"
 				| "not_in"
@@ -838,7 +947,7 @@ export type Database = {
 				| "smaller"
 				| "smaller_or_equal";
 			condition_role: "eligibility" | "discount_application" | "buy_x" | "get_y";
-			condition_type: "sub_category" | "category" | "collection" | "price" | "sku";
+			condition_type: "category" | "collection" | "price" | "sku";
 			coupon_type_enum: "discount_code" | "automatic";
 			customer_type: "admins" | "employee" | "all" | "consumer";
 			discount_type:
@@ -977,6 +1086,7 @@ export const Constants = {
 		Enums: {
 			address_type_enum: ["shipping", "billing", "both"],
 			attribute_type_enum: ["color", "size", "material", "style", "brand"],
+			buy_min_type_enum: ["quantity", "amount"],
 			condition_operator: [
 				"in",
 				"not_in",
@@ -988,7 +1098,7 @@ export const Constants = {
 				"smaller_or_equal",
 			],
 			condition_role: ["eligibility", "discount_application", "buy_x", "get_y"],
-			condition_type: ["collection", "sub_category", "category", "price", "sku"],
+			condition_type: ["category", "collection", "price", "sku"],
 			coupon_type_enum: ["discount_code", "automatic"],
 			customer_type: ["all", "admins", "employee", "consumer"],
 			discount_type: [

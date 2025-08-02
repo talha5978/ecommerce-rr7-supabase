@@ -6,6 +6,7 @@ import type {
 	ProductNameResponse,
 	ProductNamesListResponse,
 	ProductUpdationPayload,
+	SKUsNamesListResponse,
 } from "~/types/products";
 import { defaults } from "~/constants";
 import type { ProductActionData, ProductUpdateActionData } from "~/schemas/product.schema";
@@ -16,6 +17,7 @@ import { ProductRAttributesService } from "./product-r-attributes.service";
 import { ProductAttributeRow } from "~/types/attributes";
 import type { ProductFilters } from "~/schemas/products-filter.schema";
 import { Service } from "~/services/service";
+import { SKUS_PAGE_SIZE } from "~/components/Coupons/BuyXGetYCard";
 
 export class ProductsService extends Service {
 	/** Fetch product name to show on varaint creation and updation page as a disabled field! */
@@ -32,6 +34,7 @@ export class ProductsService extends Service {
 		};
 	}
 
+	// TODO: ⬇⬇⬇⬇ APPLY PAGINATION HERE IF IT IS IN DIALOG THEN APPLY INFINITE SCROLL IN THAT SELECT.. ⬇⬇⬇⬇
 	/** Fetch product names list to show in the dialoge on all product units page */
 	async getProductNamesList(): Promise<ProductNamesListResponse> {
 		try {
@@ -67,6 +70,52 @@ export class ProductsService extends Service {
 			}
 			return {
 				products: null,
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
+	/** Fetch all skus names list (abi to bs coupons k leye use ho rha hai bad ka pta ni) */
+	async getSKUsNamesList(pageIndex: number = 0, searchQuery?: string): Promise<SKUsNamesListResponse> {
+		try {
+			let query = this.supabase.from(this.PRODUCT_VARIANT_TABLE).select("id, sku", { count: "exact" });
+
+			if (searchQuery) {
+				query = query.ilike("sku", `%${searchQuery}%`);
+			}
+
+			query = query.order("createdAt", { ascending: false });
+
+			const smallPageSize = SKUS_PAGE_SIZE;
+			const from = pageIndex * smallPageSize;
+			const to = from + smallPageSize - 1;
+
+			query = query.range(from, to);
+
+			const { data, error: fetchError, count } = await query;
+
+			let error: null | ApiError = null;
+
+			if (fetchError || data == null) {
+				error = new ApiError(fetchError.message, 500, [fetchError.details]);
+			}
+
+			return {
+				skus: data ?? null,
+				total: count ?? 0,
+				error: error ?? null,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return {
+					skus: null,
+					total: 0,
+					error: err,
+				};
+			}
+			return {
+				skus: null,
 				total: 0,
 				error: new ApiError("Unknown error", 500, [err]),
 			};

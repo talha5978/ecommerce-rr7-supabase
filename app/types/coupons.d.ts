@@ -11,3 +11,5 @@ export type DiscountCondType = Database["public"]["Enums"]["condition_type"];
 export type DiscountCondOperator = Database["public"]["Enums"]["condition_operator"];
 
 export type DiscountCustomerGrps = Database["public"]["Enums"]["customer_type"];
+
+export type BuyMinType = Database["public"]["Enums"]["buy_min_type_enum"];

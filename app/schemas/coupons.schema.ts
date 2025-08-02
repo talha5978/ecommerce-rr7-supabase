@@ -5,24 +5,56 @@ import {
 	DISCOUNT_COND_TYPE_ENUM,
 	DISCOUNT_TYPE_ENUM,
 	DISCOUNT_CUSTOMER_TYPE_ENUM,
+	BUY_MIN_TYPE_ENUM,
 } from "~/constants";
 
 // Capital letters, small letters, 0 to 9 and [-]
 const CodeRegx: RegExp = /^[a-zA-Z0-9-]+$/;
 
-const ConditionSchema = z.object({
-	type: z.enum(DISCOUNT_COND_TYPE_ENUM),
-	operator: z.enum(PRODUCT_COND_OPERATOR_ENUM),
-	value_text: z.string().optional(),
-	value_decimal: z.string().optional(),
-	min_quantity: z.string().optional(),
+const ConditionSchema = z
+	.object({
+		type: z.enum(DISCOUNT_COND_TYPE_ENUM),
+		operator: z.enum(PRODUCT_COND_OPERATOR_ENUM),
+		value_text: z.string().optional(),
+		value_decimal: z.string().optional(),
+		min_quantity: z.string().optional(),
+	})
+	.refine(
+		(data) => {
+			if (data.value_decimal == null && data.value_text == null) {
+				return false;
+			}
+			return true;
+		},
+		{
+			message: "Value is required.",
+			path: ["value_decimal", "value_text"],
+		},
+	);
+
+const BuyXGetYGroupSchema = z.object({
+	type: z.string({ required_error: "Type is required." }).min(1, "Type is required."),
+	selected_ids: z
+		.array(z.string(), { required_error: "Atleast one selection is required." })
+		.min(1, "Atleast select one option."),
 });
 
 const BuyXGetYSchema = z.object({
-	sku: z.string({ required_error: "Sku is required." }),
-	buy_qty: z.string({ required_error: "Buy quantity is required." }),
-	get_qty: z.string({ required_error: "Get quantity is required." }),
-	get_discount_percent: z.string({ required_error: "Get discount percent is required." }),
+	buy_min_type: z.enum(BUY_MIN_TYPE_ENUM),
+	buy_min_value: z
+		.string({ required_error: "Minimum value is required." })
+		.min(1, "Minimum value is required.")
+		.default("1"),
+	get_quantity: z
+		.string({ required_error: "Quantity is required." })
+		.min(1, "Quantity is required.")
+		.default("2"),
+	get_discount_percent: z
+		.string({ required_error: "Discount value is required." })
+		.min(1, "Discount value is required.")
+		.default("100"),
+	buy_group: BuyXGetYGroupSchema,
+	get_group: BuyXGetYGroupSchema,
 });
 
 // For creation
@@ -49,7 +81,7 @@ export const CouponInputSchema = z
 		start_timestamp: z.date(),
 		end_timestamp: z.date(),
 		fixed_products: z.array(ConditionSchema).optional().default([]),
-		buy_x_get_y: z.array(BuyXGetYSchema).optional().default([]),
+		buy_x_get_y: BuyXGetYSchema.optional(),
 		conditions: z
 			.array(ConditionSchema)
 			.optional()
@@ -72,6 +104,7 @@ export const CouponInputSchema = z
 				},
 				{
 					message: "Please fill out all fields in the order condition(s).",
+					path: ["conditions"],
 				},
 			),
 		customer_groups: z.enum(DISCOUNT_CUSTOMER_TYPE_ENUM).nullable(),
@@ -80,21 +113,45 @@ export const CouponInputSchema = z
 			.optional()
 			.default([]),
 	})
-	.refine((data) => {
-		if (data.discount_type === "fixed_product" || data.discount_type === "percentage_product") {
-			return data.fixed_products.length === 0 ? "Target products are required." : true;
-		}
-
-		if (data.discount_type !== "buy_x_get_y") {
-			return data.discount_value === null ? "Discount value is required." : true;
-		}
-
-		if (data.want_max_total_uses === "yes" && data.max_total_uses == null) {
-			return "Max total uses is required.";
-		}
-
-		return true;
-	});
+	.refine(
+		(data) => {
+			if (data.discount_type === "fixed_product" || data.discount_type === "percentage_product") {
+				return data.fixed_products.length > 0;
+			}
+			return true;
+		},
+		{ message: "Target products are required.", path: ["fixed_products"] },
+	)
+	.refine(
+		(data) => {
+			if (
+				data.discount_type === "buy_x_get_y" &&
+				data.buy_x_get_y?.buy_group?.selected_ids?.length == 0
+			) {
+				return false;
+			}
+			return true;
+		},
+		{
+			message: "Atleast one selection is required.",
+			path: ["buy_x_get_y.buy_group.selected_ids"],
+		},
+	)
+	.refine(
+		(data) => {
+			if (
+				data.discount_type === "buy_x_get_y" &&
+				data.buy_x_get_y?.get_group?.selected_ids?.length == 0
+			) {
+				return false;
+			}
+			return true;
+		},
+		{
+			message: "Atleast one selection is required.",
+			path: ["buy_x_get_y.get_group.selected_ids"],
+		},
+	);
 
 export type CouponFormValues = z.input<typeof CouponInputSchema>;
 
