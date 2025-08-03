@@ -15,7 +15,7 @@ import type {
 	CollectionDataSubCategory,
 	SelectedProduct,
 } from "~/types/collections";
-import { useLocation, useNavigate, useNavigation, useSearchParams, Form as RouterForm } from "react-router";
+import { useLocation, useNavigation, useSearchParams, Form as RouterForm } from "react-router";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion";
 import { Skeleton } from "~/components/ui/skeleton";
 import { cn } from "~/lib/utils";
@@ -27,6 +27,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+import { Controller, useForm } from "react-hook-form";
 
 type ProductSelectionDialogProps = {
 	open: boolean;
@@ -35,6 +36,10 @@ type ProductSelectionDialogProps = {
 	onSelect: (selectedProducts: SelectedProduct[]) => void;
 	selectedProducts: SelectedProduct[];
 };
+
+export const PRODUCT_SEARCH_TAG = "prodSearch";
+export const PRODUCT_PAGE_TAG = "prodPage";
+export const CATEGORY_PAGE_TAG = "catPage";
 
 const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 	main_skeletons = 3,
@@ -106,46 +111,54 @@ const ProductSelectionDialogSkeleton = memo(function SkeletonsFunc({
 });
 
 const PaginationOptions = memo(({ totalCategories }: { totalCategories: number }) => {
+	if (totalCategories === null) return null;
 	const suppressNavigation = useSuppressTopLoadingBar();
 	const [searchParams] = useSearchParams();
 
 	const categoryPageSize = defaults.DEFAULT_COLLECTIONS_CATEGORY_PAGE_SIZE;
-	const currentCategoryPage = searchParams.get("catPage") ? Number(searchParams.get("catPage")) : 1;
-	const categoryPageCount = Math.ceil(totalCategories / categoryPageSize);
+	const pageCount = Math.ceil(totalCategories / categoryPageSize);
+	console.log(pageCount);
+
+	const currentPage =
+		pageCount === 0
+			? 0
+			: searchParams.get(PRODUCT_PAGE_TAG)
+			? Number(searchParams.get(PRODUCT_PAGE_TAG))
+			: 1;
+
+	const isFirstPage = pageCount === 0 ? true : currentPage === 1;
+	const isLastPage = currentPage === pageCount;
+
+	console.log("Current Page", currentPage, "Page Count", pageCount);
 
 	const handlePrevPage = () => {
-		if (currentCategoryPage > 1) {
+		if (currentPage > 1) {
 			suppressNavigation(() => {
-				searchParams.set("catPage", (currentCategoryPage - 1).toString());
+				searchParams.set(PRODUCT_PAGE_TAG, (currentPage - 1).toString());
 			}).setSearchParams(searchParams);
 		}
 	};
 
 	const handleNextPage = () => {
-		if (currentCategoryPage < categoryPageCount) {
+		if (currentPage < pageCount) {
 			suppressNavigation(() => {
-				searchParams.set("catPage", (currentCategoryPage + 1).toString());
+				searchParams.set(PRODUCT_PAGE_TAG, (currentPage + 1).toString());
 			}).setSearchParams(searchParams);
 		}
 	};
 
 	return (
 		<div className="flex gap-2 justify-between my-4 items-center">
-			<Button variant="outline" size="sm" onClick={handlePrevPage} disabled={currentCategoryPage === 1}>
+			<Button variant="outline" size="sm" onClick={handlePrevPage} disabled={isFirstPage}>
 				<IconChevronLeft />
 				<span className="sm:inline hidden mr-2">Previous</span>
 			</Button>
 			<div>
 				<p className="text-sm text-muted-foreground">
-					Page {currentCategoryPage} of {categoryPageCount}
+					Page {currentPage} of {pageCount}
 				</p>
 			</div>
-			<Button
-				variant="outline"
-				size="sm"
-				onClick={handleNextPage}
-				disabled={currentCategoryPage === categoryPageCount}
-			>
+			<Button variant="outline" size="sm" onClick={handleNextPage} disabled={isLastPage}>
 				<span className="sm:inline hidden ml-2">Next</span>
 				<IconChevronRight />
 			</Button>
@@ -156,56 +169,69 @@ const PaginationOptions = memo(({ totalCategories }: { totalCategories: number }
 const SearchBar = () => {
 	const suppressNavigation = useSuppressTopLoadingBar();
 	const [searchParams] = useSearchParams();
-	let currentQuery = searchParams.get("prodSearch") || "";
+	let currentQuery = searchParams.get(PRODUCT_SEARCH_TAG) || "";
+
+	const form = useForm({
+		mode: "onSubmit",
+		defaultValues: {
+			query: currentQuery?.trim() || "",
+		},
+	});
+
+	const { setValue, handleSubmit, control } = form;
 
 	function handleClearQuery() {
 		suppressNavigation(() => {
-			searchParams.delete("prodSearch");
+			searchParams.delete(PRODUCT_SEARCH_TAG);
+			searchParams.delete(PRODUCT_PAGE_TAG);
+			searchParams.delete(PRODUCT_PAGE_TAG);
 		}).setSearchParams(searchParams);
+		setValue("query", "");
 	}
 
-	const customQuerySubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const formData = new FormData(e.currentTarget);
-		const searchValue = formData.get("prodSearch")?.toString().trim() || "";
-		if (searchValue) {
-			suppressNavigation(() => {
-				searchParams.set("prodSearch", searchValue);
-				searchParams.set("prodPage", "1");
-				searchParams.set("catPage", "1");
-			}).setSearchParams(searchParams);
-		} else {
-			suppressNavigation(() => {
-				searchParams.delete("prodSearch");
-				searchParams.set("prodPage", "1");
-				searchParams.set("catPage", "1");
-			}).setSearchParams(searchParams);
-		}
+	const customQuerySubmit = (values: { query: string }) => {
+		const searchValue = values.query?.trim() || "";
+		suppressNavigation(() => {
+			if (searchValue) {
+				searchParams.set(PRODUCT_SEARCH_TAG, searchValue);
+			} else {
+				searchParams.delete(PRODUCT_SEARCH_TAG);
+			}
+			searchParams.set(PRODUCT_PAGE_TAG, "1");
+			searchParams.set(PRODUCT_PAGE_TAG, "1");
+		}).setSearchParams(searchParams);
 	};
 
 	return (
-		<RouterForm method="get" action="?" onSubmit={customQuerySubmit}>
-			<div className="relative">
-				<Search
-					className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-					width={18}
-				/>
-				<Input
-					placeholder="Search products"
-					name="prodSearch"
-					className="w-full px-8"
-					id="search"
-					defaultValue={currentQuery?.trim()}
-				/>
-				{currentQuery?.trim()?.length > 0 && (
-					<span
-						className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
-						onClick={handleClearQuery}
-					>
-						<X className="text-muted-foreground" width={18} />
-					</span>
+		<RouterForm method="get" action="?" onSubmit={handleSubmit(customQuerySubmit)}>
+			<Controller
+				name="query"
+				control={control}
+				render={({ field }) => (
+					<div className="relative">
+						<Search
+							className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+							width={18}
+						/>
+						<Input
+							placeholder="Search products"
+							name={PRODUCT_SEARCH_TAG}
+							className="w-full px-8"
+							id="search"
+							value={field.value}
+							onChange={field.onChange}
+						/>
+						{currentQuery?.trim()?.length > 0 && (
+							<span
+								className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
+								onClick={handleClearQuery}
+							>
+								<X className="text-muted-foreground" width={18} />
+							</span>
+						)}
+					</div>
 				)}
-			</div>
+			/>
 			{/* Invisible submit button: Enter in input triggers submit */}
 			<button type="submit" className="hidden">
 				Search
@@ -226,7 +252,6 @@ export function ProductSelectionDialog({
 	const categories = data?.categories || [];
 	// console.log(selectedProducts);
 
-	const [searchParams, setSearchParams] = useSearchParams();
 	const navigation = useNavigation();
 	const location = useLocation();
 
@@ -471,8 +496,8 @@ export function ProductSelectionDialog({
 					</Accordion>
 				))
 			) : (
-				<div className="my-2 p-4 pt-6">
-					<p className="text-muted-foreground w-fit text-sm mx-auto">No categories found</p>
+				<div className="my-9 p-4 pt-6">
+					<p className="text-muted-foreground w-fit text-sm mx-auto">No products found</p>
 				</div>
 			);
 		}
@@ -495,7 +520,7 @@ export function ProductSelectionDialog({
 						<ProductsArea />
 					</div>
 				</div>
-				<PaginationOptions totalCategories={data.totalCategories} />
+				<PaginationOptions totalCategories={data.totalCategories ?? 0} />
 				<DialogFooter className="space-x-1">
 					<Button variant="outline" onClick={() => setOpen(false)}>
 						Cancel

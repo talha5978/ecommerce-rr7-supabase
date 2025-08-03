@@ -60,7 +60,12 @@ import {
 	getSanitizedMetaDetailsForAction,
 	getSanitizedMetaDetailsForForm,
 } from "~/utils/getSanitizedMetaDetails";
-import { ProductSelectionDialog } from "~/components/Collections/ProductSelectionDialog";
+import {
+	CATEGORY_PAGE_TAG,
+	PRODUCT_PAGE_TAG,
+	PRODUCT_SEARCH_TAG,
+	ProductSelectionDialog,
+} from "~/components/Collections/ProductSelectionDialog";
 
 function getSimpleFields() {
 	return ["name", "description", "status", "sort_order"] as const;
@@ -146,9 +151,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	}
 
 	const { searchParams } = new URL(request.url);
-	const categoryPageParam = Number(searchParams.get("catPage"));
-	const productPageParam = Number(searchParams.get("prodPage"));
-	const productSearchQuery = searchParams.get("prodSearch") || "";
+	const categoryPageParam = Number(searchParams.get(CATEGORY_PAGE_TAG));
+	const productPageParam = Number(searchParams.get(PRODUCT_PAGE_TAG));
+	const productSearchQuery = searchParams.get(PRODUCT_SEARCH_TAG) || "";
 
 	// console.log(Math.max(0, categoryPageParam - 1), Math.max(0, productPageParam - 1));
 	const collectionResp = await queryClient.fetchQuery(FullCollectionQuery({ request, collection_id }));
