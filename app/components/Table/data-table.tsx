@@ -24,6 +24,7 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Settings2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface DataTableProps<T> {
 	table: Table<T>;
@@ -68,6 +69,13 @@ export function DataTable<T>({
 
 	const PAGE_VALUES = [10, 20, 30, 40, 50];
 
+	// Animation variants for row enter/exit
+	const rowVariants = {
+		hidden: { opacity: 0, y: 20 },
+		visible: { opacity: 1, y: 0 },
+		exit: { opacity: 0, y: -20 },
+	};
+
 	return (
 		<section>
 			<TableComponent>
@@ -101,26 +109,38 @@ export function DataTable<T>({
 				<TableBody
 					className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}
 				>
-					{table.getRowModel().rows?.length > 0 ? (
-						table.getRowModel().rows.map((row) => (
-							<TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-								{row.getVisibleCells().map((cell) => (
-									<TableCell key={cell.id}>
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
-									</TableCell>
-								))}
+					<AnimatePresence>
+						{table.getRowModel().rows?.length > 0 ? (
+							table.getRowModel().rows.map((row) => (
+								<motion.tr
+									key={row.id}
+									data-state={row.getIsSelected() && "selected"}
+									initial="hidden"
+									animate="visible"
+									exit="exit"
+									variants={rowVariants}
+									transition={{ duration: 0.3 }}
+									data-slot="table-row"
+									className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
+								>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id}>
+											{flexRender(cell.column.columnDef.cell, cell.getContext())}
+										</TableCell>
+									))}
+								</motion.tr>
+							))
+						) : (
+							<TableRow>
+								<TableCell
+									colSpan={table.getAllColumns().length}
+									className="h-36 text-center select-none text-muted-foreground"
+								>
+									<p className="text-sm">{customEmptyMessage ?? "No results found"}</p>
+								</TableCell>
 							</TableRow>
-						))
-					) : (
-						<TableRow>
-							<TableCell
-								colSpan={table.getAllColumns().length}
-								className="h-36 text-center select-none text-muted-foreground"
-							>
-								<p className="text-sm">{customEmptyMessage ?? "No results found"}</p>
-							</TableCell>
-						</TableRow>
-					)}
+						)}
+					</AnimatePresence>
 				</TableBody>
 			</TableComponent>
 			<div className="mt-4">
