@@ -1,7 +1,7 @@
 import { forwardRef, useMemo, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { cn } from "~/lib/utils";
-import { useForwardedRef } from "~/utils/use-forward-ref";
+import { useForwardedRef } from "~/hooks/use-forward-ref";
 import { Button, type ButtonProps } from "~/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Input } from "~/components/ui/input";
