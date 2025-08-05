@@ -861,6 +861,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		if (sortType) params.set("sortType", sortType);
 
 		navigate(`?${params.toString()}`);
+		setOpen(false);
 	};
 
 	function handleReset() {
@@ -874,15 +875,14 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 			}),
 			{ replace: true },
 		);
-		setOpen(false);
 	}
 
 	return (
 		<Sheet open={!!open} onOpenChange={setOpen}>
 			<SheetContent>
 				<SheetHeader>
-					<SheetTitle>Product Filters & Sort</SheetTitle>
-					<SheetDescription>Sort and filter products by their fields and values</SheetDescription>
+					<SheetTitle>Product Filters</SheetTitle>
+					<SheetDescription>Filter products by their fields and values</SheetDescription>
 				</SheetHeader>
 				<form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 flex flex-col p-4 h-full">
 					<ShadcnForm {...form}>
@@ -1097,7 +1097,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 						/>
 
 						{/* Form Actions */}
-						<SheetFooter className="!self-end px-0 w-full">
+						<SheetFooter className="!self-end px-0 w-full **:!w-full ">
 							<Button type="submit" disabled={isSubmitting}>
 								{isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
 								Apply

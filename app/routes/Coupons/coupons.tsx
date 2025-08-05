@@ -333,7 +333,7 @@ const CouponTypeSelectDialog = memo(
 					</DialogHeader>
 					{Options.map((option) => (
 						<Link key={option.value} to={`/coupons/create/${option.value}`}>
-							<div className="px-4 py-4 hover:bg-muted cursor-pointer rounded-lg ease-in-out duration-150 transition-colors">
+							<div className="px-4 py-4 hover:dark:bg-muted hover:bg-muted-dark cursor-pointer rounded-lg ease-in-out duration-150 transition-colors">
 								<div className="flex items-center gap-4">
 									{option.icon}
 									<div className="flex flex-col flex-1">

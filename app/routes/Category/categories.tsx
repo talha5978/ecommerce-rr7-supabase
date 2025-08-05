@@ -132,7 +132,7 @@ export default function CategoriesPage({
 					</div>
 				);
 			},
-			header: () => "No. of Sub Categories",
+			header: () => "Sub Categories",
 		},
 		{
 			id: "Created At",

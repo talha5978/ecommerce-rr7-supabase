@@ -69,12 +69,11 @@ export const categoriesQuery = ({
 	searchQuery,
 }: categoriesQueryArgs) => {
 	return queryOptions<GetAllCategoriesResponse>({
-		queryKey: [group ? "categories" : `${group}_categories`, pageIndex, productCount, searchQuery],
+		queryKey: [group ? "categories" : `${group}_categories`, pageIndex, searchQuery],
 		queryFn: async () => {
 			const categoryService = new CategoryService(request);
 			const result = await categoryService.getAllCategories({
 				pageIndex,
-				productCount,
 				searchQuery,
 			});
 			return result;

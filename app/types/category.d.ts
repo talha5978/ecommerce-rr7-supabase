@@ -54,6 +54,7 @@ export type HighLevelSubCategory = {
 	description: string;
 	createdAt: string;
 	url_key: string | null;
+	products_count: number;
 };
 
 export interface GetHighLevelSubCategoriesResponse {

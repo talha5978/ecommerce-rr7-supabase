@@ -1,30 +1,102 @@
 import { Row, type Table } from "@tanstack/react-table";
-import { Control, UseFormSetValue, useWatch } from "react-hook-form";
+import { Control, ControllerRenderProps, UseFormSetValue, useWatch } from "react-hook-form";
 import { type CouponFormValues } from "~/schemas/coupons.schema";
 import { Checkbox } from "~/components/ui/checkbox";
-import { JSX, memo } from "react";
+import { type JSX, memo, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { DiscountCondOperator, DiscountCondType } from "~/types/coupons";
 import { FormField } from "~/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { DISCOUNT_COND_TYPE_ENUM } from "~/constants";
-import { CondOperatorLabels, CondTypeLabels } from "~/utils/couponsConstants";
+import {
+	CondOperatorLabels,
+	CondTypeLabels,
+	getAllSearchParams,
+	typesToSelect,
+	typeToParamMap,
+} from "~/utils/couponsConstants";
 import { Input } from "~/components/ui/input";
+import { ApiError } from "~/utils/ApiError";
+import { CategoriesSelectionArea } from "~/components/Coupons/SelectionAreas/CategoriesSelectionArea";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "~/components/ui/dialog";
+import { Button } from "../ui/button";
+import { SearchBar } from "~/components/Coupons/SearchBar";
+import type {
+	FixedProductsGroupOpts,
+	OrdersGroupOpts,
+	SelectionDialogProps,
+	TypesToSelect,
+} from "~/components/Coupons/coupons-comp";
+import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+import { Await, useLoaderData, useSearchParams } from "react-router";
+import { CreateCouponsLoader } from "~/routes/Coupons/create-coupon";
+import { SKUsNamesListResponse } from "~/types/products";
+import { CollectionsNamesListResponse } from "~/types/collections";
+import { GetAllCategoriesResponse } from "~/types/category";
+import { AccordianSkeleton } from "./Skeletons/AccordianSkeleton";
+import { PaginationSkeleton } from "./Skeletons/PaginationSkeleton";
+import PaginationOptions from "./PaginationOptions";
+import { CATEGORIES_PAGE_SIZE, COLLECTIONS_PAGE_SIZE, SKUS_PAGE_SIZE } from "./BuyXGetYCard";
+import { LineSkeleton } from "./Skeletons/LineSkeleton";
+import { SKUsSelectionArea } from "./SelectionAreas/SKUSelectionArea";
+import { CollectionsSelectionArea } from "./SelectionAreas/CollectionsSelectionArea";
+
+type FieldNames = "conditions" | "fixed_products";
 
 type TypeCellProps = {
 	index: number;
 	control: Control<CouponFormValues>;
 	setValue: UseFormSetValue<CouponFormValues>;
-	name: "conditions" | "fixed_products";
+	name: FieldNames;
 };
 
 type CellMinimalProps = {
 	index: number;
 	control: Control<CouponFormValues>;
-	name: "conditions" | "fixed_products";
+	name: FieldNames;
 };
 
 type ConditionOperatorProps = CellMinimalProps;
-type ConditionValueCellProps = CellMinimalProps;
+type ConditionValueCellProps = CellMinimalProps & {
+	field: ControllerRenderProps<CouponFormValues>;
+};
+
+const getSelectedGroup = ({ name }: { name: FieldNames }): FixedProductsGroupOpts | OrdersGroupOpts => {
+	return name === "fixed_products" ? "fix" : "order";
+};
+
+const setParamsValues = ({
+	type,
+	searchParams,
+	suppressNavigation,
+	name,
+}: {
+	type: TypesToSelect | null;
+	searchParams: URLSearchParams;
+	suppressNavigation: ReturnType<typeof useSuppressTopLoadingBar>;
+	name: FieldNames;
+}) => {
+	const newParams = new URLSearchParams(searchParams);
+	const group = getSelectedGroup({ name });
+
+	suppressNavigation(() => {
+		// Clear all parameters for the group
+		getAllSearchParams([group]).forEach((param) => {
+			newParams.delete(param);
+		});
+
+		// Set the flag for the selected type, if any
+		if (type) {
+			newParams.set(`${group}_${typeToParamMap[type]}`, "true");
+		}
+	}).setSearchParams(newParams);
+};
 
 export const TableRowSelector = ({ name }: { name: "conditions" | "fixed_products" }) => {
 	function header({ table }: { table: Table<CouponFormValues[typeof name]> }) {
@@ -59,14 +131,24 @@ export const TableRowSelector = ({ name }: { name: "conditions" | "fixed_product
 };
 
 export const TypeCell = memo(({ index, control, setValue, name }: TypeCellProps): JSX.Element => {
+	const [searchParams] = useSearchParams();
+	const suppressNavigation = useSuppressTopLoadingBar();
+
 	// Reset other order_fields in the row based on the new type
 	const ResetOtherFields = ({ newType, index }: { newType: DiscountCondType; index: number }) => {
 		setValue(`${name}.${index}.operator`, newType === "price" ? "equal" : "in");
-		setValue(`${name}.${index}.value_text`, "");
+		setValue(`${name}.${index}.value_text`, []);
 		setValue(`${name}.${index}.value_decimal`, "");
 		if (name === "conditions") {
 			setValue(`${name}.${index}.min_quantity`, "1");
 		}
+		// Always reset search params on type change in the row - (passing null for price to clear all)
+		setParamsValues({
+			searchParams,
+			suppressNavigation,
+			type: newType !== "price" ? (newType as TypesToSelect) : null,
+			name,
+		});
 	};
 
 	return (
@@ -126,30 +208,258 @@ export const ConditionOperatorCell = memo(({ index, control, name }: ConditionOp
 	);
 });
 
-export const ConditionValueCell = memo(({ index, control, name }: ConditionValueCellProps): JSX.Element => {
-	const type: DiscountCondType = useWatch({ control, name: `${name}.${index}.type` });
+export const ConditionValueCell = memo(
+	({ index, control, name, field }: ConditionValueCellProps): JSX.Element => {
+		const type: DiscountCondType = useWatch({ control, name: `${name}.${index}.type` });
+		const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
 
-	if (type === "price") {
-		return (
-			<FormField
-				control={control}
-				name={`${name}.${index}.value_decimal`}
-				render={({ field }) => <Input type="number" placeholder="e.g. 50.00" {...field} />}
-			/>
+		const { fix, order } = useLoaderData<CreateCouponsLoader>();
+
+		const [searchParams] = useSearchParams();
+		const suppressNavigation = useSuppressTopLoadingBar();
+
+		const handleSelectClick = useCallback(() => {
+			if (typesToSelect.includes(type as TypesToSelect)) {
+				setDialogOpen(true);
+			} else {
+				throw new ApiError("Invalid type selected", 400, []);
+			}
+		}, [type]);
+
+		const handleDialogClose = useCallback(() => {
+			setDialogOpen(false);
+			const newParams = new URLSearchParams(searchParams);
+			// Clear the search params for the selected type
+			suppressNavigation(() => {
+				newParams.delete(
+					`${getSelectedGroup({ name })}_${typeToParamMap[type as TypesToSelect]}_search`,
+				);
+				newParams.delete(
+					`${getSelectedGroup({ name })}_${typeToParamMap[type as TypesToSelect]}_page`,
+				);
+			}).setSearchParams(newParams);
+			// field.onChange([]); // Clear the value when dialog closes
+		}, []);
+
+		const MainFormFields = () => {
+			if (type === "price") {
+				return (
+					<FormField
+						control={control}
+						name={`${name}.${index}.value_decimal`}
+						render={({ field }) => <Input type="number" placeholder="e.g. 50.00" {...field} />}
+					/>
+				);
+			}
+
+			if (!typesToSelect.includes(type)) {
+				return <p className="text-sm text-muted-foreground">Invalid type</p>;
+			}
+
+			const Label = CondTypeLabels[type as TypesToSelect]?.plural.toLowerCase();
+
+			return (
+				<FormField
+					control={control}
+					name={`${name}.${index}.value_text`}
+					render={({ field }) => (
+						<div onClick={handleSelectClick}>
+							<p className="text-sm text-primary hover:underline cursor-pointer underline-offset-4 text-ellipsis truncate max-w-[10rem]">
+								{Array.isArray(field.value) && field.value.length > 0
+									? `${field.value.length} item${
+											field.value.length > 1 ? "s" : ""
+									  } selected`
+									: `Select ${Label}`}
+							</p>
+						</div>
+					)}
+				/>
+			);
+		};
+
+		// Memoize dataSource and responses to prevent re-renders
+		const dataSource = useMemo(() => {
+			const group = getSelectedGroup({ name });
+			return group === "fix" ? fix : order;
+		}, [name, fix, order]);
+
+		const responses = useMemo(
+			() => ({
+				category: dataSource?.categoriesData,
+				sku: dataSource?.skusData,
+				collection: dataSource?.collectionsData,
+			}),
+			[dataSource],
 		);
-	} else {
+
+		const selectedData = useMemo(() => {
+			return typesToSelect.includes(type as TypesToSelect) ? responses[type as TypesToSelect] : null;
+		}, [type, responses]);
+
+		const SelectionDialogs = useCallback(() => {
+			if (!isDialogOpen || !typesToSelect.includes(type as TypesToSelect)) {
+				return null;
+			}
+
+			const group = getSelectedGroup({ name });
+
+			// console.log("Group:", group);
+			// console.log("DataSource:", dataSource);
+			// console.log("Responses:", responses);
+			// console.log("Selected type:", type);
+			// console.log("Selected data:", selectedData);
+
+			if (!selectedData) {
+				return null;
+			}
+
+			return (
+				<SelectionDialog
+					field={field}
+					type={type as TypesToSelect}
+					open={isDialogOpen}
+					onClose={handleDialogClose}
+					group={group}
+					selectedData={selectedData}
+				/>
+			);
+		}, [isDialogOpen, type, field, name, fix, order]);
+
 		return (
-			<FormField
-				control={control}
-				name={`${name}.${index}.value_text`}
-				render={({ field }) => (
-					<p className="text-sm text-primary hover:underline cursor-pointer underline-offset-4 text-ellipsis truncate max-w-[10rem]">
-						{field.value
-							? field.value
-							: `Select ${CondTypeLabels[type].plural.toLowerCase() || "values"}`}
-					</p>
-				)}
-			/>
+			<>
+				<MainFormFields />
+				<SelectionDialogs />
+			</>
 		);
-	}
+	},
+);
+
+const SelectionDialog = memo(function SelectionDialog({
+	field,
+	type,
+	open,
+	onClose,
+	group,
+	selectedData,
+}: SelectionDialogProps): JSX.Element {
+	// Memoize children to prevent re-renders
+	const children = useMemo(() => {
+		switch (type) {
+			case "category":
+				return (
+					<Suspense
+						fallback={
+							<>
+								<AccordianSkeleton main_skeletons={4} sub_skeletons={2} />
+								<PaginationSkeleton />
+							</>
+						}
+					>
+						<Await resolve={selectedData as Promise<GetAllCategoriesResponse>}>
+							{(resolvedData: GetAllCategoriesResponse | null) => (
+								<>
+									{resolvedData ? (
+										<CategoriesSelectionArea resolvedData={resolvedData} field={field} />
+									) : (
+										<p>No {CondTypeLabels[type].plural.toLowerCase()} found</p>
+									)}
+									<PaginationOptions
+										originalPageSize={CATEGORIES_PAGE_SIZE}
+										selectedType={type}
+										group={group}
+										totalElements={resolvedData?.total ?? 0}
+									/>
+								</>
+							)}
+						</Await>
+					</Suspense>
+				);
+			case "sku":
+				return (
+					<Suspense
+						fallback={
+							<>
+								<LineSkeleton lines={SKUS_PAGE_SIZE} />
+								<PaginationSkeleton />
+							</>
+						}
+					>
+						<Await resolve={selectedData as Promise<SKUsNamesListResponse>}>
+							{(resolvedData: SKUsNamesListResponse | null) => (
+								<>
+									{resolvedData ? (
+										<SKUsSelectionArea resolvedData={resolvedData} field={field} />
+									) : (
+										<p>No {CondTypeLabels[type].plural.toLowerCase()} found</p>
+									)}
+									<PaginationOptions
+										originalPageSize={SKUS_PAGE_SIZE}
+										selectedType={type}
+										group={group}
+										totalElements={resolvedData?.total ?? 0}
+									/>
+								</>
+							)}
+						</Await>
+					</Suspense>
+				);
+			case "collection":
+				return (
+					<Suspense
+						fallback={
+							<>
+								<LineSkeleton lines={COLLECTIONS_PAGE_SIZE} />
+								<PaginationSkeleton />
+							</>
+						}
+					>
+						<Await resolve={selectedData as Promise<CollectionsNamesListResponse>}>
+							{(resolvedData: CollectionsNamesListResponse | null) => (
+								<>
+									{resolvedData ? (
+										<CollectionsSelectionArea resolvedData={resolvedData} field={field} />
+									) : (
+										<p>No {CondTypeLabels[type].plural.toLowerCase()} found</p>
+									)}
+									<PaginationOptions
+										originalPageSize={COLLECTIONS_PAGE_SIZE}
+										selectedType={type}
+										group={group}
+										totalElements={resolvedData?.total ?? 0}
+									/>
+								</>
+							)}
+						</Await>
+					</Suspense>
+				);
+			default:
+				return null;
+		}
+	}, [type, selectedData, field, group]);
+
+	return (
+		<Dialog open={!!open} onOpenChange={onClose}>
+			<DialogContent
+				className="sm:max-w-[550px]"
+				showCloseButton={false}
+				onInteractOutside={(e) => e.preventDefault()}
+			>
+				<DialogHeader>
+					<DialogTitle>Select {CondTypeLabels[type].plural} for Collection</DialogTitle>
+					<DialogDescription>
+						Choose {CondTypeLabels[type].plural.toLowerCase()} below to add to your conditions.
+					</DialogDescription>
+				</DialogHeader>
+				<div className="max-h-96 overflow-y-auto space-y-4">
+					<SearchBar selectedType={type} group={group} />
+					{children}
+				</div>
+				<DialogFooter>
+					<Button variant="default" onClick={onClose}>
+						Confirm
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
 });

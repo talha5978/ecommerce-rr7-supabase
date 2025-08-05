@@ -1,6 +1,9 @@
 import { UserCog, UserLock, UserRoundCheck, Users } from "lucide-react";
-import { JSX } from "react";
+import { type JSX } from "react";
+import type { Groups, TypesToSelect } from "~/components/Coupons/coupons-comp";
+import { DISCOUNT_COND_TYPE_ENUM } from "~/constants";
 import type {
+	BuyMinType,
 	DiscountCondOperator,
 	DiscountCondType,
 	DiscountCustomerGrps,
@@ -70,4 +73,75 @@ export const CustomerGroupsLabels: Record<DiscountCustomerGrps, { label: string;
 	admins: { label: "Admins", icon: <UserLock /> },
 	employee: { label: "Employees", icon: <UserCog /> },
 	consumer: { label: "General Customers", icon: <Users /> },
+};
+
+// Condition Type for BuyXGetY Card BUY SECTION
+export const ConditionTypeValues: { value: BuyMinType; id: string; label: string }[] = [
+	{
+		value: "quantity",
+		id: "buy-quantity",
+		label: "Minimum quantity of items",
+	},
+	{
+		value: "amount",
+		id: "buy-amount",
+		label: "Minimum amount of items",
+	},
+];
+
+export const typesToSelect = DISCOUNT_COND_TYPE_ENUM.filter((type) => type !== "price");
+
+// Param Tag for pagination tags
+export function getPageSearchTag(selectedType: TypesToSelect, group: Groups) {
+	switch (selectedType) {
+		case "category":
+			return `${group}_category_page`;
+		case "collection":
+			return `${group}_collection_page`;
+		case "sku":
+			return `${group}_sku_page`;
+		default:
+			return null;
+	}
+}
+
+// Param Tag for searching
+export function getNameSearchTag(selectedType: TypesToSelect, group: Groups) {
+	switch (selectedType) {
+		case "category":
+			return `${group}_category_search`;
+		case "collection":
+			return `${group}_collection_search`;
+		case "sku":
+			return `${group}_sku_search`;
+		default:
+			return null;
+	}
+}
+
+export const groups = ["buy", "get", "fix", "order"] as const;
+
+export function getAllSearchParams(groupArray: Groups[]) {
+	const typesToSelect: TypesToSelect[] = ["category", "collection", "sku"];
+	const paramTypes = ["categories", "collections", "skus"];
+
+	let allParams = [
+		...groupArray.flatMap((groupType) =>
+			typesToSelect.flatMap((type) => [`${groupType}_${type}_search`, `${groupType}_${type}_page`]),
+		),
+	];
+
+	for (const group of groups) {
+		if (groupArray.includes(group)) {
+			allParams = [...allParams, ...paramTypes.flatMap((type) => [`${group}_${type}`])];
+		}
+	}
+
+	return allParams;
+}
+
+export const typeToParamMap: Record<TypesToSelect, string> = {
+	category: "categories",
+	collection: "collections",
+	sku: "skus",
 };

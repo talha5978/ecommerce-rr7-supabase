@@ -16,7 +16,7 @@ const statusBadgeVariants = cva(
 					"bg-muted-foreground/10 dark:bg-muted-foreground/20 text-muted-foreground shadow-none",
 				success: "bg-emerald-600/30 dark:bg-emerald-600/40 text-primary-foreground shadow-none",
 				destructive: "bg-red-600/30 dark:bg-red-600/40 text-primary-foreground shadow-none",
-				warning: "bg-yellow-600/30 dark:bg-yellow-600/30 text-primary-foreground shadow-none",
+				warning: "bg-yellow-600/30 dark:bg-yellow-600/50 text-primary-foreground shadow-none",
 			},
 			icon: {
 				dot: "text-muted-foreground dark:text-muted-foreground",

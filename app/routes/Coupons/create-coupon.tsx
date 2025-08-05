@@ -1,14 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-	Control,
-	Controller,
-	ControllerRenderProps,
-	useFieldArray,
-	useForm,
-	useFormContext,
-	UseFormSetValue,
-	useWatch,
-} from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
@@ -16,10 +7,6 @@ import {
 	useNavigate,
 	useNavigation,
 	useSubmit,
-	Form as RouterForm,
-	useSearchParams,
-	useLoaderData,
-	Await,
 } from "react-router";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
@@ -28,23 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
-import {
-	ChevronUp,
-	DollarSign,
-	Info,
-	Loader2,
-	Percent,
-	PlusCircle,
-	RefreshCcw,
-	Search,
-	Settings2,
-	Trash2,
-	UserCog,
-	UserLock,
-	UserRoundCheck,
-	Users,
-} from "lucide-react";
-import { JSX, memo, Suspense, useEffect, useMemo, useState } from "react";
+import { DollarSign, Info, Loader, Loader2, Percent, PlusCircle, RefreshCcw, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useTransition } from "react";
 import {
 	TagsInput,
 	TagsInputClear,
@@ -52,12 +24,7 @@ import {
 	TagsInputItem,
 	TagsInputList,
 } from "~/components/ui/tags-input";
-import {
-	COUPON_TYPE_ENUM,
-	DEFAULT_DICOUNT_TYPE,
-	DISCOUNT_COND_TYPE_ENUM,
-	DISCOUNT_CUSTOMER_TYPE_ENUM,
-} from "~/constants";
+import { COUPON_TYPE_ENUM, DEFAULT_DICOUNT_TYPE, DISCOUNT_CUSTOMER_TYPE_ENUM } from "~/constants";
 import { toast } from "sonner";
 import type { ActionResponse } from "~/types/action-data";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
@@ -69,29 +36,12 @@ import {
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
-	Row,
-	Table,
 	useReactTable,
 } from "@tanstack/react-table";
 import { Checkbox } from "~/components/ui/checkbox";
 import { CouponFormValues, CouponInputSchema } from "~/schemas/coupons.schema";
-import type {
-	BuyMinType,
-	CouponType,
-	DiscountCondOperator,
-	DiscountCondType,
-	DiscountCustomerGrps,
-	DiscountType,
-} from "~/types/coupons";
+import type { CouponType, DiscountCondType } from "~/types/coupons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import {
-	DropdownMenu,
-	DropdownMenuCheckboxItem,
-	DropdownMenuContent,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import DateTimePicker from "~/components/Custom-Inputs/date-time-picker";
 import {
 	ConditionOperatorCell,
@@ -99,20 +49,22 @@ import {
 	TableRowSelector,
 	TypeCell,
 } from "~/components/Coupons/TableComponents";
-import { CondTypeLabels, CustomerGroupsLabels, discount_type_fields } from "~/utils/couponsConstants";
+import {
+	CustomerGroupsLabels,
+	discount_type_fields,
+	groups,
+	typesToSelect,
+	typeToParamMap,
+} from "~/utils/couponsConstants";
 import { queryClient } from "~/lib/queryClient";
 import { categoriesQuery } from "~/queries/categories.q";
-import type {
-	CategoryListRow,
-	GetAllCategoriesResponse,
-	GetHighLevelCategoriesResponse,
-	SubCategoryListRow,
-} from "~/types/category";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
-import { ApiError } from "~/utils/ApiError";
 import { BuyXGetYCard } from "~/components/Coupons/BuyXGetYCard";
 import { skuNamesQuery } from "~/queries/products.q";
 import { collectionsNameQuery } from "~/queries/collections.q";
+import type { Groups, TypesToSelect } from "~/components/Coupons/coupons-comp";
+import { GetAllCategoriesResponse } from "~/types/category";
+import { SKUsNamesListResponse } from "~/types/products";
+import { CollectionsNamesListResponse } from "~/types/collections";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -167,6 +119,78 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	// }
 };
 
+type FetchDataFuncReturn = Promise<
+	GetAllCategoriesResponse | SKUsNamesListResponse | CollectionsNamesListResponse
+> | null;
+
+type FetchDataFuncProps = {
+	group: Groups;
+	entityType: TypesToSelect;
+	request: Request;
+};
+
+type GroupData = {
+	categoriesData: Promise<GetAllCategoriesResponse> | null;
+	skusData: Promise<SKUsNamesListResponse> | null;
+	collectionsData: Promise<CollectionsNamesListResponse> | null;
+};
+
+const getRelevantData = ({ entityType, group, request }: FetchDataFuncProps): FetchDataFuncReturn => {
+	const searchParams = new URL(request.url).searchParams;
+	const searchKey = `${group}_${entityType}_search`;
+	const pageKey = `${group}_${entityType}_page`;
+	const flagKey = `${group}_${typeToParamMap[entityType]}`;
+	const searchQuery = searchParams.get(searchKey) || "";
+	const page = Number(searchParams.get(pageKey)) || 1;
+	const isRequested = searchParams.get(flagKey) === "true";
+
+	// console.log(`Fetching data for ${group} ${entityType} - Flag ${flagKey}: ${searchParams.get(flagKey)}`);
+
+	if (!isRequested) {
+		// console.log(`Skipping fetch for ${group} ${entityType} because ${flagKey} is not "true"`);
+		return null;
+	}
+
+	const pageIndex = Math.max(0, page - 1);
+	const trimmedSearchQuery = searchQuery.trim();
+
+	switch (entityType) {
+		case "category":
+			return queryClient.fetchQuery(
+				categoriesQuery({
+					request,
+					autoRun: true,
+					group,
+					productCount: true,
+					pageIndex,
+					searchQuery: trimmedSearchQuery,
+				}),
+			);
+		case "sku":
+			return queryClient.fetchQuery(
+				skuNamesQuery({
+					request,
+					autoRun: true,
+					group,
+					pageIndex,
+					searchQuery: trimmedSearchQuery,
+				}),
+			);
+		case "collection":
+			return queryClient.fetchQuery(
+				collectionsNameQuery({
+					request,
+					autoRun: true,
+					group,
+					pageIndex,
+					searchQuery: trimmedSearchQuery,
+				}),
+			);
+		default:
+			return null;
+	}
+};
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const couponType = params.couponType;
 
@@ -174,118 +198,31 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response("Invalid Coupon Type", { status: 404 });
 	}
 
-	const { searchParams } = new URL(request.url);
+	const data: Partial<Record<Groups, GroupData>> = {};
 
-	// Define entity requests with group-specific flags
-	const entityRequests = {
-		buy_categories: searchParams.get("buy_categories") ?? null,
-		buy_collections: searchParams.get("buy_collections") ?? null,
-		buy_skus: searchParams.get("buy_skus") ?? null,
-		get_categories: searchParams.get("get_categories") ?? null,
-		get_collections: searchParams.get("get_collections") ?? null,
-		get_skus: searchParams.get("get_skus") ?? null,
-	};
+	for (const group of groups) {
+		data[group] = {
+			categoriesData: getRelevantData({
+				group: group,
+				entityType: "category",
+				request,
+			}) as Promise<GetAllCategoriesResponse> | null,
+			skusData: getRelevantData({
+				group: group,
+				entityType: "sku",
+				request,
+			}) as Promise<SKUsNamesListResponse> | null,
+			collectionsData: getRelevantData({
+				group: group,
+				entityType: "collection",
+				request,
+			}) as Promise<CollectionsNamesListResponse> | null,
+		};
+	}
 
-	// "Buy" group parameters
-	const buyCategorySearch = searchParams.get("buy_category_search") || "";
-	const buyCategoryPage = Number(searchParams.get("buy_category_page")) || 1;
-	const buySkuSearch = searchParams.get("buy_sku_search") || "";
-	const buySkuPage = Number(searchParams.get("buy_sku_page")) || 1;
-	const buyCollectionSearch = searchParams.get("buy_collection_search") || "";
-	const buyCollectionPage = Number(searchParams.get("buy_collection_page")) || 1;
+	// console.log(data);
 
-	// "Get" group parameters
-	const getCategorySearch = searchParams.get("get_category_search") || "";
-	const getCategoryPage = Number(searchParams.get("get_category_page")) || 1;
-	const getSkuSearch = searchParams.get("get_sku_search") || "";
-	const getSkuPage = Number(searchParams.get("get_sku_page")) || 1;
-	const getCollectionSearch = searchParams.get("get_collection_search") || "";
-	const getCollectionPage = Number(searchParams.get("get_collection_page")) || 1;
-
-	// Fetch data for "buy" group
-	const buyCategoriesData = entityRequests.buy_categories
-		? queryClient.fetchQuery(
-				categoriesQuery({
-					request,
-					autoRun: entityRequests.buy_categories === "true",
-					group: "buy",
-					productCount: true,
-					pageIndex: Math.max(0, buyCategoryPage - 1),
-					searchQuery: buyCategorySearch.trim(),
-				}),
-		  )
-		: null;
-
-	const buySkusData = entityRequests.buy_skus
-		? queryClient.fetchQuery(
-				skuNamesQuery({
-					request,
-					autoRun: entityRequests.buy_skus === "true",
-					group: "buy",
-					pageIndex: Math.max(0, buySkuPage - 1),
-					searchQuery: buySkuSearch.trim(),
-				}),
-		  )
-		: null;
-
-	const buyCollectionsData = entityRequests.buy_collections
-		? queryClient.fetchQuery(
-				collectionsNameQuery({
-					request,
-					autoRun: entityRequests.buy_collections === "true",
-					group: "buy",
-					pageIndex: Math.max(0, buyCollectionPage - 1),
-					searchQuery: buyCollectionSearch.trim(),
-				}),
-		  )
-		: null;
-
-	// Fetch data for "get" group
-	const getCategoriesData = entityRequests.get_categories
-		? queryClient.fetchQuery(
-				categoriesQuery({
-					request,
-					autoRun: entityRequests.get_categories === "true",
-					group: "get",
-					productCount: true,
-					pageIndex: Math.max(0, getCategoryPage - 1),
-					searchQuery: getCategorySearch.trim(),
-				}),
-		  )
-		: null;
-
-	const getSkusData = entityRequests.get_skus
-		? queryClient.fetchQuery(
-				skuNamesQuery({
-					request,
-					autoRun: entityRequests.get_skus === "true",
-					group: "get",
-					pageIndex: Math.max(0, getSkuPage - 1),
-					searchQuery: getSkuSearch.trim(),
-				}),
-		  )
-		: null;
-
-	const getCollectionsData = entityRequests.get_collections
-		? queryClient.fetchQuery(
-				collectionsNameQuery({
-					request,
-					autoRun: entityRequests.get_collections === "true",
-					group: "get",
-					pageIndex: Math.max(0, getCollectionPage - 1),
-					searchQuery: getCollectionSearch.trim(),
-				}),
-		  )
-		: null;
-
-	return {
-		buyCategoriesData,
-		buySkusData,
-		buyCollectionsData,
-		getCategoriesData,
-		getSkusData,
-		getCollectionsData,
-	};
+	return data;
 };
 
 export type CreateCouponsLoader = typeof loader;
@@ -317,7 +254,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		resolver: zodResolver(CouponInputSchema),
 		mode: "onSubmit",
 		defaultValues: {
-			code: "",
+			code: "AZADI-99",
 			status: "true",
 			description: "",
 			one_use_per_customer: "false",
@@ -330,7 +267,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			start_timestamp: getDefaultDates().start_timestamp,
 			end_timestamp: getDefaultDates().end_timestamp, // 5 days ahead of start date by default
 			fixed_products: [],
-			conditions: [], // by default no conditions
+			conditions: [],
 			customer_groups: null,
 			customer_emails: [],
 			buy_x_get_y: {
@@ -382,6 +319,8 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 	const watchedCustomerGroups = useWatch({ control, name: "customer_groups" }) || "";
 	const watchedWantMaxTotalUses = useWatch({ control, name: "want_max_total_uses" });
 	const watchedWantMaxUsesPerOrder = useWatch({ control, name: "want_max_uses_per_order" });
+	const SelectedFixedProductsType = (index: number) =>
+		useWatch({ control, name: `fixed_products.${index}.type` });
 
 	const orderConditionCols: ColumnDef<Condition, unknown>[] = [
 		{
@@ -412,7 +351,27 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			id: "Value",
 			header: "Value",
 			accessorKey: "value",
-			cell: ({ row }) => <ConditionValueCell control={control} index={row.index} name="conditions" />,
+			cell: ({ row }) => (
+				<FormField
+					control={control}
+					name={`conditions.${row.index}.${
+						SelectedFixedProductsType(row.index) === "price" ? "value_decimal" : "value_text"
+					}`}
+					render={({ field }) => (
+						<FormItem>
+							<FormControl>
+								<ConditionValueCell
+									control={control}
+									index={row.index}
+									name="conditions"
+									field={field}
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+			),
 		},
 		{
 			id: "Min. Quantity",
@@ -504,7 +463,25 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			header: "Value",
 			accessorKey: "value",
 			cell: ({ row }) => (
-				<ConditionValueCell control={control} index={row.index} name="fixed_products" />
+				<FormField
+					control={control}
+					name={`fixed_products.${row.index}.${
+						SelectedFixedProductsType(row.index) === "price" ? "value_decimal" : "value_text"
+					}`}
+					render={({ field }) => (
+						<FormItem>
+							<FormControl>
+								<ConditionValueCell
+									control={control}
+									index={row.index}
+									name="fixed_products"
+									field={field}
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
 			),
 		},
 		{
@@ -599,7 +576,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		append_order_field({
 			type: "price",
 			operator: "equal",
-			value_text: "",
+			value_text: [],
 			value_decimal: "",
 			min_quantity: "",
 		});
@@ -609,7 +586,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		append_fix_prd_fields({
 			type: "price",
 			operator: "equal",
-			value_text: "",
+			value_text: [],
 			value_decimal: "",
 			min_quantity: "",
 		});
@@ -634,6 +611,9 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			fixedProductsTable.resetRowSelection();
 		}
 	};
+
+	const [isAppendingOrderCondition, setAppendOrderCondTransition] = useTransition();
+	const [isAppendingFixedProductCondition, setAppendFixedProductCondTransition] = useTransition();
 
 	useEffect(() => {
 		console.log("Errors: ", errors);
@@ -864,7 +844,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 											</div>
 											<DataTable
 												table={fixedProductsTable}
-												customEmptyMessage="No product order conditions added"
+												customEmptyMessage="No target products added"
 												cellClassName="**:data-[slot=table-cell]:last:bg-card"
 												headerClassName="bg-primary-foreground"
 											/>
@@ -887,9 +867,17 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 													type="button"
 													variant="outline"
 													size={"sm"}
-													onClick={appendFixProdCondition}
+													onClick={() => {
+														setAppendFixedProductCondTransition(
+															appendFixProdCondition,
+														);
+													}}
 												>
-													<PlusCircle className="h-4 w-4 mr-2" />
+													{!isAppendingFixedProductCondition ? (
+														<PlusCircle className="h-4 w-4 mr-2" />
+													) : (
+														<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+													)}
 													<span>Add Condition</span>
 												</Button>
 											</div>
@@ -986,9 +974,15 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 												<Button
 													type="button"
 													variant="outline"
-													onClick={appendOrderCondition}
+													onClick={() => {
+														setAppendOrderCondTransition(appendOrderCondition);
+													}}
 												>
-													<PlusCircle className="h-4 w-4 mr-2" />
+													{!isAppendingOrderCondition ? (
+														<PlusCircle className="h-4 w-4 mr-2" />
+													) : (
+														<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+													)}
 													<span>Add Condition</span>
 												</Button>
 											</div>

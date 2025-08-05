@@ -785,6 +785,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		if (sortType) params.set("sortType", sortType);
 
 		navigate(`?${params.toString()}`);
+		setOpen(false);
 	};
 
 	const operatorItems: { value: FilterOp; label: string }[] = filterOps.map((op: FilterOp) => ({
@@ -803,7 +804,6 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 			}),
 			{ replace: true },
 		);
-		setOpen(false);
 	}
 
 	return (
@@ -1085,7 +1085,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 						/>
 
 						{/* Form Actions */}
-						<SheetFooter className="!self-end px-0 w-full">
+						<SheetFooter className="!self-end px-0 w-full **:w-full">
 							<Button type="submit" disabled={isSubmitting}>
 								{isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
 								Apply

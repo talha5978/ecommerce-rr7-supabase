@@ -1,7 +1,7 @@
 import { Form, Link, LoaderFunctionArgs, useLocation, useSearchParams } from "react-router";
 import { Route } from "./+types/sub-categories";
 import { Button } from "~/components/ui/button";
-import { MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, Settings2, TriangleAlert } from "lucide-react";
 import {
 	DataTable,
 	DataTableSkeleton,
@@ -92,12 +92,20 @@ export default function SubCategoriesPage({
 			header: () => "Url Key",
 		},
 		{
-			id: "Description",
-			accessorKey: "description",
-			cell: (info: any) => (
-				<div className="truncate max-w-[300px]">{info.row.original.description}</div>
-			),
-			header: () => "Description",
+			id: "Products",
+			accessorKey: "products_count",
+			cell: (info: any) => {
+				const product_count = info.row.original.products_count ?? 0;
+				const isZero = product_count === 0;
+
+				return (
+					<div className={`${isZero ? "flex gap-2 items-center" : ""}`}>
+						<p className={`${isZero ? "text-destructive" : ""}`}>{product_count}</p>
+						{isZero && <TriangleAlert className="w-4 h-4 text-destructive" />}
+					</div>
+				);
+			},
+			header: () => "Products",
 		},
 		{
 			id: "Created At",

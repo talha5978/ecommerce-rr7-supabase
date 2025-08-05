@@ -88,7 +88,7 @@ const ImageViewer = ({
 												onClick={() => zoomOut()}
 												variant={"ghost"}
 												size={"icon"}
-												className="rounded-full p-2 bg-black/50 text-white transition-colors"
+												className="rounded-full p-2 bg-muted-foreground text-primary-foreground transition-colors"
 												aria-label="Zoom out"
 											>
 												<MinusCircle className="size-6" />
@@ -97,7 +97,7 @@ const ImageViewer = ({
 												onClick={() => zoomIn()}
 												variant={"ghost"}
 												size={"icon"}
-												className="rounded-full p-2 bg-black/50 text-white transition-colors"
+												className="rounded-full p-2 bg-muted-foreground text-primary-foreground transition-colors"
 												aria-label="Zoom in"
 											>
 												<PlusCircle className="size-6" />
@@ -107,15 +107,13 @@ const ImageViewer = ({
 								</>
 							)}
 						</TransformWrapper>
-						<DialogClose asChild>
-							<Button
-								variant={"ghost"}
-								size={"icon"}
-								className="absolute top-4 right-4 z-10 rounded-full bg-black/50 p-2 text-white transition-colors"
+						<DialogClose asChild className="absolute top-4 right-4 z-10">
+							<button
+								className="size-9 rounded-full bg-muted-foreground text-primary-foreground transition-colors duration-200 cursor-pointer flex justify-center items-center"
 								aria-label="Close"
 							>
 								<X className="size-6" />
-							</Button>
+							</button>
 						</DialogClose>
 					</div>
 				</DialogContent>

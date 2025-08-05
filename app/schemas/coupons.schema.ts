@@ -15,7 +15,7 @@ const ConditionSchema = z
 	.object({
 		type: z.enum(DISCOUNT_COND_TYPE_ENUM),
 		operator: z.enum(PRODUCT_COND_OPERATOR_ENUM),
-		value_text: z.string().optional(),
+		value_text: z.array(z.string()).optional(),
 		value_decimal: z.string().optional(),
 		min_quantity: z.string().optional(),
 	})
@@ -121,36 +121,6 @@ export const CouponInputSchema = z
 			return true;
 		},
 		{ message: "Target products are required.", path: ["fixed_products"] },
-	)
-	.refine(
-		(data) => {
-			if (
-				data.discount_type === "buy_x_get_y" &&
-				data.buy_x_get_y?.buy_group?.selected_ids?.length == 0
-			) {
-				return false;
-			}
-			return true;
-		},
-		{
-			message: "Atleast one selection is required.",
-			path: ["buy_x_get_y.buy_group.selected_ids"],
-		},
-	)
-	.refine(
-		(data) => {
-			if (
-				data.discount_type === "buy_x_get_y" &&
-				data.buy_x_get_y?.get_group?.selected_ids?.length == 0
-			) {
-				return false;
-			}
-			return true;
-		},
-		{
-			message: "Atleast one selection is required.",
-			path: ["buy_x_get_y.get_group.selected_ids"],
-		},
 	);
 
 export type CouponFormValues = z.input<typeof CouponInputSchema>;

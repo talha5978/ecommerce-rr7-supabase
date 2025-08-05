@@ -63,7 +63,7 @@ export class CategoryService extends Service {
 				query = query.ilike("category_name", `%${searchQuery}%`);
 			}
 
-			if (pageIndex && pageIndex != undefined) {
+			if (pageIndex != undefined) {
 				// fetch 5 categories at a time in each operation!
 				const smallPageSize = 5;
 				const from = pageIndex * smallPageSize;
@@ -93,7 +93,7 @@ export class CategoryService extends Service {
 									id: subCategory.id,
 									sub_category_name: subCategory.sub_category_name,
 									parent_id: subCategory.parent_id ?? category.id,
-									products_count: (subCategory as any)?.product![0]?.count ?? undefined,
+									products_count: (subCategory as any)?.product![0]?.count ?? 0,
 								};
 							}),
 						};
@@ -105,6 +105,8 @@ export class CategoryService extends Service {
 			if (err instanceof ApiError) {
 				return { categories: [], total: 0, error: err };
 			}
+			console.log(err);
+
 			return {
 				categories: [],
 				total: 0,
@@ -189,7 +191,8 @@ export class CategoryService extends Service {
 				.select(
 					`
 					id, sub_category_name, description, createdAt,
-					${this.META_DETAILS_TABLE}(url_key)
+					${this.META_DETAILS_TABLE}(url_key),
+					${this.PRODUCTS_TABLE}(count)
 				`,
 					{ count: "exact" },
 				)
@@ -216,6 +219,7 @@ export class CategoryService extends Service {
 							url_key: subCategory.meta_details?.url_key,
 							description: subCategory.description,
 							createdAt: subCategory.createdAt,
+							products_count: (subCategory as any)?.product![0]?.count ?? 0,
 						};
 					}) ?? [],
 				total: count ?? 0,

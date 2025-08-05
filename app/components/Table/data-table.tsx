@@ -25,6 +25,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Settings2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { memo } from "react";
 
 interface DataTableProps<T> {
 	table: Table<T>;
@@ -224,7 +225,10 @@ export function DataTable<T>({
 	);
 }
 
-export function DataTableSkeleton({ noOfSkeletons = 8, columns }: DataTableSkeletonProps) {
+export const DataTableSkeleton = memo(function DataTableSkeleton({
+	noOfSkeletons = 8,
+	columns,
+}: DataTableSkeletonProps) {
 	const table = useReactTable({
 		data: [],
 		columns,
@@ -263,7 +267,7 @@ export function DataTableSkeleton({ noOfSkeletons = 8, columns }: DataTableSkele
 			</TableBody>
 		</TableComponent>
 	);
-}
+});
 
 export function TableColumnsToggle<T>({ table }: { table: Table<T> }) {
 	return (
