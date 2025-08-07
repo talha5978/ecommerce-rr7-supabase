@@ -1,22 +1,23 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, UseFieldArrayAppend, useForm, useWatch } from "react-hook-form";
 import {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
 	useActionData,
 	useNavigate,
 	useNavigation,
+	useSearchParams,
 	useSubmit,
 } from "react-router";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
-import { DollarSign, Info, Loader, Loader2, Percent, PlusCircle, RefreshCcw, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useTransition } from "react";
+import { DollarSign, Info, Loader2, Percent, PlusCircle, RefreshCcw, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useTransition } from "react";
 import {
 	TagsInput,
 	TagsInputClear,
@@ -40,7 +41,7 @@ import {
 } from "@tanstack/react-table";
 import { Checkbox } from "~/components/ui/checkbox";
 import { CouponFormValues, CouponInputSchema } from "~/schemas/coupons.schema";
-import type { CouponType, DiscountCondType } from "~/types/coupons";
+import type { CouponType, DiscountCondType, DiscountType } from "~/types/coupons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import DateTimePicker from "~/components/Custom-Inputs/date-time-picker";
 import {
@@ -50,21 +51,27 @@ import {
 	TypeCell,
 } from "~/components/Coupons/TableComponents";
 import {
+	buy_x_get_y_detault_values,
 	CustomerGroupsLabels,
 	discount_type_fields,
-	groups,
+	getAllSearchParams,
+	getDiscountAmntConstraint,
+	resetFieldValsOnTypeChange,
+	resetParamsOnTypeChange,
 	typesToSelect,
 	typeToParamMap,
 } from "~/utils/couponsConstants";
-import { queryClient } from "~/lib/queryClient";
-import { categoriesQuery } from "~/queries/categories.q";
 import { BuyXGetYCard } from "~/components/Coupons/BuyXGetYCard";
-import { skuNamesQuery } from "~/queries/products.q";
-import { collectionsNameQuery } from "~/queries/collections.q";
-import type { Groups, TypesToSelect } from "~/components/Coupons/coupons-comp";
-import { GetAllCategoriesResponse } from "~/types/category";
-import { SKUsNamesListResponse } from "~/types/products";
-import { CollectionsNamesListResponse } from "~/types/collections";
+import { getMappedData } from "~/utils/getCouponsMutationsLoaderData";
+import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+import { Separator } from "~/components/ui/separator";
+import {
+	appendFixProdCondition,
+	appendOrderCondition,
+	FixedProductsCols,
+	OrderConditionsCols,
+	remOrderSelectedRows,
+} from "~/components/Coupons/coupons-mutation-page-tables";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -119,78 +126,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	// }
 };
 
-type FetchDataFuncReturn = Promise<
-	GetAllCategoriesResponse | SKUsNamesListResponse | CollectionsNamesListResponse
-> | null;
-
-type FetchDataFuncProps = {
-	group: Groups;
-	entityType: TypesToSelect;
-	request: Request;
-};
-
-type GroupData = {
-	categoriesData: Promise<GetAllCategoriesResponse> | null;
-	skusData: Promise<SKUsNamesListResponse> | null;
-	collectionsData: Promise<CollectionsNamesListResponse> | null;
-};
-
-const getRelevantData = ({ entityType, group, request }: FetchDataFuncProps): FetchDataFuncReturn => {
-	const searchParams = new URL(request.url).searchParams;
-	const searchKey = `${group}_${entityType}_search`;
-	const pageKey = `${group}_${entityType}_page`;
-	const flagKey = `${group}_${typeToParamMap[entityType]}`;
-	const searchQuery = searchParams.get(searchKey) || "";
-	const page = Number(searchParams.get(pageKey)) || 1;
-	const isRequested = searchParams.get(flagKey) === "true";
-
-	// console.log(`Fetching data for ${group} ${entityType} - Flag ${flagKey}: ${searchParams.get(flagKey)}`);
-
-	if (!isRequested) {
-		// console.log(`Skipping fetch for ${group} ${entityType} because ${flagKey} is not "true"`);
-		return null;
-	}
-
-	const pageIndex = Math.max(0, page - 1);
-	const trimmedSearchQuery = searchQuery.trim();
-
-	switch (entityType) {
-		case "category":
-			return queryClient.fetchQuery(
-				categoriesQuery({
-					request,
-					autoRun: true,
-					group,
-					productCount: true,
-					pageIndex,
-					searchQuery: trimmedSearchQuery,
-				}),
-			);
-		case "sku":
-			return queryClient.fetchQuery(
-				skuNamesQuery({
-					request,
-					autoRun: true,
-					group,
-					pageIndex,
-					searchQuery: trimmedSearchQuery,
-				}),
-			);
-		case "collection":
-			return queryClient.fetchQuery(
-				collectionsNameQuery({
-					request,
-					autoRun: true,
-					group,
-					pageIndex,
-					searchQuery: trimmedSearchQuery,
-				}),
-			);
-		default:
-			return null;
-	}
-};
-
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const couponType = params.couponType;
 
@@ -198,28 +133,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response("Invalid Coupon Type", { status: 404 });
 	}
 
-	const data: Partial<Record<Groups, GroupData>> = {};
-
-	for (const group of groups) {
-		data[group] = {
-			categoriesData: getRelevantData({
-				group: group,
-				entityType: "category",
-				request,
-			}) as Promise<GetAllCategoriesResponse> | null,
-			skusData: getRelevantData({
-				group: group,
-				entityType: "sku",
-				request,
-			}) as Promise<SKUsNamesListResponse> | null,
-			collectionsData: getRelevantData({
-				group: group,
-				entityType: "collection",
-				request,
-			}) as Promise<CollectionsNamesListResponse> | null,
-		};
-	}
-
+	const data = getMappedData({ request });
 	// console.log(data);
 
 	return data;
@@ -242,11 +156,13 @@ function getDefaultDates(): { start_timestamp: Date; end_timestamp: Date } {
 
 type Condition = CouponFormValues["conditions"];
 
-export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
+export default function CreateCouponPage({ loaderData, params }: Route.ComponentProps) {
 	const navigate = useNavigate();
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
+
+	const couponType = params.couponType as CouponType;
 
 	const actionData: ActionResponse = useActionData();
 
@@ -254,7 +170,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		resolver: zodResolver(CouponInputSchema),
 		mode: "onSubmit",
 		defaultValues: {
-			code: "AZADI-99",
+			code: "",
 			status: "true",
 			description: "",
 			one_use_per_customer: "false",
@@ -270,20 +186,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 			conditions: [],
 			customer_groups: null,
 			customer_emails: [],
-			buy_x_get_y: {
-				buy_min_type: "quantity",
-				buy_min_value: "1",
-				get_quantity: "2",
-				get_discount_percent: "100",
-				buy_group: {
-					type: "sku",
-					selected_ids: [],
-				},
-				get_group: {
-					type: "sku",
-					selected_ids: [],
-				},
-			},
+			buy_x_get_y: buy_x_get_y_detault_values,
 		},
 	});
 
@@ -293,6 +196,7 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		control,
 		setValue,
 		formState: { errors },
+		resetField,
 	} = form;
 
 	const {
@@ -316,111 +220,58 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 	console.log("Re rendering..");
 
 	const watchedDiscountType = useWatch({ control, name: "discount_type" });
+	// Keep track of previous discount type for resetting fields and params ⬇
+	const prevDiscountType = useRef(watchedDiscountType);
 	const watchedCustomerGroups = useWatch({ control, name: "customer_groups" }) || "";
 	const watchedWantMaxTotalUses = useWatch({ control, name: "want_max_total_uses" });
 	const watchedWantMaxUsesPerOrder = useWatch({ control, name: "want_max_uses_per_order" });
 	const SelectedFixedProductsType = (index: number) =>
-		useWatch({ control, name: `fixed_products.${index}.type` });
+		useWatch({ control, name: `fixed_products.${index}.type` }) as DiscountCondType;
+	const SelectedCouponsCondsType = (index: number) =>
+		useWatch({ control, name: `conditions.${index}.type` }) as DiscountCondType;
 
-	const orderConditionCols: ColumnDef<Condition, unknown>[] = [
-		{
-			id: "select",
-			header: ({ table }) => TableRowSelector({ name: "conditions" }).header({ table }),
-			cell: ({ row }) => TableRowSelector({ name: "conditions" }).cell({ row }),
-			enableSorting: false,
-			enableHiding: false,
-		},
-		{
-			id: "Type",
-			accessorKey: "type",
-			header: "Type",
-			enableHiding: false,
-			cell: ({ row }) => (
-				<TypeCell index={row.index} control={control} setValue={setValue} name="conditions" />
-			),
-		},
-		{
-			id: "Operator",
-			accessorKey: "operator",
-			header: "Operator",
-			cell: ({ row }) => (
-				<ConditionOperatorCell control={control} index={row.index} name="conditions" />
-			),
-		},
-		{
-			id: "Value",
-			header: "Value",
-			accessorKey: "value",
-			cell: ({ row }) => (
-				<FormField
-					control={control}
-					name={`conditions.${row.index}.${
-						SelectedFixedProductsType(row.index) === "price" ? "value_decimal" : "value_text"
-					}`}
-					render={({ field }) => (
-						<FormItem>
-							<FormControl>
-								<ConditionValueCell
-									control={control}
-									index={row.index}
-									name="conditions"
-									field={field}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-			),
-		},
-		{
-			id: "Min. Quantity",
-			accessorKey: "min_quantity",
-			header: "Min. Quantity",
-			cell: ({ row }) => {
-				const index = row.index;
-				return (
-					<FormField
-						control={control}
-						name={`conditions.${index}.min_quantity`}
-						render={({ field }) => (
-							<Input
-								type="number"
-								placeholder="e.g. 1"
-								min={1}
-								minLength={1}
-								className="max-w-[5rem]"
-								{...field}
-							/>
-						)}
-					/>
-				);
-			},
-		},
-		{
-			id: "actions",
-			cell: ({ row }) => {
-				return (
-					<Button
-						type="button"
-						variant="destructive"
-						className={"size-8"}
-						onClick={() => remove_order_fields(row.index)}
-					>
-						<Trash2 className="!h-4 !w-4" />
-					</Button>
-				);
-			},
-		},
-	];
+	const [searchParams, setSearchParams] = useSearchParams();
+	const suppressNavigation = useSuppressTopLoadingBar();
 
-	const orderCols = useMemo(() => orderConditionCols, []);
+	const resetProductsFieldVals = useCallback(() => {
+		resetFieldValsOnTypeChange({
+			prevDiscountType: prevDiscountType.current,
+			resetField,
+			setValue,
+		});
+	}, [prevDiscountType]);
+
+	const resetParamsonTypeChange = useCallback(() => {
+		// Clear related search parameters
+		resetParamsOnTypeChange({
+			searchParams,
+			suppressNavigation,
+		});
+	}, [searchParams, suppressNavigation]);
+
+	// Reset form fields and search params when discount_type changes
+	useEffect(() => {
+		if (prevDiscountType.current !== watchedDiscountType) {
+			// Reset form fields based on previous discount type
+			resetProductsFieldVals();
+			resetParamsonTypeChange();
+
+			// Update previous discount type
+			prevDiscountType.current = watchedDiscountType;
+			console.clear();
+		}
+	}, [watchedDiscountType, form, searchParams, setSearchParams, suppressNavigation]);
 
 	// console.log(order_fields);
 
 	const conditionsTable = useReactTable({
-		data: order_fields,
-		columns: orderCols as any,
+		data: order_fields as any,
+		columns: OrderConditionsCols({
+			control,
+			remove_fields: remove_order_fields,
+			selectedType: SelectedCouponsCondsType,
+			setValue,
+		}),
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
@@ -433,81 +284,14 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		},
 	});
 
-	const fixedProductsCols: ColumnDef<Condition, unknown>[] = [
-		{
-			id: "select",
-			header: ({ table }) => TableRowSelector({ name: "fixed_products" }).header({ table }),
-			cell: ({ row }) => TableRowSelector({ name: "fixed_products" }).cell({ row }),
-			enableSorting: false,
-			enableHiding: false,
-		},
-		{
-			id: "Type",
-			accessorKey: "type",
-			header: "Type",
-			enableHiding: false,
-			cell: ({ row }) => (
-				<TypeCell index={row.index} control={control} setValue={setValue} name="fixed_products" />
-			),
-		},
-		{
-			id: "Operator",
-			accessorKey: "operator",
-			header: "Operator",
-			cell: ({ row }) => (
-				<ConditionOperatorCell control={control} index={row.index} name="fixed_products" />
-			),
-		},
-		{
-			id: "Value",
-			header: "Value",
-			accessorKey: "value",
-			cell: ({ row }) => (
-				<FormField
-					control={control}
-					name={`fixed_products.${row.index}.${
-						SelectedFixedProductsType(row.index) === "price" ? "value_decimal" : "value_text"
-					}`}
-					render={({ field }) => (
-						<FormItem>
-							<FormControl>
-								<ConditionValueCell
-									control={control}
-									index={row.index}
-									name="fixed_products"
-									field={field}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-			),
-		},
-		{
-			id: "actions",
-			cell: ({ row }) => {
-				return (
-					<div className="flex items-center justify-center">
-						<Button
-							type="button"
-							variant="destructive"
-							className={"size-8"}
-							onClick={() => remove_fix_prd_fields(row.index)}
-						>
-							<Trash2 className="!h-4 !w-4" />
-						</Button>
-					</div>
-				);
-			},
-		},
-	];
-
-	const fixProdCols = useMemo(() => fixedProductsCols, []);
-
 	const fixedProductsTable = useReactTable({
 		data: fixed_prodcts_fields as any,
-		columns: fixProdCols,
+		columns: FixedProductsCols({
+			control,
+			setValue,
+			selectedType: SelectedFixedProductsType,
+			remove_fields: remove_fix_prd_fields,
+		}),
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
@@ -543,74 +327,9 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 		console.log("🔤 Form values: ", values);
 	}
 
-	const getDiscountAmntConstraint = (comp: "label" | "icon") => {
-		if (watchedDiscountType === "fixed_order" || watchedDiscountType === "fixed_product") {
-			return comp === "label" ? (
-				"Amount"
-			) : (
-				<DollarSign className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground  " />
-			);
-		} else if (
-			watchedDiscountType === "percentage_order" ||
-			watchedDiscountType === "percentage_product"
-		) {
-			return comp === "label" ? (
-				"Percentage"
-			) : (
-				<Percent className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground  " />
-			);
-		} else {
-			return comp === "label" ? (
-				"Value"
-			) : (
-				<PlusCircle className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground   rotate-45" />
-			);
-		}
-	};
-
 	const isFixedProdctsEnabled =
 		watchedDiscountType === "fixed_product" || watchedDiscountType === "percentage_product";
 	const isBuyXGetYEnabled = watchedDiscountType === "buy_x_get_y";
-
-	const appendOrderCondition = () => {
-		append_order_field({
-			type: "price",
-			operator: "equal",
-			value_text: [],
-			value_decimal: "",
-			min_quantity: "",
-		});
-	};
-
-	const appendFixProdCondition = () => {
-		append_fix_prd_fields({
-			type: "price",
-			operator: "equal",
-			value_text: [],
-			value_decimal: "",
-			min_quantity: "",
-		});
-	};
-
-	const remOrderSelectedRows = (tableName: "conditionsTable" | "fixedProductsTable") => {
-		if (tableName === "conditionsTable") {
-			const selectedIndices = conditionsTable
-				.getSelectedRowModel()
-				.rows.map((row) => row.index)
-				.sort((a, b) => b - a);
-
-			remove_order_fields(selectedIndices);
-			conditionsTable.resetRowSelection();
-		} else if (tableName === "fixedProductsTable") {
-			const selectedIndices = fixedProductsTable
-				.getSelectedRowModel()
-				.rows.map((row) => row.index)
-				.sort((a, b) => b - a);
-
-			remove_fix_prd_fields(selectedIndices);
-			fixedProductsTable.resetRowSelection();
-		}
-	};
 
 	const [isAppendingOrderCondition, setAppendOrderCondTransition] = useTransition();
 	const [isAppendingFixedProductCondition, setAppendFixedProductCondTransition] = useTransition();
@@ -632,11 +351,11 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 					<h1 className="text-2xl font-semibold">Create Coupon</h1>
 				</div>
 
-				<form className="space-y-4" onSubmit={handleSubmit(onFormSubmit)}>
-					<Form {...form}>
-						<section className="grid grid-cols-8 gap-4">
-							{/* LEFT SIDE: General Card */}
-							<Card className="md:col-span-5 col-span-8">
+				<form className="space-y-6" onSubmit={handleSubmit(onFormSubmit)}>
+					<div className="grid gap-4 grid-cols-8 *:col-span-8">
+						<Form {...form}>
+							{/* General Card */}
+							<Card>
 								<CardHeader>
 									<CardTitle className="text-lg">General</CardTitle>
 								</CardHeader>
@@ -649,7 +368,11 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 											<FormItem>
 												<FormLabel>Code</FormLabel>
 												<FormControl>
-													<Input placeholder="e.g. AZADI76" {...field} />
+													<Input
+														placeholder="e.g. AZADI76"
+														className="font-mono"
+														{...field}
+													/>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -672,232 +395,191 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 											</FormItem>
 										)}
 									/>
+									<div>
+										<p className="text-muted-foreground italic text-sm">
+											{couponType === "automatic"
+												? "This coupon will automatically apply to the order when required conditions are met."
+												: "The customers will have to manually enter the code at checkout to avail discount."}
+										</p>
+									</div>
 								</CardContent>
 							</Card>
 
-							{/* Right Side: Coupon Validity Dates */}
-							<Card className="md:col-span-3 col-span-8">
+							{/* Discount Selection Card */}
+							<Card>
 								<CardHeader>
-									<CardTitle className="text-lg">Coupon Validity</CardTitle>
+									<CardTitle className="text-lg">Discount Selection</CardTitle>
 								</CardHeader>
-								<CardContent className="space-y-4">
-									{/* start_timestamp */}
-									<Controller
-										control={control}
-										name="start_timestamp"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>Start Date & Time</FormLabel>
-												<FormControl>
-													<DateTimePicker
-														value={field.value ?? null}
-														onDateTimeChange={field.onChange}
-														disabled={isSubmitting}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									{/* end_timestamp */}
-									<Controller
-										control={control}
-										name="end_timestamp"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>End Date & Time</FormLabel>
-												<FormControl>
-													<DateTimePicker
-														value={field.value ?? null}
-														onDateTimeChange={field.onChange}
-														disabled={isSubmitting}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									{/* Status */}
-									<FormField
-										control={control}
-										name="status"
-										render={({ field }) => (
-											<FormItem className="space-y-1 mt-6">
-												<FormLabel>Visibility Status</FormLabel>
-												<FormControl>
-													<RadioGroup
-														onValueChange={field.onChange}
-														value={field.value}
-													>
-														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem value="true" id="status-active" />
-															<Label htmlFor="status-active">Active</Label>
-														</div>
-														<div className="flex items-center gap-3 *:cursor-pointer">
-															<RadioGroupItem
-																value="false"
-																id="status-inactive"
+								<CardContent className="space-y-8">
+									{/* Discount Type Selection */}
+									<div className="flex flex-col gap-2">
+										<Label className="text-md font-semibold">Type</Label>
+										<section className="grid md:grid-cols-5 grid-cols-1 gap-6">
+											<div className="md:col-span-3">
+												<FormField
+													control={control}
+													name="discount_type"
+													render={({ field }) => (
+														<FormItem className="space-y-1">
+															<FormControl>
+																<RadioGroup
+																	onValueChange={field.onChange}
+																	value={field.value}
+																>
+																	{discount_type_fields.map(
+																		(discount_type) => (
+																			<div
+																				key={discount_type.value}
+																				className="flex items-center gap-3 *:cursor-pointer"
+																			>
+																				<RadioGroupItem
+																					value={
+																						discount_type.value
+																					}
+																					id={discount_type.value}
+																				/>
+																				<Label
+																					htmlFor={
+																						discount_type.value
+																					}
+																				>
+																					{discount_type.label}
+																				</Label>
+																			</div>
+																		),
+																	)}
+																</RadioGroup>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+											</div>
+											<Card className="md:col-span-2 p-4 gap-1 h-fit max-md:hidden">
+												<CardTitle className="text-sm font-medium mb-2 flex gap-2 items-center">
+													<span>
+														<Info className="h-4 w-4" />
+													</span>
+													<p>Example</p>
+												</CardTitle>
+												<p className="text-sm text-muted-foreground mb-1">
+													{discount_type_fields.find(
+														(discount_type) =>
+															discount_type.value === watchedDiscountType,
+													)?.example || "Select a discount type to see an example."}
+												</p>
+											</Card>
+										</section>
+									</div>
+									{/* Discount Value */}
+									{watchedDiscountType !== "buy_x_get_y" && (
+										<FormField
+											control={control}
+											name="discount_value"
+											render={({ field }) => (
+												<FormItem className={`max-w-[350px]`}>
+													<FormLabel className="text-md font-semibold">
+														Discount{" "}
+														{getDiscountAmntConstraint(
+															"label",
+															watchedDiscountType,
+														)}
+													</FormLabel>
+													<FormControl>
+														<div className="relative">
+															<Input
+																type="number"
+																placeholder="e.g. 10"
+																className="pr-9"
+																{...field}
 															/>
-															<Label htmlFor="status-inactive">Inactive</Label>
+															{getDiscountAmntConstraint(
+																"icon",
+																watchedDiscountType,
+															)}
 														</div>
-													</RadioGroup>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									)}
+									{/* Table according to the selected discount type */}
+									{isFixedProdctsEnabled ? (
+										<section className="flex flex-col gap-3">
+											<Label className="text-md font-semibold">Target Products</Label>
+											<div className="flex flex-col gap-3">
+												<div className="flex justify-end">
+													<TableColumnsToggle table={fixedProductsTable} />
+												</div>
+												<DataTable
+													table={fixedProductsTable}
+													customEmptyMessage="No target products added"
+													cellClassName="**:data-[slot=table-cell]:last:bg-card"
+													headerClassName="bg-primary-foreground"
+												/>
+												<div className="flex justify-end gap-2">
+													{fixed_prodcts_fields.length > 0 &&
+														fixedProductsTable.getSelectedRowModel().rows.length >
+															0 && (
+															<Button
+																type="button"
+																variant="destructive"
+																onClick={() =>
+																	remOrderSelectedRows({
+																		tableName: "fixedProductsTable",
+																		table: fixedProductsTable,
+																		remove_fields: remove_fix_prd_fields,
+																	})
+																}
+															>
+																<Trash2 className="h-4 w-4 mr-2" />
+																<span>Delete</span>
+															</Button>
+														)}
+													<Button
+														type="button"
+														variant="outline"
+														size={"sm"}
+														onClick={() => {
+															const func =
+																appendFixProdCondition(append_fix_prd_fields);
+															setAppendFixedProductCondTransition(func);
+														}}
+													>
+														{!isAppendingFixedProductCondition ? (
+															<PlusCircle className="h-4 w-4 mr-2" />
+														) : (
+															<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+														)}
+														<span>Add Condition</span>
+													</Button>
+												</div>
+											</div>
+										</section>
+									) : isBuyXGetYEnabled ? (
+										<BuyXGetYCard
+											control={control}
+											disabled={watchedDiscountType !== "buy_x_get_y" || isSubmitting}
+										/>
+									) : null}
+									{watchedDiscountType === "buy_x_get_y" && errors?.buy_x_get_y && (
+										<p className="text-sm text-destructive">
+											{errors.buy_x_get_y.message}
+										</p>
+									)}
+									{(watchedDiscountType === "fixed_product" ||
+										watchedDiscountType === "percentage_product") &&
+										errors?.fixed_products && (
+											<p className="text-sm text-destructive">
+												{errors.fixed_products.message}
+											</p>
 										)}
-									/>
 								</CardContent>
 							</Card>
-						</section>
 
-						{/* Discount Selection Card */}
-						<Card>
-							<CardHeader>
-								<CardTitle className="text-lg">Discount Selection</CardTitle>
-							</CardHeader>
-							<CardContent className="grid gap-8">
-								{/* Discount Type Selection */}
-								<div className="grid gap-3">
-									<Label className="text-md font-semibold">Type</Label>
-									<section className="grid md:grid-cols-3 grid-cols-1 gap-6">
-										<div className="md:col-span-2">
-											<FormField
-												control={control}
-												name="discount_type"
-												render={({ field }) => (
-													<FormItem className="space-y-1">
-														<FormControl>
-															<RadioGroup
-																onValueChange={field.onChange}
-																value={field.value}
-															>
-																{discount_type_fields.map((discount_type) => (
-																	<div
-																		key={discount_type.value}
-																		className="flex items-center gap-3 *:cursor-pointer"
-																	>
-																		<RadioGroupItem
-																			value={discount_type.value}
-																			id={discount_type.value}
-																		/>
-																		<Label htmlFor={discount_type.value}>
-																			{discount_type.label}
-																		</Label>
-																	</div>
-																))}
-															</RadioGroup>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-										</div>
-										<Card className="md:col-span-1 p-4 gap-1 h-fit max-md:hidden">
-											<CardTitle className="text-sm font-medium mb-2 flex gap-2 items-center">
-												<span>
-													<Info className="h-4 w-4" />
-												</span>
-												<p>Example</p>
-											</CardTitle>
-											<p className="text-sm text-muted-foreground mb-1">
-												{discount_type_fields.find(
-													(discount_type) =>
-														discount_type.value === watchedDiscountType,
-												)?.example || "Select a discount type to see an example."}
-											</p>
-										</Card>
-									</section>
-								</div>
-								{/* Discount Value */}
-								{watchedDiscountType !== "buy_x_get_y" && (
-									<FormField
-										control={control}
-										name="discount_value"
-										render={({ field }) => (
-											<FormItem className={`max-w-[350px]`}>
-												<FormLabel className="text-md font-semibold">
-													Discount {getDiscountAmntConstraint("label")}
-												</FormLabel>
-												<FormControl>
-													<div className="relative">
-														<Input
-															type="number"
-															placeholder="e.g. 10"
-															className="pr-9"
-															{...field}
-														/>
-														{getDiscountAmntConstraint("icon")}
-													</div>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								)}
-								{/* Table according to the selected discount type */}
-								{isFixedProdctsEnabled ? (
-									<section className="grid gap-3">
-										<Label className="text-md font-semibold">Target Products</Label>
-										<div className="flex flex-col gap-3">
-											<div className="flex justify-end">
-												<TableColumnsToggle table={fixedProductsTable} />
-											</div>
-											<DataTable
-												table={fixedProductsTable}
-												customEmptyMessage="No target products added"
-												cellClassName="**:data-[slot=table-cell]:last:bg-card"
-												headerClassName="bg-primary-foreground"
-											/>
-											<div className="flex justify-end gap-2">
-												{fixed_prodcts_fields.length > 0 &&
-													fixedProductsTable.getSelectedRowModel().rows.length >
-														0 && (
-														<Button
-															type="button"
-															variant="destructive"
-															onClick={() =>
-																remOrderSelectedRows("fixedProductsTable")
-															}
-														>
-															<Trash2 className="h-4 w-4 mr-2" />
-															<span>Delete</span>
-														</Button>
-													)}
-												<Button
-													type="button"
-													variant="outline"
-													size={"sm"}
-													onClick={() => {
-														setAppendFixedProductCondTransition(
-															appendFixProdCondition,
-														);
-													}}
-												>
-													{!isAppendingFixedProductCondition ? (
-														<PlusCircle className="h-4 w-4 mr-2" />
-													) : (
-														<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-													)}
-													<span>Add Condition</span>
-												</Button>
-											</div>
-										</div>
-									</section>
-								) : isBuyXGetYEnabled ? (
-									<BuyXGetYCard
-										control={control}
-										disabled={watchedDiscountType !== "buy_x_get_y" || isSubmitting}
-									/>
-								) : null}
-								{errors?.buy_x_get_y && (
-									<p className="text-sm text-destructive">{errors.buy_x_get_y.message}</p>
-								)}
-							</CardContent>
-						</Card>
-
-						<section className="grid grid-cols-8 gap-4">
-							{/* LEFT SIDE: Order conditions Card */}
-							<Card className="md:col-span-5 col-span-8">
+							{/* Order conditions Card */}
+							<Card>
 								<CardHeader>
 									<CardTitle className="text-lg">Order Conditions</CardTitle>
 								</CardHeader>
@@ -964,7 +646,11 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 															type="button"
 															variant="destructive"
 															onClick={() =>
-																remOrderSelectedRows("fixedProductsTable")
+																remOrderSelectedRows({
+																	tableName: "conditionsTable",
+																	table: conditionsTable,
+																	remove_fields: remove_order_fields,
+																})
 															}
 														>
 															<Trash2 className="h-4 w-4 mr-2" />
@@ -975,7 +661,8 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 													type="button"
 													variant="outline"
 													onClick={() => {
-														setAppendOrderCondTransition(appendOrderCondition);
+														const func = appendOrderCondition(append_order_field);
+														setAppendOrderCondTransition(func);
 													}}
 												>
 													{!isAppendingOrderCondition ? (
@@ -986,6 +673,11 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 													<span>Add Condition</span>
 												</Button>
 											</div>
+											{errors?.conditions?.root && (
+												<p className="text-sm text-destructive">
+													{errors.conditions.root.message}
+												</p>
+											)}
 										</div>
 									</section>
 									{/* Max. uses per order */}
@@ -1040,213 +732,298 @@ export default function CreateCouponPage({ loaderData }: Route.ComponentProps) {
 								</CardContent>
 							</Card>
 
-							{/* Right Side: Customer conditions Card */}
-							<Card className="md:col-span-3 col-span-8 h-fit">
-								<CardHeader>
-									<CardTitle className="text-lg">Customer conditions</CardTitle>
-								</CardHeader>
-								<CardContent className="space-y-4">
-									{/* Customer Groups */}
-									<FormField
-										control={control}
-										name={"customer_groups"}
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>Customer Groups</FormLabel>
-												<FormControl>
-													<Select
-														value={field.value == null ? "" : field.value}
-														onValueChange={field.onChange}
-													>
-														<SelectTrigger className="w-full">
-															<SelectValue placeholder="Select customer group" />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem
-																className="text-muted-foreground"
-																value={null as any}
-																defaultChecked
-															>
-																Select customer group
-															</SelectItem>
-															{DISCOUNT_CUSTOMER_TYPE_ENUM.map((group) => (
-																<SelectItem
-																	key={group}
-																	value={group}
-																	className="flex gap-2"
-																>
-																	<span>
-																		{CustomerGroupsLabels[group].icon}
-																	</span>
-																	<span>
-																		{CustomerGroupsLabels[group].label}
-																	</span>
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									{/* Customer Emails */}
-									<FormField
-										control={control}
-										name="customer_emails"
-										render={({ field, fieldState }) => (
-											<FormItem>
-												<FormLabel className="flex gap-2">
-													<span>Customer Emails</span>
-													<span className="text-muted-foreground">
-														(Empty for all)
-													</span>
-												</FormLabel>
-												<FormControl>
-													<TagsInput
-														value={field.value}
-														onValueChange={field.onChange}
-														editable
-														addOnPaste
-														className="w-full"
-														aria-invalid={!!fieldState.error}
-														inputMode="email"
-														disabled={
-															watchedCustomerGroups === "" ||
-															watchedCustomerGroups === null
-														}
-													>
-														<div className="flex sm:flex-row flex-col gap-2">
-															<TagsInputList>
-																{field.value && Array.isArray(field.value)
-																	? field.value.map((item) => (
-																			<TagsInputItem
-																				key={item}
-																				value={item}
-																			>
-																				{item}
-																			</TagsInputItem>
-																	  ))
-																	: null}
-																<TagsInputInput placeholder="Add customer emails..." />
-															</TagsInputList>
-															<TagsInputClear className="sm:w-fit w-full">
-																<div className="tags-input-clear-container">
-																	<RefreshCcw className="h-4 w-4" />
-																	<span className="sm:hidden inline">
-																		Clear
-																	</span>
-																</div>
-															</TagsInputClear>
-														</div>
-													</TagsInput>
-												</FormControl>
-												{errors.customer_emails &&
-													Array.isArray(errors.customer_emails) &&
-													errors.customer_emails.length > 0 && (
-														<div>
-															<p className="text-sm text-destructive">
-																{errors.customer_emails.some(
-																	(error) => error?.message,
-																) &&
-																	errors.customer_emails.find(
-																		(error) => error?.message,
-																	)?.message}
-															</p>
-														</div>
-													)}
-											</FormItem>
-										)}
-									/>
-								</CardContent>
-							</Card>
-						</section>
-
-						{/* Max. total uses and only one use for customer fields */}
-						<Card>
-							<CardHeader>
-								<CardTitle className="text-lg">Usage Limits</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-6">
-								<div className="space-y-4">
-									<FormField
-										control={control}
-										name="want_max_total_uses"
-										render={({ field }) => (
-											<FormItem>
-												<FormControl>
-													<Label className="flex items-center cursor-pointer">
-														<Checkbox
-															checked={field.value === "yes"}
-															onCheckedChange={() =>
-																field.onChange(
-																	field.value === "no" ? "yes" : "no",
-																)
-															}
-															className="mr-2"
-														/>
-														Limit number of times this discount can be used in
-														total
-													</Label>
-												</FormControl>
-											</FormItem>
-										)}
-									/>
-									{watchedWantMaxTotalUses && watchedWantMaxTotalUses === "yes" && (
+							<div className="grid grid-cols-8 gap-4 *:md:col-span-4 *:col-span-8">
+								{/* Customer conditions Card */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="text-lg">Customer conditions</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										{/* Customer Groups */}
 										<FormField
 											control={control}
-											name="max_total_uses"
+											name={"customer_groups"}
 											render={({ field }) => (
-												<FormItem className="max-w-[350px]">
-													<FormLabel>Max. total uses</FormLabel>
+												<FormItem>
+													<FormLabel>Customer Groups</FormLabel>
 													<FormControl>
-														<Input
-															type="number"
-															min={watchedWantMaxTotalUses ? 1 : 0}
-															minLength={watchedWantMaxTotalUses ? 1 : 0}
-															placeholder="e.g. 100"
-															{...field}
+														<Select
+															value={field.value == null ? "" : field.value}
+															onValueChange={field.onChange}
+														>
+															<SelectTrigger className="w-full">
+																<SelectValue placeholder="Select customer group" />
+															</SelectTrigger>
+															<SelectContent>
+																<SelectItem
+																	className="text-muted-foreground"
+																	value={null as any}
+																	defaultChecked
+																>
+																	Select customer group
+																</SelectItem>
+																{DISCOUNT_CUSTOMER_TYPE_ENUM.map((group) => (
+																	<SelectItem
+																		key={group}
+																		value={group}
+																		className="flex gap-2"
+																	>
+																		<span>
+																			{CustomerGroupsLabels[group].icon}
+																		</span>
+																		<span>
+																			{
+																				CustomerGroupsLabels[group]
+																					.label
+																			}
+																		</span>
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										{/* Customer Emails */}
+										<FormField
+											control={control}
+											name="customer_emails"
+											render={({ field, fieldState }) => (
+												<FormItem>
+													<FormLabel className="flex gap-2">
+														<span>Customer Emails</span>
+														<span className="text-muted-foreground">
+															(Empty for all)
+														</span>
+													</FormLabel>
+													<FormControl>
+														<TagsInput
+															value={field.value}
+															onValueChange={field.onChange}
+															editable
+															addOnPaste
+															className="w-full"
+															aria-invalid={!!fieldState.error}
+															inputMode="email"
+															disabled={
+																watchedCustomerGroups === "" ||
+																watchedCustomerGroups === null
+															}
+														>
+															<div className="flex sm:flex-row flex-col gap-2">
+																<TagsInputList>
+																	{field.value && Array.isArray(field.value)
+																		? field.value.map((item) => (
+																				<TagsInputItem
+																					key={item}
+																					value={item}
+																				>
+																					{item}
+																				</TagsInputItem>
+																		  ))
+																		: null}
+																	<TagsInputInput placeholder="Add customer emails..." />
+																</TagsInputList>
+																<TagsInputClear className="sm:w-fit w-full">
+																	<div className="tags-input-clear-container">
+																		<RefreshCcw className="h-4 w-4" />
+																		<span className="sm:hidden inline">
+																			Clear
+																		</span>
+																	</div>
+																</TagsInputClear>
+															</div>
+														</TagsInput>
+													</FormControl>
+													{errors.customer_emails &&
+														Array.isArray(errors.customer_emails) &&
+														errors.customer_emails.length > 0 && (
+															<div>
+																<p className="text-sm text-destructive">
+																	{errors.customer_emails.some(
+																		(error) => error?.message,
+																	) &&
+																		errors.customer_emails.find(
+																			(error) => error?.message,
+																		)?.message}
+																</p>
+															</div>
+														)}
+												</FormItem>
+											)}
+										/>
+									</CardContent>
+								</Card>
+								{/* Coupon Validity Dates */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="text-lg">Coupon Validity</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										{/* start_timestamp */}
+										<Controller
+											control={control}
+											name="start_timestamp"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Start Date & Time</FormLabel>
+													<FormControl>
+														<DateTimePicker
+															value={field.value ?? null}
+															onDateTimeChange={field.onChange}
+															disabled={isSubmitting}
 														/>
 													</FormControl>
 													<FormMessage />
 												</FormItem>
 											)}
 										/>
-									)}
-								</div>
-								<FormField
-									control={control}
-									name="one_use_per_customer"
-									render={({ field }) => (
-										<FormItem>
-											<FormControl>
-												<Label className="flex items-center cursor-pointer">
-													<Checkbox
-														checked={field.value === "true"}
-														onCheckedChange={() =>
-															field.onChange(
-																field.value === "false" ? "true" : "false",
-															)
-														}
-														className="mr-2"
-													/>
-													Limit to one use per customer
-												</Label>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-							</CardContent>
-						</Card>
+										{/* end_timestamp */}
+										<Controller
+											control={control}
+											name="end_timestamp"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>End Date & Time</FormLabel>
+													<FormControl>
+														<DateTimePicker
+															value={field.value ?? null}
+															onDateTimeChange={field.onChange}
+															disabled={isSubmitting}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										{/* Status */}
+										<FormField
+											control={control}
+											name="status"
+											render={({ field }) => (
+												<FormItem className="space-y-1 mt-6">
+													<FormLabel>Visibility Status</FormLabel>
+													<FormControl>
+														<RadioGroup
+															onValueChange={field.onChange}
+															value={field.value}
+														>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem
+																	value="true"
+																	id="status-active"
+																/>
+																<Label htmlFor="status-active">Active</Label>
+															</div>
+															<div className="flex items-center gap-3 *:cursor-pointer">
+																<RadioGroupItem
+																	value="false"
+																	id="status-inactive"
+																/>
+																<Label htmlFor="status-inactive">
+																	Inactive
+																</Label>
+															</div>
+														</RadioGroup>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</CardContent>
+								</Card>
+							</div>
 
-						{/* Submit Button */}
-						<section className="flex justify-end md:col-span-3">
-							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting && <Loader2 className="animate-spin mr-2" />}
-								<span>Create</span>
-							</Button>
-						</section>
-					</Form>
+							{/* Max. total uses and only one use for customer fields */}
+							<Card>
+								<CardHeader>
+									<CardTitle className="text-lg">Usage Limits</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-6">
+									<div className="space-y-4">
+										<FormField
+											control={control}
+											name="want_max_total_uses"
+											render={({ field }) => (
+												<FormItem>
+													<FormControl>
+														<Label className="flex items-center cursor-pointer">
+															<Checkbox
+																checked={field.value === "yes"}
+																onCheckedChange={() =>
+																	field.onChange(
+																		field.value === "no" ? "yes" : "no",
+																	)
+																}
+																className="mr-2"
+															/>
+															Limit number of times this discount can be used in
+															total
+														</Label>
+													</FormControl>
+												</FormItem>
+											)}
+										/>
+										{watchedWantMaxTotalUses && watchedWantMaxTotalUses === "yes" && (
+											<FormField
+												control={control}
+												name="max_total_uses"
+												render={({ field }) => (
+													<FormItem className="max-w-[350px]">
+														<FormLabel>Max. total uses</FormLabel>
+														<FormControl>
+															<Input
+																type="number"
+																min={watchedWantMaxTotalUses ? 1 : 0}
+																minLength={watchedWantMaxTotalUses ? 1 : 0}
+																placeholder="e.g. 100"
+																{...field}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										)}
+									</div>
+									<FormField
+										control={control}
+										name="one_use_per_customer"
+										render={({ field }) => (
+											<FormItem>
+												<FormControl>
+													<Label className="flex items-center cursor-pointer">
+														<Checkbox
+															checked={field.value === "true"}
+															onCheckedChange={() =>
+																field.onChange(
+																	field.value === "false"
+																		? "true"
+																		: "false",
+																)
+															}
+															className="mr-2"
+														/>
+														Limit to one use per customer
+													</Label>
+												</FormControl>
+											</FormItem>
+										)}
+									/>
+								</CardContent>
+							</Card>
+						</Form>
+					</div>
+
+					{/* Submit Button */}
+					<div className="flex justify-end">
+						<Button type="submit" disabled={isSubmitting}>
+							{isSubmitting && <Loader2 className="animate-spin mr-2" />}
+							<span>Create</span>
+						</Button>
+					</div>
 				</form>
 			</section>
 		</>

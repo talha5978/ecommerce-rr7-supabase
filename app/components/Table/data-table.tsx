@@ -110,38 +110,37 @@ export function DataTable<T>({
 				<TableBody
 					className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}
 				>
-					<AnimatePresence>
-						{table.getRowModel().rows?.length > 0 ? (
-							table.getRowModel().rows.map((row) => (
-								<motion.tr
-									key={row.id}
-									data-state={row.getIsSelected() && "selected"}
-									initial="hidden"
-									animate="visible"
-									exit="exit"
-									variants={rowVariants}
-									transition={{ duration: 0.3 }}
-									data-slot="table-row"
-									className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
-								>
-									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
-											{flexRender(cell.column.columnDef.cell, cell.getContext())}
-										</TableCell>
-									))}
-								</motion.tr>
-							))
-						) : (
-							<TableRow>
-								<TableCell
-									colSpan={table.getAllColumns().length}
-									className="h-36 text-center select-none text-muted-foreground"
-								>
-									<p className="text-sm">{customEmptyMessage ?? "No results found"}</p>
-								</TableCell>
-							</TableRow>
-						)}
-					</AnimatePresence>
+					{/* <AnimatePresence> */}
+					{table.getRowModel().rows?.length > 0 ? (
+						table.getRowModel().rows.map((row) => (
+							<motion.tr
+								key={row.id}
+								id={row.id}
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ duration: 0.4, ease: "easeOut" }}
+								data-state={row.getIsSelected() && "selected"}
+								data-slot="table-row"
+								className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
+							>
+								{row.getVisibleCells().map((cell) => (
+									<TableCell key={cell.id}>
+										{flexRender(cell.column.columnDef.cell, cell.getContext())}
+									</TableCell>
+								))}
+							</motion.tr>
+						))
+					) : (
+						<TableRow>
+							<TableCell
+								colSpan={table.getAllColumns().length}
+								className="h-36 text-center select-none text-muted-foreground"
+							>
+								<p className="text-sm">{customEmptyMessage ?? "No results found"}</p>
+							</TableCell>
+						</TableRow>
+					)}
+					{/* </AnimatePresence> */}
 				</TableBody>
 			</TableComponent>
 			<div className="mt-4">

@@ -142,7 +142,6 @@ export const TypeCell = memo(({ index, control, setValue, name }: TypeCellProps)
 		if (name === "conditions") {
 			setValue(`${name}.${index}.min_quantity`, "1");
 		}
-		// Always reset search params on type change in the row - (passing null for price to clear all)
 		setParamsValues({
 			searchParams,
 			suppressNavigation,
@@ -210,7 +209,10 @@ export const ConditionOperatorCell = memo(({ index, control, name }: ConditionOp
 
 export const ConditionValueCell = memo(
 	({ index, control, name, field }: ConditionValueCellProps): JSX.Element => {
-		const type: DiscountCondType = useWatch({ control, name: `${name}.${index}.type` });
+		const type: DiscountCondType = useWatch({
+			control,
+			name: `${name}.${index}.type`,
+		}) as DiscountCondType;
 		const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
 
 		const { fix, order } = useLoaderData<CreateCouponsLoader>();
@@ -226,20 +228,21 @@ export const ConditionValueCell = memo(
 			}
 		}, [type]);
 
-		const handleDialogClose = useCallback(() => {
-			setDialogOpen(false);
-			const newParams = new URLSearchParams(searchParams);
-			// Clear the search params for the selected type
-			suppressNavigation(() => {
-				newParams.delete(
-					`${getSelectedGroup({ name })}_${typeToParamMap[type as TypesToSelect]}_search`,
-				);
-				newParams.delete(
-					`${getSelectedGroup({ name })}_${typeToParamMap[type as TypesToSelect]}_page`,
-				);
-			}).setSearchParams(newParams);
-			// field.onChange([]); // Clear the value when dialog closes
-		}, []);
+		const handleDialogClose = useCallback(
+			(type: TypesToSelect) => {
+				setDialogOpen(false);
+				const newParams = new URLSearchParams(searchParams);
+				// Clear the search params for the selected type
+				const tag = `${getSelectedGroup({ name })}_${type}`;
+				console.log(tag + "_search");
+
+				suppressNavigation(() => {
+					newParams.delete(`${tag}_search`);
+					newParams.delete(`${tag}_page`);
+				}).setSearchParams(newParams);
+			},
+			[type, name, searchParams, suppressNavigation],
+		);
 
 		const MainFormFields = () => {
 			if (type === "price") {
@@ -318,7 +321,7 @@ export const ConditionValueCell = memo(
 					field={field}
 					type={type as TypesToSelect}
 					open={isDialogOpen}
-					onClose={handleDialogClose}
+					onClose={() => handleDialogClose(type as TypesToSelect)}
 					group={group}
 					selectedData={selectedData}
 				/>

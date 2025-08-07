@@ -1,7 +1,20 @@
-import { UserCog, UserLock, UserRoundCheck, Users } from "lucide-react";
+import { IconShoppingCartDiscount } from "@tabler/icons-react";
+import {
+	BadgePercent,
+	DollarSign,
+	Percent,
+	PlusCircle,
+	UserCog,
+	UserLock,
+	UserRoundCheck,
+	Users,
+} from "lucide-react";
 import { type JSX } from "react";
-import type { Groups, TypesToSelect } from "~/components/Coupons/coupons-comp";
+import { type UseFormSetValue, type UseFormResetField } from "react-hook-form";
+import type { CouponTypesOption, Groups, TypesToSelect } from "~/components/Coupons/coupons-comp";
 import { DISCOUNT_COND_TYPE_ENUM } from "~/constants";
+import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+import type { CouponFormValues } from "~/schemas/coupons.schema";
 import type {
 	BuyMinType,
 	DiscountCondOperator,
@@ -89,6 +102,43 @@ export const ConditionTypeValues: { value: BuyMinType; id: string; label: string
 	},
 ];
 
+export const CouponTypeOptions: CouponTypesOption[] = [
+	{
+		label: "Manual Discount",
+		description: "Cusomters will get a discount if they enter a code at checkout.",
+		value: "manual",
+		icon: <BadgePercent className="h-5 w-5" />,
+	},
+	{
+		label: "Automatic Discount",
+		description: "Cusomters will get a discount automatically in their cart.",
+		value: "automatic",
+		icon: <IconShoppingCartDiscount className="h-5 w-5" />,
+	},
+];
+
+export const getDiscountAmntConstraint = (comp: "label" | "icon", discountType: DiscountType | undefined) => {
+	if (discountType === "fixed_order" || discountType === "fixed_product") {
+		return comp === "label" ? (
+			"Amount"
+		) : (
+			<DollarSign className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground  " />
+		);
+	} else if (discountType === "percentage_order" || discountType === "percentage_product") {
+		return comp === "label" ? (
+			"Percentage"
+		) : (
+			<Percent className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground  " />
+		);
+	} else {
+		return comp === "label" ? (
+			"Value"
+		) : (
+			<PlusCircle className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground   rotate-45" />
+		);
+	}
+};
+
 export const typesToSelect = DISCOUNT_COND_TYPE_ENUM.filter((type) => type !== "price");
 
 // Param Tag for pagination tags
@@ -145,3 +195,63 @@ export const typeToParamMap: Record<TypesToSelect, string> = {
 	collection: "collections",
 	sku: "skus",
 };
+
+export const buy_x_get_y_detault_values = {
+	buy_min_type: "quantity",
+	buy_min_value: "1",
+	get_quantity: "2",
+	get_discount_percent: "100",
+	buy_group: {
+		type: "sku",
+		selected_ids: [],
+	},
+	get_group: {
+		type: "sku",
+		selected_ids: [],
+	},
+} as CouponFormValues["buy_x_get_y"];
+
+// This function is used to reset the fields of products selections in coupons when type changes
+export function resetFieldValsOnTypeChange({
+	prevDiscountType,
+	resetField,
+	setValue,
+}: {
+	prevDiscountType: DiscountType | undefined;
+	resetField: UseFormResetField<CouponFormValues>;
+	setValue: UseFormSetValue<CouponFormValues>;
+}) {
+	if (prevDiscountType === "fixed_product" || prevDiscountType === "percentage_product") {
+		resetField("fixed_products", { defaultValue: [] });
+		setValue("discount_value", "");
+	} else if (prevDiscountType === "buy_x_get_y") {
+		resetField("buy_x_get_y", {
+			defaultValue: buy_x_get_y_detault_values,
+		});
+	} else if (prevDiscountType === "fixed_order" || prevDiscountType === "percentage_order") {
+		setValue("discount_value", "");
+	}
+}
+
+// This function is used to reset the search params of products selections component dialogs in coupons when type changes
+export function resetParamsOnTypeChange({
+	searchParams,
+	suppressNavigation,
+}: {
+	searchParams: URLSearchParams;
+	suppressNavigation: ReturnType<typeof useSuppressTopLoadingBar>;
+}) {
+	// Clear related search parameters
+	const newParams = new URLSearchParams(searchParams);
+	suppressNavigation(() => {
+		const groups = ["fix", "buy", "get"]; // groups to remove when the type changes
+
+		for (const group of groups) {
+			for (const type of typesToSelect) {
+				newParams.delete(`${group}_${typeToParamMap[type]}`);
+				newParams.delete(`${group}_${type}_search`);
+				newParams.delete(`${group}_${type}_page`);
+			}
+		}
+	}).setSearchParams(newParams, true);
+}

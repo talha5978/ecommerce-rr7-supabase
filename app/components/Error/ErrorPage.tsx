@@ -26,7 +26,7 @@ export default function ErrorPage() {
 						<p className="font-semibold">{error.status || "500"}</p>
 					</Badge>
 					<h1 className="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-5xl text-primary-foreground">
-						Unexpected Error
+						{error.data || "Something went wrong"}
 					</h1>
 					<p className="mt-6 text-lg font-medium text-pretty text-muted-foreground sm:text-xl/8">
 						{errorText}

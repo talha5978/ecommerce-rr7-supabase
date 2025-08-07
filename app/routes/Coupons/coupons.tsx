@@ -1,10 +1,10 @@
 import { Link, LoaderFunctionArgs, useLocation } from "react-router";
 import { Route } from "./+types/coupons";
 import { Button } from "~/components/ui/button";
-import { BadgePercent, ChevronRight, PlusCircle } from "lucide-react";
+import { ChevronRight, PlusCircle } from "lucide-react";
 
 import { useNavigation } from "react-router";
-import { JSX, memo, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { defaults } from "~/constants";
 
@@ -16,8 +16,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "~/components/ui/dialog";
-import type { CouponType } from "~/types/coupons";
-import { IconShoppingCartDiscount } from "@tabler/icons-react";
+import { CouponTypeOptions } from "~/utils/couponsConstants";
+import type { CouponTypesOption } from "~/components/Coupons/coupons-comp";
 
 const defaultPage = (defaults.DEFAULT_PRODUCTS_PAGE - 1).toString();
 const defaultSize = defaults.DEFAULT_PRODUCTS_PAGE_SIZE.toString();
@@ -298,30 +298,8 @@ export default function CouponsPage({} // loaderData: { data, query, pageIndex, 
 	);
 }
 
-type CouponTypesOptions = {
-	label: string;
-	description: string;
-	value: CouponType;
-	icon: JSX.Element;
-};
-
 const CouponTypeSelectDialog = memo(
 	({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {
-		const Options: CouponTypesOptions[] = [
-			{
-				label: "Discount Code",
-				description: "Cusomters will get a discount if they enter a code at checkout.",
-				value: "discount_code",
-				icon: <BadgePercent className="h-5 w-5" />,
-			},
-			{
-				label: "Automatic Discount",
-				description: "Cusomters will get a discount automatically in their cart.",
-				value: "automatic",
-				icon: <IconShoppingCartDiscount className="h-5 w-5" />,
-			},
-		];
-
 		return (
 			<Dialog open={open} onOpenChange={setOpen}>
 				<DialogContent>
@@ -331,7 +309,7 @@ const CouponTypeSelectDialog = memo(
 							Select the type of the coupon you want to create.
 						</DialogDescription>
 					</DialogHeader>
-					{Options.map((option) => (
+					{CouponTypeOptions.map((option: CouponTypesOption) => (
 						<Link key={option.value} to={`/coupons/create/${option.value}`}>
 							<div className="px-4 py-4 hover:dark:bg-muted hover:bg-muted-dark cursor-pointer rounded-lg ease-in-out duration-150 transition-colors">
 								<div className="flex items-center gap-4">

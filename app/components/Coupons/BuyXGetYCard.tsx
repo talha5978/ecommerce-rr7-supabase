@@ -1,11 +1,10 @@
-import { memo, Suspense, useCallback, useEffect } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 import { Control, ControllerRenderProps, useFormContext, useWatch } from "react-hook-form";
 import { Await, useLoaderData, useSearchParams } from "react-router";
 import { type CreateCouponsLoader } from "~/routes/Coupons/create-coupon";
 import { CouponFormValues } from "~/schemas/coupons.schema";
 import type { GetAllCategoriesResponse } from "~/types/category";
 import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
 import { DollarSign, Percent } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ApiError } from "~/utils/ApiError";
@@ -22,7 +21,7 @@ import {
 } from "~/utils/couponsConstants";
 import type { SKUsNamesListResponse } from "~/types/products";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
-import type { CollectionNameListRow, CollectionsNamesListResponse } from "~/types/collections";
+import type { CollectionsNamesListResponse } from "~/types/collections";
 import type { BuyXGetYGroupOpts, TypesToSelect } from "~/components/Coupons/coupons-comp.d";
 import { SearchBar } from "~/components/Coupons/SearchBar";
 import { LineSkeleton } from "./Skeletons/LineSkeleton";
@@ -42,6 +41,27 @@ type BuyXGetYCardProps = {
 	disabled?: boolean;
 };
 
+type ConditionChangeFuncProps = {
+	value: string;
+	field: ControllerRenderProps<CouponFormValues>;
+};
+
+type SelectionFuncProps = {
+	field: ControllerRenderProps<CouponFormValues>;
+	group: BuyXGetYGroupOpts;
+};
+
+type GetSelectedTypesFuncProps = {
+	selectedType: TypesToSelect;
+	field: ControllerRenderProps<CouponFormValues>;
+	data:
+		| Promise<SKUsNamesListResponse>
+		| Promise<CollectionsNamesListResponse>
+		| Promise<GetAllCategoriesResponse>
+		| null;
+	group: BuyXGetYGroupOpts;
+};
+
 export const BuyXGetYCard = ({ control, disabled }: BuyXGetYCardProps) => {
 	const { setValue } = useFormContext();
 
@@ -56,27 +76,6 @@ export const BuyXGetYCard = ({ control, disabled }: BuyXGetYCardProps) => {
 
 	const [searchParams] = useSearchParams();
 	const suppressNavigation = useSuppressTopLoadingBar();
-
-	type ConditionChangeFuncProps = {
-		value: string;
-		field: ControllerRenderProps<CouponFormValues>;
-	};
-
-	type SelectionFuncProps = {
-		field: ControllerRenderProps<CouponFormValues>;
-		group: BuyXGetYGroupOpts;
-	};
-
-	type GetSelectedTypesFuncProps = {
-		selectedType: TypesToSelect;
-		field: ControllerRenderProps<CouponFormValues>;
-		data:
-			| Promise<SKUsNamesListResponse>
-			| Promise<CollectionsNamesListResponse>
-			| Promise<GetAllCategoriesResponse>
-			| null;
-		group: BuyXGetYGroupOpts;
-	};
 
 	const setParams = useCallback(() => {
 		const newParams = new URLSearchParams(searchParams);
@@ -230,7 +229,7 @@ export const BuyXGetYCard = ({ control, disabled }: BuyXGetYCardProps) => {
 					<CardTitle className="text-lg">Customer Buys</CardTitle>
 				</CardHeader>
 
-				<CardContent className="space-y-4">
+				<CardContent className="space-y-4 focus:outline-amber-500">
 					<FormField
 						control={control}
 						name="buy_x_get_y.buy_min_type"

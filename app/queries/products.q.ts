@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { GroupOptions } from "~/components/Coupons/BuyXGetYCard";
+import type { Groups } from "~/components/Coupons/coupons-comp";
 import { ProductFilters } from "~/schemas/products-filter.schema";
 import { ProductsService } from "~/services/products.service";
 import type {
@@ -23,7 +23,7 @@ type skuNamesQueryArgs = {
 	pageIndex?: number;
 	searchQuery?: string;
 	autoRun?: boolean;
-	group: GroupOptions;
+	group: Groups;
 };
 type singleProductQueryArgs = { request: Request; productId: string };
 

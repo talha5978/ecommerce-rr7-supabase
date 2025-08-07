@@ -452,7 +452,7 @@ export type Database = {
 			};
 			coupons: {
 				Row: {
-					code: string | null;
+					code: string;
 					coupon_id: number;
 					coupon_type: Database["public"]["Enums"]["coupon_type_enum"];
 					description: string | null;
@@ -468,7 +468,7 @@ export type Database = {
 					status: boolean | null;
 				};
 				Insert: {
-					code?: string | null;
+					code: string;
 					coupon_id?: number;
 					coupon_type?: Database["public"]["Enums"]["coupon_type_enum"];
 					description?: string | null;
@@ -484,7 +484,7 @@ export type Database = {
 					status?: boolean | null;
 				};
 				Update: {
-					code?: string | null;
+					code?: string;
 					coupon_id?: number;
 					coupon_type?: Database["public"]["Enums"]["coupon_type_enum"];
 					description?: string | null;
@@ -948,7 +948,7 @@ export type Database = {
 				| "smaller_or_equal";
 			condition_role: "eligibility" | "discount_application" | "buy_x" | "get_y";
 			condition_type: "category" | "collection" | "price" | "sku";
-			coupon_type_enum: "discount_code" | "automatic";
+			coupon_type_enum: "manual" | "automatic";
 			customer_type: "admins" | "employee" | "all" | "consumer";
 			discount_type:
 				| "fixed_order"
@@ -1099,7 +1099,7 @@ export const Constants = {
 			],
 			condition_role: ["eligibility", "discount_application", "buy_x", "get_y"],
 			condition_type: ["category", "collection", "price", "sku"],
-			coupon_type_enum: ["discount_code", "automatic"],
+			coupon_type_enum: ["manual", "automatic"],
 			customer_type: ["all", "admins", "employee", "consumer"],
 			discount_type: [
 				"fixed_order",
