@@ -72,6 +72,7 @@ import {
 	OrderConditionsCols,
 	remOrderSelectedRows,
 } from "~/components/Coupons/coupons-mutation-page-tables";
+import { ImportEmailsButton } from "~/components/Custom-Inputs/import-emails-button";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -790,69 +791,93 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 										<FormField
 											control={control}
 											name="customer_emails"
-											render={({ field, fieldState }) => (
-												<FormItem>
-													<FormLabel className="flex gap-2">
-														<span>Customer Emails</span>
-														<span className="text-muted-foreground">
-															(Empty for all)
-														</span>
-													</FormLabel>
-													<FormControl>
-														<TagsInput
-															value={field.value}
-															onValueChange={field.onChange}
-															editable
-															addOnPaste
-															className="w-full"
-															aria-invalid={!!fieldState.error}
-															inputMode="email"
-															disabled={
-																watchedCustomerGroups === "" ||
-																watchedCustomerGroups === null
-															}
-														>
-															<div className="flex sm:flex-row flex-col gap-2">
-																<TagsInputList>
-																	{field.value && Array.isArray(field.value)
-																		? field.value.map((item) => (
-																				<TagsInputItem
-																					key={item}
-																					value={item}
-																				>
-																					{item}
-																				</TagsInputItem>
-																		  ))
-																		: null}
-																	<TagsInputInput placeholder="Add customer emails..." />
-																</TagsInputList>
-																<TagsInputClear className="sm:w-fit w-full">
-																	<div className="tags-input-clear-container">
-																		<RefreshCcw className="h-4 w-4" />
-																		<span className="sm:hidden inline">
-																			Clear
-																		</span>
+											render={({ field, fieldState }) => {
+												// callback when user imports
+												const handleImport = (emails: string[]) => {
+													// Merge with existing, remove dupes:
+													const merged = Array.from(
+														new Set([...(field.value || []), ...emails]),
+													);
+													field.onChange(merged);
+												};
+
+												const fieldDisabledCondition =
+													watchedCustomerGroups === "" ||
+													watchedCustomerGroups === null;
+
+												return (
+													<FormItem>
+														<FormLabel className="flex gap-2">
+															<span>Customer Emails</span>
+															<span className="text-muted-foreground">
+																(Empty for all)
+															</span>
+														</FormLabel>
+														<FormControl>
+															<div className="flex flex-col gap-3">
+																<TagsInput
+																	value={field.value}
+																	onValueChange={field.onChange}
+																	editable
+																	addOnPaste
+																	className="w-full"
+																	aria-invalid={!!fieldState.error}
+																	inputMode="email"
+																	disabled={fieldDisabledCondition}
+																>
+																	<div className="flex sm:flex-row flex-col gap-2">
+																		<TagsInputList>
+																			{field.value &&
+																			Array.isArray(field.value)
+																				? field.value.map((item) => (
+																						<TagsInputItem
+																							key={item}
+																							value={item}
+																						>
+																							{item}
+																						</TagsInputItem>
+																				  ))
+																				: null}
+																			<TagsInputInput placeholder="Add customer emails..." />
+																		</TagsInputList>
+																		<TagsInputClear className="sm:w-fit w-full">
+																			<div className="tags-input-clear-container">
+																				<RefreshCcw className="h-4 w-4" />
+																				<span className="sm:hidden inline">
+																					Clear
+																				</span>
+																			</div>
+																		</TagsInputClear>
 																	</div>
-																</TagsInputClear>
+																</TagsInput>
+																<div className="self-end">
+																	<ImportEmailsButton
+																		onImport={handleImport}
+																		disabled={
+																			fieldState.invalid ||
+																			fieldDisabledCondition
+																		}
+																	/>
+																</div>
 															</div>
-														</TagsInput>
-													</FormControl>
-													{errors.customer_emails &&
-														Array.isArray(errors.customer_emails) &&
-														errors.customer_emails.length > 0 && (
-															<div>
-																<p className="text-sm text-destructive">
-																	{errors.customer_emails.some(
-																		(error) => error?.message,
-																	) &&
-																		errors.customer_emails.find(
+														</FormControl>
+														{errors.customer_emails &&
+															Array.isArray(errors.customer_emails) &&
+															errors.customer_emails.length > 0 && (
+																<div>
+																	<p className="text-sm text-destructive">
+																		{errors.customer_emails.some(
 																			(error) => error?.message,
-																		)?.message}
-																</p>
-															</div>
-														)}
-												</FormItem>
-											)}
+																		) &&
+																			errors.customer_emails.find(
+																				(error) => error?.message,
+																			)?.message}
+																	</p>
+																</div>
+															)}
+													</FormItem>
+												);
+											}}
 										/>
 									</CardContent>
 								</Card>
