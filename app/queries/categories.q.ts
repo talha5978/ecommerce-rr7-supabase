@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { GroupOptions } from "~/components/Coupons/BuyXGetYCard";
+import type { Groups } from "~/components/Coupons/coupons-comp";
 import { CategoryService } from "~/services/category.service";
 import type {
 	GetAllCategoriesResponse,
@@ -37,7 +37,7 @@ interface singleSubCategoryQueryArgs {
 interface categoriesQueryArgs {
 	request: Request;
 	autoRun?: boolean;
-	group?: GroupOptions;
+	group?: Groups;
 	pageIndex?: number;
 	productCount?: boolean;
 	searchQuery?: string;

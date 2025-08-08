@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { GroupOptions } from "~/components/Coupons/BuyXGetYCard";
+import type { Groups } from "~/components/Coupons/coupons-comp";
 import { CollectionFilers } from "~/schemas/collections-filter.schema";
 import { CollectionsService } from "~/services/collections.service";
 import {
@@ -37,7 +37,7 @@ type collectionsNameQueryArgs = {
 	pageIndex?: number;
 	searchQuery?: string;
 	autoRun?: boolean;
-	group: GroupOptions;
+	group: Groups;
 };
 
 export const collectionsQuery = ({ request, q, pageIndex, pageSize, filters }: collectionsQueryArgs) => {
