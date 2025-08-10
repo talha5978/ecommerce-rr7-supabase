@@ -15,8 +15,16 @@ export default defineConfig({
 		tsconfigPaths(),
 		Inspect(),
 		visualizer({ open: true }),
-		viteCompression(),
-		svgr(),
+		viteCompression({
+			verbose: true,
+			disable: false,
+			algorithm: "brotliCompress",
+			ext: ".br",
+		}),
+		svgr({
+			svgrOptions: { exportType: "default", ref: true, svgo: false, titleProp: true },
+			include: "**/*.svg",
+		}),
 	],
 	resolve: {
 		alias: {
