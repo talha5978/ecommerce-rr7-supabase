@@ -63,7 +63,10 @@ type GetSelectedTypesFuncProps = {
 };
 
 export const BuyXGetYCard = ({ control, disabled }: BuyXGetYCardProps) => {
-	const { setValue } = useFormContext();
+	const {
+		setValue,
+		formState: { errors },
+	} = useFormContext();
 
 	const discountType = useWatch({ control, name: "discount_type" });
 	if (discountType !== "buy_x_get_y") return null;
@@ -432,8 +435,6 @@ export const BuyXGetYCard = ({ control, disabled }: BuyXGetYCardProps) => {
 									<div className="relative">
 										<Input
 											type="number"
-											min={0}
-											max={100}
 											placeholder="e.g. 100"
 											{...field}
 											value={field.value ?? ""}
@@ -447,7 +448,14 @@ export const BuyXGetYCard = ({ control, disabled }: BuyXGetYCardProps) => {
 										/>
 									</div>
 								</FormControl>
-								<FormMessage />
+								{(errors.buy_x_get_y as any)?.get_discount_percent?.get_discount_percent && (
+									<p className="text-sm text-destructive">
+										{
+											(errors.buy_x_get_y as any)?.get_discount_percent
+												?.get_discount_percent.message
+										}
+									</p>
+								)}
 							</FormItem>
 						)}
 					/>

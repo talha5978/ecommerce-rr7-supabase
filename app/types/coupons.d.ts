@@ -1,4 +1,5 @@
 import type { Database } from "~/types/supabase";
+import { type ApiError } from "~/utils/ApiError";
 
 export type CouponType = Database["public"]["Enums"]["coupon_type_enum"];
 
@@ -13,3 +14,5 @@ export type DiscountCondOperator = Database["public"]["Enums"]["condition_operat
 export type DiscountCustomerGrps = Database["public"]["Enums"]["customer_type"];
 
 export type BuyMinType = Database["public"]["Enums"]["buy_min_type_enum"];
+
+export type GroupsConditionRole = Database["public"]["Enums"]["condition_role"];

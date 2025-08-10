@@ -1,6 +1,6 @@
 import { type ChangeEvent, memo, useCallback, useRef } from "react";
 import { Button } from "~/components/ui/button";
-import { Import } from "lucide-react";
+import { IconFileImport } from "@tabler/icons-react";
 
 type AcceptedFileTypes = ".csv" | ".txt";
 
@@ -56,7 +56,7 @@ export const ImportEmailsButton = memo(
 					size={buttonSize}
 					variant={buttonVariant}
 				>
-					<Import className="w-4 h-4" />
+					<IconFileImport className="w-4 h-4" />
 					<span>{buttonLabel}</span>
 				</Button>
 				<input

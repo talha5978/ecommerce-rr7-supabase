@@ -208,4 +208,4 @@ export const DISCOUNT_COND_ROLE_ENUM = Constants.public.Enums.condition_role;
 export const DISCOUNT_COND_TYPE_ENUM = Constants.public.Enums.condition_type;
 export const BUY_MIN_TYPE_ENUM = Constants.public.Enums.buy_min_type_enum;
 
-export const DEFAULT_DICOUNT_TYPE: DiscountType = "fixed_product";
+export const DEFAULT_DICOUNT_TYPE: DiscountType = "fixed_order";

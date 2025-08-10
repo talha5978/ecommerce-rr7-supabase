@@ -35,7 +35,7 @@ import type {
 } from "~/components/Coupons/coupons-comp";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { Await, useLoaderData, useSearchParams } from "react-router";
-import { CreateCouponsLoader } from "~/routes/Coupons/create-coupon";
+import { type CreateCouponsLoader } from "~/routes/Coupons/create-coupon";
 import { SKUsNamesListResponse } from "~/types/products";
 import { CollectionsNamesListResponse } from "~/types/collections";
 import { GetAllCategoriesResponse } from "~/types/category";

@@ -19,10 +19,7 @@ import {
 import { CouponTypeOptions } from "~/utils/couponsConstants";
 import type { CouponTypesOption } from "~/components/Coupons/coupons-comp";
 
-const defaultPage = (defaults.DEFAULT_PRODUCTS_PAGE - 1).toString();
-const defaultSize = defaults.DEFAULT_PRODUCTS_PAGE_SIZE.toString();
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
 	// const { q, pageIndex, pageSize } = getPaginationQueryPayload({
 	//     request,
 	//     defaultPageNo: defaults.DEFAULT_PRODUCTS_PAGE,
@@ -291,6 +288,7 @@ export default function CouponsPage({} // loaderData: { data, query, pageIndex, 
                     )}
                 </div> */}
 			</section>
+
 			{couponTypeDialog && (
 				<CouponTypeSelectDialog open={couponTypeDialog} setOpen={setCouponTypeDialog} />
 			)}

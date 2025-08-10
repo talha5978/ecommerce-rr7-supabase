@@ -3,10 +3,16 @@ import { STORAGE_BUCKETS } from "~/constants";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { Database } from "~/types/supabase";
 
-export class Service {
+export interface ServiceBase {
 	supabase: SupabaseClient<Database>;
-	readonly headers: Headers;
-	readonly request: Request;
+	headers: Headers;
+	request: Request;
+}
+
+export class Service implements ServiceBase {
+	supabase;
+	readonly headers;
+	readonly request;
 
 	readonly IMAGES_BUCKET = STORAGE_BUCKETS.images;
 
@@ -30,6 +36,9 @@ export class Service {
 
 	readonly BUY_X_GET_Y_TABLE = "buy_x_get_y_details";
 	readonly CONDITION_GROUPS_TABLE = "condition_groups";
+	readonly CONDITION_GROUP_COLLECTIONS_TABLE = "condition_group_collections";
+	readonly CONDITION_GROUP_SKUS_TABLE = "condition_group_skus";
+	readonly CONDITION_GROUP_SUB_CATEGORIES_TABLE = "condition_group_sub_categories";
 	readonly COUPONS_TABLE = "coupons";
 	readonly CUSTOMER_CONDITIONS_TABLE = "customer_conditions";
 	readonly PRODUCT_CONDITIONS_TABLE = "product_conditions";

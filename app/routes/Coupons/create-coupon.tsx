@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, UseFieldArrayAppend, useForm, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import {
-	ActionFunctionArgs,
 	LoaderFunctionArgs,
 	useActionData,
 	useNavigate,
@@ -12,12 +11,12 @@ import {
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
-import { DollarSign, Info, Loader2, Percent, PlusCircle, RefreshCcw, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useTransition } from "react";
+import { DollarSign, Info, Loader2, PlusCircle, RefreshCcw, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import {
 	TagsInput,
 	TagsInputClear,
@@ -33,38 +32,32 @@ import { Label } from "~/components/ui/label";
 import type { Route } from "./+types/create-coupon";
 import { DataTable, TableColumnsToggle } from "~/components/Table/data-table";
 import {
-	type ColumnDef,
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
 import { Checkbox } from "~/components/ui/checkbox";
-import { CouponFormValues, CouponInputSchema } from "~/schemas/coupons.schema";
+import {
+	type CouponActionData,
+	CouponActionDataSchema,
+	type CouponFormValues,
+	CouponInputSchema,
+} from "~/schemas/coupons.schema";
 import type { CouponType, DiscountCondType, DiscountType } from "~/types/coupons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import DateTimePicker from "~/components/Custom-Inputs/date-time-picker";
 import {
-	ConditionOperatorCell,
-	ConditionValueCell,
-	TableRowSelector,
-	TypeCell,
-} from "~/components/Coupons/TableComponents";
-import {
 	buy_x_get_y_detault_values,
 	CustomerGroupsLabels,
 	discount_type_fields,
-	getAllSearchParams,
 	getDiscountAmntConstraint,
 	resetFieldValsOnTypeChange,
 	resetParamsOnTypeChange,
-	typesToSelect,
-	typeToParamMap,
 } from "~/utils/couponsConstants";
 import { BuyXGetYCard } from "~/components/Coupons/BuyXGetYCard";
 import { getMappedData } from "~/utils/getCouponsMutationsLoaderData";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
-import { Separator } from "~/components/ui/separator";
 import {
 	appendFixProdCondition,
 	appendOrderCondition,
@@ -73,58 +66,91 @@ import {
 	remOrderSelectedRows,
 } from "~/components/Coupons/coupons-mutation-page-tables";
 import { ImportEmailsButton } from "~/components/Custom-Inputs/import-emails-button";
+import { ApiError } from "~/utils/ApiError";
+import { CouponsService } from "~/services/coupons.service";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params }: Route.ActionArgs) => {
+	const couponType = params.couponType;
+
+	if (!couponType || couponType == null || !COUPON_TYPE_ENUM.includes(couponType as CouponType)) {
+		throw new Response("Invalid Coupon Type", { status: 404 });
+	}
+
 	const formData = await request.formData();
-	console.log("Form data: ", formData);
+	// console.log("Form data: ", formData);
+
+	const raw_buy_x_get_y_fields = formData.get("buy_x_get_y_fields");
+	const buy_x_get_y_fields =
+		raw_buy_x_get_y_fields === "" || raw_buy_x_get_y_fields === null
+			? null
+			: JSON.parse(raw_buy_x_get_y_fields as string);
+
+	const raw_order_conditions = formData.get("order_conditions");
+	const order_conditions =
+		raw_order_conditions !== "" && raw_order_conditions !== null
+			? JSON.parse(raw_order_conditions as string)
+			: null;
+
+	const raw_customer_conditions = formData.get("customer_conditions");
+	const customer_conditions =
+		raw_customer_conditions !== "" && raw_customer_conditions !== null
+			? JSON.parse(raw_customer_conditions as string)
+			: null;
+
+	const raw_specific_target_products = formData.get("specific_target_products");
+	const specific_target_products =
+		raw_specific_target_products === "" || raw_specific_target_products === null
+			? null
+			: JSON.parse(raw_specific_target_products as string);
 
 	// return;
-	// const data = {
-	// 	name: formData.get("name") as string,
-	// 	description: formData.get("description") as string,
-	// 	image: formData.get("image") as File,
-	// 	sort_order: formData.get("sort_order") as string,
-	// 	status: formData.get("status") as string,
-	// 	meta_details: {
-	// 		meta_title: formData.get("meta_details.meta_title") as string,
-	// 		meta_description: formData.get("meta_details.meta_description") as string,
-	// 		url_key: formData.get("meta_details.url_key") as string,
-	// 		meta_keywords: formData.get("meta_details.meta_keywords"),
-	// 	},
-	// 	product_ids: formData.getAll("product_ids") as string[],
-	// };
+	const data: CouponActionData = {
+		code: formData.get("code") as string,
+		description: formData.get("description") as string,
+		status: formData.get("status") as "true" | "false",
+		discount_type: formData.get("discount_type") as DiscountType,
+		discount_value: formData.get("discount_value") as string | null,
+		start_timestamp: formData.get("start_timestamp") as string,
+		end_timestamp: formData.get("end_timestamp") as string,
+		specific_target_products,
+		buy_x_get_y_fields,
+		order_conditions,
+		customer_conditions,
+		usage_conditions: {
+			max_total_uses: formData.get("usage_conditions.max_total_uses") as string | null,
+			one_use_per_customer: formData.get("usage_conditions.one_use_per_customer") as
+				| "true"
+				| "false"
+				| null,
+		},
+	};
 
-	// const parseResult = CollectionActionDataSchema.safeParse(data);
-	// // console.log("Parse result: ", parseResult?.error);
+	const parseResult = CouponActionDataSchema.safeParse(data);
+	// console.log("Parse result: ", parseResult?.error);
 
-	// if (!parseResult.success) {
-	// 	return new Response(JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }), {
-	// 		status: 400,
-	// 		headers: { "Content-Type": "application/json" },
-	// 	});
-	// }
+	if (!parseResult.success) {
+		return new Response(JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
 
-	// // console.log("Data in the action: ", parseResult.data);
+	// console.log("Data in the action: ", parseResult.data);
 
-	// const collectionSvc = new CollectionsService(request);
-	// // return;
-	// try {
-	// 	await collectionSvc.createCollection(parseResult.data);
-	// 	await queryClient.invalidateQueries({ queryKey: ["highLvlCollections"] });
-	// 	return { success: true };
-	// } catch (error: any) {
-	// 	// console.error("Error in action:", error);
-	// 	const errorMessage =
-	// 		error instanceof ApiError ? error.message : error.message || "Failed to create coupon";
+	const couponsSvc = new CouponsService(request);
+	// return;
+	try {
+		await couponsSvc.createCoupon({ input: parseResult.data, coupon_type: couponType as CouponType });
 
-	// 	if (error instanceof ApiError && error.details.length) {
-	// 		console.error("ApiError details:", error.details);
-	// 	}
-	// 	return {
-	// 		success: false,
-	// 		error: errorMessage,
-	// 	};
-	// }
+		return { success: true };
+	} catch (error: any) {
+		const errorMessage =
+			error instanceof ApiError ? error.message : error.message || "Failed to create coupon";
+		return {
+			success: false,
+			error: errorMessage,
+		};
+	}
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -145,9 +171,13 @@ export type CreateCouponsLoader = typeof loader;
 function getDefaultDates(): { start_timestamp: Date; end_timestamp: Date } {
 	const today = new Date();
 
+	// Set the time to 12 pm (noon)
+	today.setHours(12, 0, 0, 0); // hours, minutes, seconds, milliseconds
+
 	// Get the date after 5 days from now
 	const delayedDate = new Date(today);
 	delayedDate.setDate(delayedDate.getDate() + 5);
+	delayedDate.setHours(12, 0, 0, 0); // set the time to 12 pm (noon) as well
 
 	return {
 		start_timestamp: today,
@@ -155,9 +185,182 @@ function getDefaultDates(): { start_timestamp: Date; end_timestamp: Date } {
 	};
 }
 
-type Condition = CouponFormValues["conditions"];
+function getFinalData(values: CouponFormValues) {
+	if (values.discount_type == undefined) {
+		toast.error("Please select a discount type.");
+		return;
+	}
+	// toast.info("Creating coupon...");
+	const checkEmptySpecificProducts = () => {
+		if (values.discount_type === "fixed_product" || values.discount_type === "percentage_product") {
+			return !Array.isArray(values.fixed_products) ||
+				values.fixed_products?.length === 0 ||
+				values.fixed_products == null
+				? false
+				: true;
+		} else {
+			return true;
+		}
+	};
 
-export default function CreateCouponPage({ loaderData, params }: Route.ComponentProps) {
+	const isEmptySpecificProducts = checkEmptySpecificProducts();
+	if (!isEmptySpecificProducts) {
+		toast.error("Please select at least one product in the fixed products field.");
+		return;
+	}
+
+	const checkInvalidSpecificValue = () => {
+		return (
+			values.fixed_products?.every((condition) => {
+				if (
+					(condition.type === "price" && condition.value_decimal === "") ||
+					(condition.type !== "price" && condition.value_text?.length === 0)
+				) {
+					return false;
+				} else {
+					return true;
+				}
+			}) ?? true
+		);
+	};
+
+	const invalidSpecificValue = checkInvalidSpecificValue();
+	if (!invalidSpecificValue) {
+		toast.error("Invalid form data. Please check your inputs.");
+		return;
+	}
+
+	const getSpecificProductsConditions = () => {
+		if (
+			values.discount_type === "fixed_order" ||
+			values.discount_type === "percentage_order" ||
+			values.discount_type === "buy_x_get_y"
+		) {
+			return null;
+		} else {
+			return values.fixed_products?.flatMap((condition) => {
+				return {
+					type: condition.type,
+					operator: condition.operator,
+					value_text: condition.type === "price" ? null : condition.value_text ?? null,
+					value_decimal: condition.type !== "price" ? null : condition.value_decimal ?? null,
+					min_quantity: null,
+				};
+			});
+		}
+	};
+
+	const checkEmptyBuyXGetYFields = () => {
+		if (values.discount_type !== "buy_x_get_y") {
+			return true;
+		} else {
+			const fl = values.buy_x_get_y;
+			if (
+				fl.buy_min_value == null ||
+				fl.buy_min_value === "" ||
+				fl.get_discount_percent == null ||
+				fl.get_discount_percent === "" ||
+				fl.get_quantity == null ||
+				fl.get_quantity === ""
+			) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	};
+
+	const isEmptyBuyXGetYFields = checkEmptyBuyXGetYFields();
+	if (!isEmptyBuyXGetYFields) {
+		toast.error("Please fill in all the fields in the buy x get y section.");
+		return;
+	}
+
+	const getBuyXGetYConditions = () => {
+		if (values.discount_type !== "buy_x_get_y") {
+			return null;
+		} else {
+			const fl = values.buy_x_get_y;
+			return {
+				buy_group: {
+					buy_min_type: fl.buy_min_type,
+					buy_min_value: fl.buy_min_value,
+					condition_type: fl.buy_group.type,
+					selected_ids: fl.buy_group.selected_ids,
+				},
+				get_group: {
+					quantity: fl.get_quantity,
+					discount_percent: fl.get_discount_percent,
+					condition_type: fl.get_group.type,
+					selected_ids: fl.get_group.selected_ids,
+				},
+			};
+		}
+	};
+
+	const getOrderFields = () => {
+		if (values.conditions && Array.isArray(values.conditions) && values.conditions?.length > 0) {
+			const fields = values.conditions?.flatMap((condition) => {
+				return {
+					type: condition.type,
+					operator: condition.operator,
+					value_text: condition.type === "price" ? null : condition.value_text ?? null,
+					value_decimal: condition.type !== "price" ? null : condition.value_decimal ?? null,
+					min_quantity: condition.min_quantity,
+				};
+			});
+
+			return fields;
+		} else {
+			return null;
+		}
+	};
+
+	let finalData = {
+		code: values.code.trim(),
+		description: values.description?.trim(),
+		discount_type: values.discount_type,
+		discount_value: values.discount_type !== "buy_x_get_y" ? values.discount_value : null,
+		specific_target_products: getSpecificProductsConditions(),
+		buy_x_get_y_fields: getBuyXGetYConditions(),
+		order_conditions: {
+			min_purchase_qty: values.min_purchase_qty ?? null,
+			min_purchase_amount: values.min_purchase_amount ?? null,
+			conditions: getOrderFields(),
+			max_uses_per_order: values.want_max_uses_per_order === "yes" ? values.max_uses_per_order : null,
+		},
+		customer_conditions: {
+			customer_groups: values.customer_groups ?? null,
+			customer_emails: values.customer_emails?.map((i) => i.trim()) ?? [],
+			min_purchased_amount: values.customer_min_purchased_amount ?? null,
+		},
+		usage_conditions: {
+			max_total_uses: values.want_max_total_uses === "yes" ? values.max_total_uses : null,
+			one_use_per_customer: values.one_use_per_customer,
+		},
+		start_timestamp: values.start_timestamp,
+		end_timestamp: values.end_timestamp,
+		status: values.status,
+	};
+
+	// Convert to FormData
+	const formData = new FormData();
+
+	Object.entries(finalData).forEach(([key, value]) => {
+		if (value === undefined || value === null) {
+			formData.append(key, "");
+		} else if (typeof value === "object") {
+			// stringify objects & arrays
+			formData.append(key, JSON.stringify(value));
+		} else {
+			formData.append(key, String(value));
+		}
+	});
+
+	return formData;
+}
+
+export default function CreateCouponPage({ params }: Route.ComponentProps) {
 	const navigate = useNavigate();
 
 	const submit = useSubmit();
@@ -174,7 +377,7 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 			code: "",
 			status: "true",
 			description: "",
-			one_use_per_customer: "false",
+			one_use_per_customer: "true",
 			want_max_total_uses: "no",
 			want_max_uses_per_order: "no",
 			discount_type: DEFAULT_DICOUNT_TYPE,
@@ -182,11 +385,12 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 			min_purchase_amount: "",
 			min_purchase_qty: "",
 			start_timestamp: getDefaultDates().start_timestamp,
-			end_timestamp: getDefaultDates().end_timestamp, // 5 days ahead of start date by default
+			end_timestamp: getDefaultDates().end_timestamp,
 			fixed_products: [],
 			conditions: [],
 			customer_groups: null,
 			customer_emails: [],
+			customer_min_purchased_amount: "",
 			buy_x_get_y: buy_x_get_y_detault_values,
 		},
 	});
@@ -230,6 +434,13 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 		useWatch({ control, name: `fixed_products.${index}.type` }) as DiscountCondType;
 	const SelectedCouponsCondsType = (index: number) =>
 		useWatch({ control, name: `conditions.${index}.type` }) as DiscountCondType;
+
+	const isFixedProdctsEnabled =
+		watchedDiscountType === "fixed_product" || watchedDiscountType === "percentage_product";
+	const isBuyXGetYEnabled = watchedDiscountType === "buy_x_get_y";
+
+	const [isAppendingOrderCondition, setAppendOrderCondTransition] = useTransition();
+	const [isAppendingFixedProductCondition, setAppendFixedProductCondTransition] = useTransition();
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const suppressNavigation = useSuppressTopLoadingBar();
@@ -314,7 +525,9 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 				navigate(`/coupons`);
 			} else if (actionData.error) {
 				toast.error(actionData.error);
+				console.log(actionData.error);
 			} else if (actionData.validationErrors) {
+				console.log(actionData.validationErrors);
 				toast.error("Invalid form data. Please check your inputs.");
 				Object.entries(actionData.validationErrors).forEach(([field, errors]) => {
 					setError(field as keyof CouponFormValues, { message: errors[0] });
@@ -324,16 +537,10 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 	}, [actionData, navigate, setError]);
 
 	async function onFormSubmit(values: CouponFormValues) {
-		// toast.info("Creating coupon...");
-		console.log("🔤 Form values: ", values);
+		const formData = getFinalData(values);
+		if (!formData) return;
+		submit(formData, { method: "POST" });
 	}
-
-	const isFixedProdctsEnabled =
-		watchedDiscountType === "fixed_product" || watchedDiscountType === "percentage_product";
-	const isBuyXGetYEnabled = watchedDiscountType === "buy_x_get_y";
-
-	const [isAppendingOrderCondition, setAppendOrderCondTransition] = useTransition();
-	const [isAppendingFixedProductCondition, setAppendFixedProductCondTransition] = useTransition();
 
 	useEffect(() => {
 		console.log("Errors: ", errors);
@@ -396,8 +603,9 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 											</FormItem>
 										)}
 									/>
-									<div>
-										<p className="text-muted-foreground italic text-sm">
+									<div className="flex gap-2 items-center sm:flex-row flex-col max-sm:mt-4">
+										<Info className="sm:h-4 h-5 sm:w-4 w-5 text-muted-foreground" />
+										<p className="text-muted-foreground text-sm">
 											{couponType === "automatic"
 												? "This coupon will automatically apply to the order when required conditions are met."
 												: "The customers will have to manually enter the code at checkout to avail discount."}
@@ -569,6 +777,23 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 											{errors.buy_x_get_y.message}
 										</p>
 									)}
+									{(watchedDiscountType === "fixed_product" ||
+										watchedDiscountType === "percentage_product") &&
+										(errors?.fixed_products as any)?.fixed_products?.root && (
+											<p className="text-sm text-destructive">
+												{
+													(errors?.fixed_products as any)?.fixed_products?.root
+														.message
+												}
+											</p>
+										)}
+									{(watchedDiscountType === "fixed_product" ||
+										watchedDiscountType === "percentage_product") &&
+										errors?.fixed_products?.root && (
+											<p className="text-sm text-destructive">
+												{errors.fixed_products?.root.message}
+											</p>
+										)}
 									{(watchedDiscountType === "fixed_product" ||
 										watchedDiscountType === "percentage_product") &&
 										errors?.fixed_products && (
@@ -814,52 +1039,45 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 															</span>
 														</FormLabel>
 														<FormControl>
-															<div className="flex flex-col gap-3">
-																<TagsInput
-																	value={field.value}
-																	onValueChange={field.onChange}
-																	editable
-																	addOnPaste
-																	className="w-full"
-																	aria-invalid={!!fieldState.error}
-																	inputMode="email"
-																	disabled={fieldDisabledCondition}
-																>
-																	<div className="flex sm:flex-row flex-col gap-2">
-																		<TagsInputList>
-																			{field.value &&
-																			Array.isArray(field.value)
-																				? field.value.map((item) => (
-																						<TagsInputItem
-																							key={item}
-																							value={item}
-																						>
-																							{item}
-																						</TagsInputItem>
-																				  ))
-																				: null}
-																			<TagsInputInput placeholder="Add customer emails..." />
-																		</TagsInputList>
-																		<TagsInputClear className="sm:w-fit w-full">
-																			<div className="tags-input-clear-container">
-																				<RefreshCcw className="h-4 w-4" />
-																				<span className="sm:hidden inline">
-																					Clear
-																				</span>
-																			</div>
-																		</TagsInputClear>
-																	</div>
-																</TagsInput>
-																<div className="self-end">
+															<TagsInput
+																value={field.value}
+																onValueChange={field.onChange}
+																editable
+																addOnPaste
+																className="w-full flex flex-col gap-3"
+																aria-invalid={!!fieldState.error}
+																inputMode="email"
+																disabled={fieldDisabledCondition}
+															>
+																<TagsInputList>
+																	{field.value && Array.isArray(field.value)
+																		? field.value.map((item) => (
+																				<TagsInputItem
+																					key={item}
+																					value={item}
+																				>
+																					{item}
+																				</TagsInputItem>
+																		  ))
+																		: null}
+																	<TagsInputInput placeholder="Add customer emails..." />
+																</TagsInputList>
+																<div className="self-end flex gap-2">
 																	<ImportEmailsButton
 																		onImport={handleImport}
-																		disabled={
-																			fieldState.invalid ||
-																			fieldDisabledCondition
-																		}
+																		disabled={fieldDisabledCondition}
+																		buttonSize="default"
 																	/>
+																	<TagsInputClear className="sm:w-fit">
+																		<div className="tags-input-clear-container">
+																			<RefreshCcw className="h-4 w-4" />
+																			<span className="sm:hidden inline">
+																				Clear
+																			</span>
+																		</div>
+																	</TagsInputClear>
 																</div>
-															</div>
+															</TagsInput>
 														</FormControl>
 														{errors.customer_emails &&
 															Array.isArray(errors.customer_emails) &&
@@ -879,6 +1097,44 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 												);
 											}}
 										/>
+										{/* Min. purchase quantity for customers */}
+										<FormField
+											control={control}
+											name="customer_min_purchased_amount"
+											render={({ field }) => {
+												const fieldDisabledCondition =
+													watchedCustomerGroups === "" ||
+													watchedCustomerGroups === null;
+												return (
+													<FormItem>
+														<FormLabel>Minimum Purchase Ammount</FormLabel>
+														<FormControl>
+															<div className="relative">
+																<Input
+																	type="number"
+																	placeholder="e.g. $1500"
+																	className="pr-9"
+																	{...field}
+																	disabled={fieldDisabledCondition}
+																	value={field.value ?? ""}
+																/>
+																<DollarSign
+																	className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+																	width={18}
+																/>
+															</div>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												);
+											}}
+										/>
+										<div>
+											<p className="text-sm text-muted-foreground">
+												This ammount condition will apply on the total amount spend by
+												customer.
+											</p>
+										</div>
 									</CardContent>
 								</Card>
 								{/* Coupon Validity Dates */}
@@ -901,7 +1157,11 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 															disabled={isSubmitting}
 														/>
 													</FormControl>
-													<FormMessage />
+													{errors?.start_timestamp && (
+														<FormMessage>
+															{errors.start_timestamp.message}
+														</FormMessage>
+													)}
 												</FormItem>
 											)}
 										/>
@@ -919,7 +1179,11 @@ export default function CreateCouponPage({ loaderData, params }: Route.Component
 															disabled={isSubmitting}
 														/>
 													</FormControl>
-													<FormMessage />
+													{errors?.end_timestamp && (
+														<FormMessage>
+															{errors.end_timestamp.message}
+														</FormMessage>
+													)}
 												</FormItem>
 											)}
 										/>

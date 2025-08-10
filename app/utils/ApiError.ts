@@ -18,7 +18,5 @@ export class ApiError extends Error {
 		this.statusCode = statusCode;
 		this.ok = false;
 		this.details.push({ stack: this.stack });
-
-		console.error("ApiError: ", this);
 	}
 }

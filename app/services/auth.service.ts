@@ -38,7 +38,7 @@ export class AuthService extends Service {
 			// console.log("Reached at next level 😀😀😀", userDetails ?? "NOT FOUND 🌋");
 
 			if (userDetailsErr || userDetails == null) {
-				error = new ApiError(userDetailsErr?.message || "User not found", 500, []);
+				error = new ApiError(userDetailsErr?.message || "User not found", 401, []);
 				return { user: null, error };
 			}
 

@@ -681,7 +681,7 @@ export type Database = {
 					operator: Database["public"]["Enums"]["condition_operator"];
 					type: Database["public"]["Enums"]["condition_type"];
 					value_decimal: number | null;
-					value_text: string | null;
+					value_ids: string[] | null;
 				};
 				Insert: {
 					condition_id?: number;
@@ -690,7 +690,7 @@ export type Database = {
 					operator: Database["public"]["Enums"]["condition_operator"];
 					type: Database["public"]["Enums"]["condition_type"];
 					value_decimal?: number | null;
-					value_text?: string | null;
+					value_ids?: string[] | null;
 				};
 				Update: {
 					condition_id?: number;
@@ -699,7 +699,7 @@ export type Database = {
 					operator?: Database["public"]["Enums"]["condition_operator"];
 					type?: Database["public"]["Enums"]["condition_type"];
 					value_decimal?: number | null;
-					value_text?: string | null;
+					value_ids?: string[] | null;
 				};
 				Relationships: [
 					{
@@ -887,6 +887,10 @@ export type Database = {
 					p_product_ids: string[];
 				};
 				Returns: string;
+			};
+			create_coupon: {
+				Args: { input: Json };
+				Returns: number;
 			};
 			get_high_level_collections: {
 				Args: {
@@ -1100,7 +1104,7 @@ export const Constants = {
 			condition_role: ["eligibility", "discount_application", "buy_x", "get_y"],
 			condition_type: ["category", "collection", "price", "sku"],
 			coupon_type_enum: ["manual", "automatic"],
-			customer_type: ["all", "admins", "employee", "consumer"],
+			customer_type: ["admins", "employee", "all", "consumer"],
 			discount_type: [
 				"fixed_order",
 				"percentage_order",
