@@ -22,11 +22,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
-import { Loader2, RefreshCcw } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import {
+	CustomTagsInputClear,
 	TagsInput,
-	TagsInputClear,
 	TagsInputInput,
 	TagsInputItem,
 	TagsInputList,
@@ -306,14 +306,7 @@ export default function CreateCategoryPage() {
 																: null}
 															<TagsInputInput placeholder="Add meta keywords..." />
 														</TagsInputList>
-														<TagsInputClear className="sm:w-fit w-full">
-															<div className="tags-input-clear-container">
-																<RefreshCcw className="h-4 w-4" />
-																<span className="sm:hidden inline">
-																	Clear
-																</span>
-															</div>
-														</TagsInputClear>
+														<CustomTagsInputClear />
 													</div>
 													<div className="text-muted-foreground text-sm">
 														You can add up to {defaults.META_KEYWORDS_VALUE}{" "}
