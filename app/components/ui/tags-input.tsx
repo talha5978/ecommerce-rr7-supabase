@@ -11,7 +11,7 @@ const TagsInput = React.forwardRef<
 	<TagsInputPrimitive.Root
 		data-slot="tags-input"
 		ref={ref}
-		className={cn("flex w-[380px] flex-col gap-2 ", className)}
+		className={cn("flex min-w-0 flex-col gap-2 ", className)}
 		{...props}
 	/>
 ));
@@ -76,7 +76,7 @@ const TagsInputItem = React.forwardRef<
 		data-slot="tags-input-item"
 		ref={ref}
 		className={cn(
-			"inline-flex max-w-[calc(100%-8px)] items-center gap-1.5 rounded border bg-transparent px-2.5 text-sm focus:outline-hidden data-disabled:cursor-not-allowed data-editable:select-none data-editing:bg-transparent data-disabled:opacity-50 data-editing:ring-1 data-editing:ring-ring [&:not([data-editing])]:pr-1.5 [&[data-highlighted]:not([data-editing])]:bg-accent [&[data-highlighted]:not([data-editing])]:text-accent-foreground",
+			"inline-flex max-w-[calc(100%-50px)] items-center gap-1.5 rounded border bg-transparent px-2.5 text-sm focus:outline-hidden data-disabled:cursor-not-allowed data-editable:select-none data-editing:bg-transparent data-disabled:opacity-50 data-editing:ring-1 data-editing:ring-ring [&:not([data-editing])]:pr-1.5 [&[data-highlighted]:not([data-editing])]:bg-accent [&[data-highlighted]:not([data-editing])]:text-accent-foreground",
 			className,
 		)}
 		{...props}
