@@ -14,14 +14,15 @@ const statusBadgeVariants = cva(
 			variant: {
 				default:
 					"bg-muted-foreground/10 dark:bg-muted-foreground/20 text-muted-foreground shadow-none",
-				success: "bg-emerald-600/30 dark:bg-emerald-600/40 text-primary-foreground shadow-none",
-				destructive: "bg-red-600/30 dark:bg-red-600/40 text-primary-foreground shadow-none",
-				warning: "bg-yellow-600/30 dark:bg-yellow-600/50 text-primary-foreground shadow-none",
+				success: "bg-success/50 dark:bg-success/60 text-white shadow-none",
+				destructive: "bg-destructive/50 dark:bg-destructive/40 text-white shadow-none",
+				warning: "bg-warning/30 dark:bg-warning/60 text-white shadow-none",
 			},
+			// empty class names for future modification
 			icon: {
-				dot: "text-muted-foreground dark:text-muted-foreground",
-				tick: "text-green-500",
-				cross: "text-destructive",
+				dot: "",
+				tick: "",
+				cross: "",
 			},
 		},
 		defaultVariants: {
@@ -49,7 +50,7 @@ const StatusBadge = ({ className, variant, icon = Default_Icon, children, ...pro
 			) : (
 				<X strokeWidth={4} className="!size-3" />
 			)}
-			{children}
+			<p className="dark:text-white/70 text-black/60">{children}</p>
 		</Badge>
 	);
 };
