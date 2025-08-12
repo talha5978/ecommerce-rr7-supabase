@@ -1,5 +1,12 @@
 import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from "@tabler/icons-react";
-import { ColumnDef, flexRender, getCoreRowModel, type Table, useReactTable } from "@tanstack/react-table";
+import {
+	ColumnDef,
+	flexRender,
+	getCoreRowModel,
+	Row,
+	type Table,
+	useReactTable,
+} from "@tanstack/react-table";
 
 import { Button } from "~/components/ui/button";
 
@@ -24,11 +31,12 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Settings2 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
-import { memo } from "react";
+import { motion } from "motion/react";
+import { type JSX, memo, useCallback } from "react";
+import { Checkbox } from "~/components/ui/checkbox";
 
-interface DataTableProps<T> {
-	table: Table<T>;
+interface DataTableProps {
+	table: Table<any>;
 	onPageChange?: (page: number) => void;
 	onPageSizeChange?: (pageSize: number) => void;
 	pageSize?: number;
@@ -48,181 +56,180 @@ export interface DataTableSkeletonProps {
 	columns: ColumnDef<any>[];
 }
 
-export function DataTable<T>({
-	table,
-	onPageChange,
-	onPageSizeChange,
-	pageSize,
-	total,
-	customEmptyMessage,
-	cellClassName = "**:data-[slot=table-cell]:last:bg-background",
-	headerClassName = "bg-muted",
-}: DataTableProps<T>) {
-	if (!table) {
+export const DataTable = memo(
+	({
+		table,
+		onPageChange,
+		onPageSizeChange,
+		pageSize,
+		total,
+		customEmptyMessage,
+		cellClassName = "**:data-[slot=table-cell]:last:bg-background",
+		headerClassName = "bg-muted",
+	}: DataTableProps) => {
+		if (!table) {
+			return (
+				<div>
+					<p className="text-center text-muted-foreground">
+						Table not initialized. Please check the data source.
+					</p>
+				</div>
+			);
+		}
+
+		const PAGE_VALUES = [10, 20, 30, 40, 50];
+
 		return (
-			<div>
-				<p className="text-center text-muted-foreground">
-					Table not initialized. Please check the data source.
-				</p>
-			</div>
-		);
-	}
+			<section>
+				<TableComponent>
+					<TableHeader className={`sticky top-0 z-10`}>
+						{table.getHeaderGroups().map((headerGroup) => (
+							<TableRow
+								key={headerGroup.id}
+								className="[&>*]:whitespace-nowrap sticky top-0 bg-background after:content-[''] after:inset-x-0 after:h-px after:bg-border after:absolute after:bottom-0"
+							>
+								{headerGroup.headers.map((header, index) => {
+									const isFirst = index === 0;
+									const isLast = index === headerGroup.headers.length - 1;
 
-	const PAGE_VALUES = [10, 20, 30, 40, 50];
-
-	// Animation variants for row enter/exit
-	const rowVariants = {
-		hidden: { opacity: 0, y: 20 },
-		visible: { opacity: 1, y: 0 },
-		exit: { opacity: 0, y: -20 },
-	};
-
-	return (
-		<section>
-			<TableComponent>
-				<TableHeader className={`sticky top-0 z-10`}>
-					{table.getHeaderGroups().map((headerGroup) => (
-						<TableRow
-							key={headerGroup.id}
-							className="[&>*]:whitespace-nowrap sticky top-0 bg-background after:content-[''] after:inset-x-0 after:h-px after:bg-border after:absolute after:bottom-0"
-						>
-							{headerGroup.headers.map((header, index) => {
-								const isFirst = index === 0;
-								const isLast = index === headerGroup.headers.length - 1;
-
-								return (
-									<TableHead
-										key={header.id}
-										className={`
+									return (
+										<TableHead
+											key={header.id}
+											className={`
 											${cn(headerClassName)}
 											${isFirst && "rounded-tl-lg"}
 											${isLast && "rounded-tr-lg"}`}
-									>
-										{header.isPlaceholder
-											? null
-											: flexRender(header.column.columnDef.header, header.getContext())}
-									</TableHead>
-								);
-							})}
-						</TableRow>
-					))}
-				</TableHeader>
-				<TableBody
-					className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}
-				>
-					{/* <AnimatePresence> */}
-					{table.getRowModel().rows?.length > 0 ? (
-						table.getRowModel().rows.map((row) => (
-							<motion.tr
-								key={row.id}
-								id={row.id}
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								transition={{ duration: 0.4, ease: "easeOut" }}
-								data-state={row.getIsSelected() && "selected"}
-								data-slot="table-row"
-								className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
-							>
-								{row.getVisibleCells().map((cell) => (
-									<TableCell key={cell.id}>
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
-									</TableCell>
-								))}
-							</motion.tr>
-						))
-					) : (
-						<TableRow>
-							<TableCell
-								colSpan={table.getAllColumns().length}
-								className="h-36 text-center select-none text-muted-foreground"
-							>
-								<p className="text-sm">{customEmptyMessage ?? "No results found"}</p>
-							</TableCell>
-						</TableRow>
-					)}
-					{/* </AnimatePresence> */}
-				</TableBody>
-			</TableComponent>
-			<div className="mt-4">
-				{total && (
-					<div className="px-4">
-						<p>
-							({total}) record{total ? (total === 1 ? "" : "s") : "s"} found
-						</p>
-					</div>
-				)}
-				{onPageSizeChange && onPageChange && pageSize ? (
-					<div className="mt-4 flex w-full items-center gap-8 justify-between px-4">
-						<div className="hidden items-center gap-2 sm:flex">
-							<Label htmlFor="rows-per-page" className="text-sm font-medium">
-								Rows per page
-							</Label>
-							<Select
-								value={`${pageSize}`}
-								onValueChange={(value) => onPageSizeChange(Number(value))}
-							>
-								<SelectTrigger size="sm" className="w-20" id="rows-per-page">
-									<SelectValue placeholder={table.getState().pagination.pageSize} />
-								</SelectTrigger>
-								<SelectContent side="top" defaultValue={`${pageSize}`}>
-									{PAGE_VALUES.map((size) => (
-										<SelectItem key={size} value={`${size}`}>
-											{size}
-										</SelectItem>
+										>
+											{header.isPlaceholder
+												? null
+												: flexRender(
+														header.column.columnDef.header,
+														header.getContext(),
+												  )}
+										</TableHead>
+									);
+								})}
+							</TableRow>
+						))}
+					</TableHeader>
+					<TableBody
+						className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}
+					>
+						{/* <AnimatePresence> */}
+						{table.getRowModel().rows?.length > 0 ? (
+							table.getRowModel().rows.map((row) => (
+								<motion.tr
+									key={row.id}
+									id={row.id}
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ duration: 0.4, ease: "easeOut" }}
+									data-state={row.getIsSelected() && "selected"}
+									data-slot="table-row"
+									className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
+								>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id}>
+											{flexRender(cell.column.columnDef.cell, cell.getContext())}
+										</TableCell>
 									))}
-								</SelectContent>
-							</Select>
+								</motion.tr>
+							))
+						) : (
+							<TableRow>
+								<TableCell
+									colSpan={table.getAllColumns().length}
+									className="h-36 text-center select-none text-muted-foreground"
+								>
+									<p className="text-sm">{customEmptyMessage ?? "No results found"}</p>
+								</TableCell>
+							</TableRow>
+						)}
+						{/* </AnimatePresence> */}
+					</TableBody>
+				</TableComponent>
+				<div className="mt-4">
+					{total && (
+						<div className="px-4">
+							<p>
+								({total}) record{total ? (total === 1 ? "" : "s") : "s"} found
+							</p>
 						</div>
-						<div className="flex w-fit items-center justify-center text-sm font-medium">
-							Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+					)}
+					{onPageSizeChange && onPageChange && pageSize ? (
+						<div className="mt-4 flex w-full items-center gap-8 justify-between px-4">
+							<div className="hidden items-center gap-2 sm:flex">
+								<Label htmlFor="rows-per-page" className="text-sm font-medium">
+									Rows per page
+								</Label>
+								<Select
+									value={`${pageSize}`}
+									onValueChange={(value) => onPageSizeChange(Number(value))}
+								>
+									<SelectTrigger size="sm" className="w-20" id="rows-per-page">
+										<SelectValue placeholder={table.getState().pagination.pageSize} />
+									</SelectTrigger>
+									<SelectContent side="top" defaultValue={`${pageSize}`}>
+										{PAGE_VALUES.map((size) => (
+											<SelectItem key={size} value={`${size}`}>
+												{size}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+							<div className="flex w-fit items-center justify-center text-sm font-medium">
+								Page {table.getState().pagination.pageIndex + 1} of{" "}
+								{table.getPageCount() || 1}
+							</div>
+							<div className="ml-auto flex items-center gap-2 sm:ml-0">
+								<Button
+									variant="outline"
+									className="hidden h-8 w-8 p-0 sm:flex"
+									onClick={() => onPageChange(0)}
+									disabled={!table.getCanPreviousPage()}
+								>
+									<span className="sr-only">Go to first page</span>
+									<IconChevronsLeft />
+								</Button>
+								<Button
+									variant="outline"
+									className="size-8"
+									size="icon"
+									onClick={() => onPageChange(table.getState().pagination.pageIndex - 1)}
+									disabled={!table.getCanPreviousPage()}
+								>
+									<span className="sr-only">Go to previous page</span>
+									<IconChevronLeft />
+								</Button>
+								<Button
+									variant="outline"
+									className="size-8"
+									size="icon"
+									onClick={() => onPageChange(table.getState().pagination.pageIndex + 1)}
+									disabled={!table.getCanNextPage()}
+								>
+									<span className="sr-only">Go to next page</span>
+									<IconChevronRight />
+								</Button>
+								<Button
+									variant="outline"
+									className="hidden size-8 sm:flex"
+									size="icon"
+									onClick={() => onPageChange(table.getPageCount() - 1)}
+									disabled={!table.getCanNextPage()}
+								>
+									<span className="sr-only">Go to last page</span>
+									<IconChevronsRight />
+								</Button>
+							</div>
 						</div>
-						<div className="ml-auto flex items-center gap-2 sm:ml-0">
-							<Button
-								variant="outline"
-								className="hidden h-8 w-8 p-0 sm:flex"
-								onClick={() => onPageChange(0)}
-								disabled={!table.getCanPreviousPage()}
-							>
-								<span className="sr-only">Go to first page</span>
-								<IconChevronsLeft />
-							</Button>
-							<Button
-								variant="outline"
-								className="size-8"
-								size="icon"
-								onClick={() => onPageChange(table.getState().pagination.pageIndex - 1)}
-								disabled={!table.getCanPreviousPage()}
-							>
-								<span className="sr-only">Go to previous page</span>
-								<IconChevronLeft />
-							</Button>
-							<Button
-								variant="outline"
-								className="size-8"
-								size="icon"
-								onClick={() => onPageChange(table.getState().pagination.pageIndex + 1)}
-								disabled={!table.getCanNextPage()}
-							>
-								<span className="sr-only">Go to next page</span>
-								<IconChevronRight />
-							</Button>
-							<Button
-								variant="outline"
-								className="hidden size-8 sm:flex"
-								size="icon"
-								onClick={() => onPageChange(table.getPageCount() - 1)}
-								disabled={!table.getCanNextPage()}
-							>
-								<span className="sr-only">Go to last page</span>
-								<IconChevronsRight />
-							</Button>
-						</div>
-					</div>
-				) : null}
-			</div>
-		</section>
-	);
-}
+					) : null}
+				</div>
+			</section>
+		);
+	},
+);
 
 export const DataTableSkeleton = memo(function DataTableSkeleton({
 	noOfSkeletons = 8,
@@ -268,7 +275,7 @@ export const DataTableSkeleton = memo(function DataTableSkeleton({
 	);
 });
 
-export function TableColumnsToggle<T>({ table }: { table: Table<T> }) {
+export function TableColumnsToggle({ table }: { table: Table<any> }) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -302,4 +309,45 @@ export function TableColumnsToggle<T>({ table }: { table: Table<T> }) {
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
+}
+
+interface TableRowSelectorProps<TableValues extends Record<string, any>> {
+	name: keyof TableValues;
+}
+
+export function TableRowSelector<TableValues extends Record<string, any>>({
+	name,
+}: TableRowSelectorProps<TableValues>) {
+	const header = useCallback(
+		({ table }: { table: Table<TableValues[typeof name]> }): JSX.Element | null => {
+			const rows = table.getRowCount();
+			return rows > 0 ? (
+				<div className="flex items-center justify-center mr-2 ml-1">
+					<Checkbox
+						checked={
+							table.getIsAllPageRowsSelected() ||
+							(table.getIsSomePageRowsSelected() && "indeterminate")
+						}
+						onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+						aria-label="Select all"
+					/>
+				</div>
+			) : null;
+		},
+		[],
+	);
+
+	const cell = useCallback(({ row }: { row: Row<TableValues[typeof name]> }): JSX.Element => {
+		return (
+			<div className="flex items-center justify-center mr-2 ml-1">
+				<Checkbox
+					checked={row.getIsSelected()}
+					onCheckedChange={(value) => row.toggleSelected(!!value)}
+					aria-label="Select row"
+				/>
+			</div>
+		);
+	}, []);
+
+	return { header, cell };
 }

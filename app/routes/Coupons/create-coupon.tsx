@@ -15,11 +15,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
-import { DollarSign, Info, Loader2, PlusCircle, RefreshCcw, Trash2 } from "lucide-react";
+import { DollarSign, Info, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useTransition } from "react";
 import {
+	CustomTagsInputClear,
 	TagsInput,
-	TagsInputClear,
 	TagsInputInput,
 	TagsInputItem,
 	TagsInputList,
@@ -102,6 +102,21 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		raw_specific_target_products === "" || raw_specific_target_products === null
 			? null
 			: JSON.parse(raw_specific_target_products as string);
+
+	if (
+		specific_target_products !== null &&
+		Array.isArray(specific_target_products) &&
+		specific_target_products.length > 0
+	) {
+		specific_target_products.forEach((product: any) => {
+			if (
+				(product.value_text === "" || product.value_text === null) &&
+				(product.value_decimal === null || product.value_decimal === "")
+			) {
+				throw new ApiError("Invalid targets products data", 400, []);
+			}
+		});
+	}
 
 	// return;
 	const data: CouponActionData = {
@@ -1068,14 +1083,7 @@ export default function CreateCouponPage({ params }: Route.ComponentProps) {
 																		disabled={fieldDisabledCondition}
 																		buttonSize="default"
 																	/>
-																	<TagsInputClear className="sm:w-fit">
-																		<div className="tags-input-clear-container">
-																			<RefreshCcw className="h-4 w-4" />
-																			<span className="sm:hidden inline">
-																				Clear
-																			</span>
-																		</div>
-																	</TagsInputClear>
+																	<CustomTagsInputClear />
 																</div>
 															</TagsInput>
 														</FormControl>

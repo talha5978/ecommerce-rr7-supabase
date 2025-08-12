@@ -174,6 +174,7 @@ export const OrderConditionsCols = ({
 								minLength={1}
 								className="max-w-[5rem]"
 								{...field}
+								value={field.value ?? ""}
 							/>
 						)}
 					/>

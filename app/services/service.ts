@@ -14,35 +14,35 @@ export class Service implements ServiceBase {
 	readonly headers;
 	readonly request;
 
-	readonly IMAGES_BUCKET = STORAGE_BUCKETS.images;
+	protected readonly IMAGES_BUCKET = STORAGE_BUCKETS.images;
 
-	readonly USERS_TABLE = "app_users";
-	readonly USER_ROLES_TABLE = "user_roles";
+	protected readonly USERS_TABLE = "app_users";
+	protected readonly USER_ROLES_TABLE = "user_roles";
 
-	readonly ATTRIBUTES_TABLE = "attributes";
-	readonly PRODUCT_ATTRIBUTES_TABLE = "product_attributes";
-	readonly VARIANT_ATTRIBUTES_TABLE = "variant_attributes";
+	protected readonly ATTRIBUTES_TABLE = "attributes";
+	protected readonly PRODUCT_ATTRIBUTES_TABLE = "product_attributes";
+	protected readonly VARIANT_ATTRIBUTES_TABLE = "variant_attributes";
 
-	readonly CATEGORY_TABLE = "category";
-	readonly SUB_CATEGORY_TABLE = "sub_category";
+	protected readonly CATEGORY_TABLE = "category";
+	protected readonly SUB_CATEGORY_TABLE = "sub_category";
 
-	readonly META_DETAILS_TABLE = "meta_details";
+	protected readonly META_DETAILS_TABLE = "meta_details";
 
-	readonly COLLECTION_PRODUCTS_TABLE = "collection_products";
-	readonly COLLECTION_TABLE = "collections";
+	protected readonly COLLECTION_PRODUCTS_TABLE = "collection_products";
+	protected readonly COLLECTION_TABLE = "collections";
 
-	readonly PRODUCTS_TABLE = "product";
-	readonly PRODUCT_VARIANT_TABLE = "product_variant";
+	protected readonly PRODUCTS_TABLE = "product";
+	protected readonly PRODUCT_VARIANT_TABLE = "product_variant";
 
-	readonly BUY_X_GET_Y_TABLE = "buy_x_get_y_details";
-	readonly CONDITION_GROUPS_TABLE = "condition_groups";
-	readonly CONDITION_GROUP_COLLECTIONS_TABLE = "condition_group_collections";
-	readonly CONDITION_GROUP_SKUS_TABLE = "condition_group_skus";
-	readonly CONDITION_GROUP_SUB_CATEGORIES_TABLE = "condition_group_sub_categories";
-	readonly COUPONS_TABLE = "coupons";
-	readonly CUSTOMER_CONDITIONS_TABLE = "customer_conditions";
-	readonly PRODUCT_CONDITIONS_TABLE = "product_conditions";
-	readonly CUSTOMER_EMAILS_TABLE = "customer_emails";
+	protected readonly BUY_X_GET_Y_TABLE = "buy_x_get_y_details";
+	protected readonly CONDITION_GROUPS_TABLE = "condition_groups";
+	protected readonly CONDITION_GROUP_COLLECTIONS_TABLE = "condition_group_collections";
+	protected readonly CONDITION_GROUP_SKUS_TABLE = "condition_group_skus";
+	protected readonly CONDITION_GROUP_SUB_CATEGORIES_TABLE = "condition_group_sub_categories";
+	protected readonly COUPONS_TABLE = "coupons";
+	protected readonly CUSTOMER_CONDITIONS_TABLE = "customer_conditions";
+	protected readonly PRODUCT_CONDITIONS_TABLE = "product_conditions";
+	protected readonly CUSTOMER_EMAILS_TABLE = "customer_emails";
 
 	constructor(request: Request) {
 		const { supabase, headers } = createSupabaseServerClient(request);

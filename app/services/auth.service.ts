@@ -1,8 +1,11 @@
 import { ApiError } from "~/utils/ApiError";
-import type { GetCurrentUser, Login, Logout, VerifyOtp } from "~/types/auth";
+import type { GetCurrentUser, GetSession, Login, Logout, VerifyOtp } from "~/types/auth";
 import type { AdminUser } from "~/types/user";
 import { Service } from "~/services/service";
+import { UseClassMiddleware } from "~/decorators/useClassMiddleware";
+import { loggerMiddleware } from "~/middlewares/logger.middleware";
 
+@UseClassMiddleware(loggerMiddleware)
 export class AuthService extends Service {
 	async getCurrentUser(): Promise<GetCurrentUser> {
 		try {
@@ -68,6 +71,32 @@ export class AuthService extends Service {
 		}
 	}
 
+	async getSession(): Promise<GetSession> {
+		try {
+			const {
+				data: { session },
+				error: sessionErr,
+			} = await this.supabase.auth.getSession();
+			// console.log("Auth user: ", authUser);
+
+			let error: null | ApiError = null;
+			if (sessionErr || session == null) {
+				error = new ApiError(sessionErr?.message || "Session not found", 401, []);
+				return { session: null, error };
+			}
+
+			return { session, error };
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { session: null, error: err };
+			}
+			return {
+				session: null,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
 	async getCode({ email }: { email: string }): Promise<Login> {
 		try {
 			const { error: fetchError } = await this.supabase.auth.signInWithOtp({
@@ -113,7 +142,7 @@ export class AuthService extends Service {
 			if (fetchError) {
 				error = new ApiError(fetchError.message, Number(fetchError.code) || 500, []);
 			}
-			console.log(this.headers);
+			// console.log(this.headers);
 
 			return { error, user, session, headers: this.headers };
 		} catch (err: any) {
@@ -131,7 +160,8 @@ export class AuthService extends Service {
 
 	async logout(): Promise<Logout> {
 		try {
-			const { error: logoutErrr } = await this.supabase.auth.signOut();
+			// Signout the user for this session only
+			const { error: logoutErrr } = await this.supabase.auth.signOut({ scope: "local" });
 
 			let error: null | ApiError = null;
 			if (logoutErrr) {

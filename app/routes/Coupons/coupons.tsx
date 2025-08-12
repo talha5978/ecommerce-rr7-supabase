@@ -1,10 +1,10 @@
-import { Link, LoaderFunctionArgs, useLocation } from "react-router";
+import { Form, Link, useLoaderData, useLocation, useSearchParams } from "react-router";
 import { Route } from "./+types/coupons";
 import { Button } from "~/components/ui/button";
-import { ChevronRight, PlusCircle } from "lucide-react";
+import { ChevronRight, LayoutGrid, MoreHorizontal, PlusCircle, Search, TableOfContents } from "lucide-react";
 
 import { useNavigation } from "react-router";
-import { memo, useMemo, useState } from "react";
+import { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { defaults } from "~/constants";
 
@@ -18,243 +18,233 @@ import {
 } from "~/components/ui/dialog";
 import { CouponTypeOptions } from "~/utils/couponsConstants";
 import type { CouponTypesOption } from "~/components/Coupons/coupons-comp";
+import { GetPaginationControls } from "~/utils/getPaginationControls";
+import {
+	type ColumnDef,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	Table,
+	useReactTable,
+} from "@tanstack/react-table";
+import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
+import { queryClient } from "~/lib/queryClient";
+import { highLevelCouponsQuery } from "~/queries/coupons.q";
+import { toast } from "sonner";
+import type { HighLevelCoupon } from "~/types/coupons";
+import StatusBadge from "~/components/status-badge";
+import { GetFormattedDate } from "~/lib/utils";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Input } from "~/components/ui/input";
+import {
+	DataTable,
+	DataTableSkeleton,
+	TableColumnsToggle,
+	TableRowSelector,
+	type DataTableViewOptionsProps,
+} from "~/components/Table/data-table";
+import { format } from "date-fns";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { CouponCard, CouponCardSkeleton, CreateNewCouponCard } from "~/components/Coupons/CouponCard";
+import { motion } from "motion/react";
+import CouponsPageContex, { CouponsPageCtx, type ViewMode } from "~/components/Coupons/MainCouponsContext";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-	// const { q, pageIndex, pageSize } = getPaginationQueryPayload({
-	//     request,
-	//     defaultPageNo: defaults.DEFAULT_PRODUCTS_PAGE,
-	//     defaultPageSize: defaults.DEFAULT_PRODUCTS_PAGE_SIZE,
-	// });
-	// const productFilters: ProductFilters = getProductsFiltersPayload({ request });
-	// const data = await queryClient.fetchQuery(
-	//     productsQuery({
-	//         request,
-	//         q,
-	//         pageIndex,
-	//         pageSize,
-	//         filters: productFilters,
-	//     })
-	// );
-	// const categories = await queryClient.fetchQuery(categoriesQuery({ request }));
-	// return {
-	//     data,
-	//     query: q,
-	//     pageIndex,
-	//     pageSize,
-	//     categories
-	// };
+	const {
+		q: searchQuery,
+		pageIndex,
+		pageSize,
+	} = getPaginationQueryPayload({
+		request,
+		defaultPageNo: 1,
+		defaultPageSize: defaults.DEFAULT_COUPONS_PAGE_SIZE,
+	});
+
+	const data = await queryClient.fetchQuery(
+		highLevelCouponsQuery({
+			request,
+			searchQuery,
+			pageIndex,
+			pageSize,
+		}),
+	);
+
+	return {
+		data,
+		query: searchQuery,
+		pageIndex,
+		pageSize,
+	};
 };
 
-export default function CouponsPage({} // loaderData: { data, query, pageIndex, pageSize }
-: Route.ComponentProps) {
+export default function CouponsMainCtx({}: Route.ComponentProps) {
+	return (
+		<CouponsPageContex>
+			<CouponsPage />
+			<CouponTypeSelectDialog />
+		</CouponsPageContex>
+	);
+}
+
+const CouponsPage = memo(() => {
+	const { data, query, pageIndex, pageSize } = useLoaderData<typeof loader>();
 	const navigation = useNavigation();
 	const location = useLocation();
 
-	// const pageCount = Math.ceil(data.total / pageSize);
-
-	const [couponTypeDialog, setCouponTypeDialog] = useState<boolean>(false);
+	const pageCount = useMemo(() => Math.ceil(data.total / pageSize), [data.total, pageSize]);
 
 	const isFetchingThisRoute = useMemo(
 		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
 		[navigation.state, navigation.location?.pathname, location.pathname],
 	);
 
+	const { setCouponTypeDialogState } = useContext(CouponsPageCtx);
+
 	const handleCreateClick = () => {
-		setCouponTypeDialog(true);
+		setCouponTypeDialogState(true);
 		return;
 	};
 	// console.log(data);
 
-	// useEffect(() => {
-	//     if (data.error != null && data.error.message) {
-	//         toast.error(`${data.error.statusCode} - ${data.error.message}`);
-	//     }
-	// }, [data.error]);
+	useEffect(() => {
+		if (data.error != null && data.error.message) {
+			toast.error(`${data.error.statusCode} - ${data.error.message}`);
+		}
+	}, [data.error]);
+
+	const columns: ColumnDef<HighLevelCoupon>[] = [
+		{
+			id: "select",
+			header: ({ table }) => TableRowSelector({ name: "id" }).header({ table }),
+			cell: ({ row }) => TableRowSelector({ name: "id" }).cell({ row }),
+			enableSorting: false,
+			enableHiding: false,
+		},
+		{
+			id: "code",
+			enableHiding: false,
+			accessorKey: "code",
+			cell: (info) => {
+				return <p className="md:max-w-[35ch] max-w-[20ch] truncate">{info.row.original.code}</p>;
+			},
+			header: () => "Code",
+		},
+		{
+			id: "Type",
+			accessorKey: "coupon_type",
+			cell: (info) =>
+				info.row.original.coupon_type.charAt(0).toUpperCase() +
+				info.row.original.coupon_type.slice(1),
+			header: () => "Type",
+		},
+		{
+			id: "Uses",
+			accessorKey: "uses",
+			cell: (info) => "N/A",
+			header: () => "Uses",
+		},
+		{
+			id: "Start",
+			accessorKey: "start_timestamp",
+			cell: (info) => format(info.row.original.start_timestamp, "PPP hh:mm a"),
+			header: () => "Start",
+		},
+		{
+			id: "End",
+			accessorKey: "end_timestamp",
+			cell: (info) => format(info.row.original.end_timestamp, "PPP hh:mm a"),
+			header: () => "End",
+		},
+		{
+			id: "Status",
+			accessorKey: "status",
+			cell: (info) => {
+				return (
+					<StatusBadge variant={info.row.original.status ? "success" : "destructive"} icon="dot">
+						{info.row.original.status ? "Active" : "Inactive"}
+					</StatusBadge>
+				);
+			},
+			header: () => "Status",
+		},
+		{
+			id: "Created At",
+			accessorKey: "createdAt",
+			cell: (info) => {
+				const field = info.row.original.created_at;
+				return field !== null ? GetFormattedDate(field) : null;
+			},
+			header: () => "Created At",
+		},
+		{
+			id: "actions",
+			cell: ({ row }) => {
+				const rowData: HighLevelCoupon = row.original;
+
+				return (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+								<span className="sr-only">Open menu</span>
+								<MoreHorizontal className="h-4 w-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem
+								onClick={() => {
+									navigator.clipboard.writeText(rowData.id.toString());
+									toast.success("Coupon ID copied", {
+										description: rowData.id,
+									});
+								}}
+							>
+								Copy ID
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<Link to={`${rowData.id}/variants`} viewTransition prefetch="intent">
+								<DropdownMenuItem>See details</DropdownMenuItem>
+							</Link>
+							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
+								<DropdownMenuItem>Update</DropdownMenuItem>
+							</Link>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				);
+			},
+		},
+	];
+
+	const tableColumns = useMemo(() => columns, []);
+
+	const table = useReactTable({
+		data: (data.coupons as HighLevelCoupon[]) ?? [],
+		columns: tableColumns,
+		getCoreRowModel: getCoreRowModel(),
+		manualPagination: true,
+		getPaginationRowModel: getPaginationRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+		enableRowSelection: true,
+		pageCount,
+		state: {
+			pagination: {
+				pageIndex,
+				pageSize,
+			},
+		},
+	});
+
 	console.log("Re rendered");
-
-	// const columns: ColumnDef<HighLevelProduct, unknown>[] = [
-	//     {
-	//         id: "Sr. No.",
-	//         enableHiding: false,
-	//         accessorKey: "id",
-	//         cell: (info: any) => `(${info.row.index + 1})`,
-	//         header: () => "Sr. No.",
-	//     },
-	//     {
-	//         id: "Cover",
-	//         accessorKey: "cover_image",
-	//         cell: (info: any) => {
-	//             const rowImg = info.row.original.cover_image;
-	//             const image = `${SUPABASE_IMAGE_BUCKET_PATH}/${rowImg}`;
-
-	//             if (rowImg) {
-	//                 return (
-	//                     <div>
-	//                         <ImageViewer
-	//                             imageUrl={image}
-	//                             classNameThumbnailViewer="h-20 w-18 rounded-sm object-cover shadow-md"
-	//                         />
-	//                     </div>
-	//                 )
-	//             } else {
-	//                 return (
-	//                     <Skeleton className="h-20 w-18 rounded-sm" />
-	//                 )
-	//             }
-	//         },
-	//         header: () => "Cover",
-	//     },
-	//     {
-	//         id: "Name",
-	//         enableHiding: false,
-	//         accessorKey: "name",
-	//         cell: (info: any) => {
-	//             return (
-	//                 <p className="md:max-w-[35ch] max-w-[20ch] truncate">{info.row.original.name}</p>
-	//             )
-	//         },
-	//         header: () => "Name",
-	//     },
-	//     {
-	//         id: "Category",
-	//         accessorKey: "categoryName",
-	//         cell: (info: any) => info.row.original.categoryName,
-	//         header: () => "Category",
-	//     },
-	//     {
-	//         id: "Sub Category",
-	//         accessorKey: "subCategoryName",
-	//         cell: (info: any) => info.row.original.subCategoryName,
-	//         header: () => "Sub Category",
-	//     },
-	//     {
-	//         id: "No. of Variants",
-	//         accessorKey: "variants_count",
-	//         cell: (info: any) => {
-	//             const len = info.row.original.variants_count;
-	//             const isZeroLen = len === 0;
-	//             return (
-	//                 <div className={`${isZeroLen ? "flex gap-2 items-center" : ""}`}>
-	//                     <p className={`${isZeroLen ? "text-destructive" : ""}`}>
-	//                         {len}
-	//                     </p>
-	//                     {isZeroLen && <TriangleAlert className="w-4 h-4 text-destructive" />}
-	//                 </div>
-	//             );
-	//         },
-	//         header: () => "No. of Variants",
-	//     },
-	//     {
-	//         id: "Featured",
-	//         accessorKey: "is_featured",
-	//         cell: (info: any) => {
-	//             const featured = info.row.original.is_featured;
-	//             return (
-	//                 <StatusBadge variant={featured ? "success" : "default"} icon={featured ? "tick" : "cross"}>
-	//                     {featured ? "Yes" : "No"}
-	//                 </StatusBadge>
-	//             );
-	//         },
-	//         header: () => "Featured",
-	//     },
-	//     {
-	//         id: "Status",
-	//         accessorKey: "status",
-	//         cell: (info: any) => {
-	//             return (
-	//                 <StatusBadge variant={info.row.original.status ? "success" : "destructive"} icon="dot">
-	//                     {info.row.original.status ? "Active" : "Inactive"}
-	//                 </StatusBadge>
-	//             );
-	//         },
-	//         header: () => "Status",
-	//     },
-	//     {
-	//         id: "Shipping",
-	//         accessorKey: "free_shipping",
-	//         cell: (info: any) => {
-	//             return (
-	//                 <StatusBadge variant={info.row.original.free_shipping ? "warning" : "default"} icon="dot">
-	//                     {info.row.original.free_shipping ? "Free" : "Paid"}
-	//                 </StatusBadge>
-	//             );
-	//         },
-	//         header: () => "Shipping",
-	//     },
-	//     {
-	//         id: "Created At",
-	//         accessorKey: "createdAt",
-	//         cell: (info: any) => GetFormattedDate(info.row.original.createdAt),
-	//         header: () => "Created At",
-	//     },
-	//     {
-	//         id: "actions",
-	//         cell: ({ row }) => {
-	//             const rowData: HighLevelProduct = row.original;
-
-	//             return (
-	//                 <DropdownMenu>
-	//                     <DropdownMenuTrigger asChild>
-	//                         <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-	//                             <span className="sr-only">Open menu</span>
-	//                             <MoreHorizontal className="h-4 w-4" />
-	//                         </Button>
-	//                     </DropdownMenuTrigger>
-	//                     <DropdownMenuContent align="end">
-	//                         <DropdownMenuItem
-	//                             onClick={() => {
-	//                                 navigator.clipboard.writeText(rowData.id);
-	//                                 toast.success("Product ID copied", {
-	//                                     description: rowData.id,
-	//                                 });
-	//                             }}
-	//                         >
-	//                             Copy ID
-	//                         </DropdownMenuItem>
-	//                         <DropdownMenuSeparator />
-	//                         <Link to={`${rowData.id}/variants`} viewTransition prefetch="intent">
-	//                             <DropdownMenuItem>View Variants</DropdownMenuItem>
-	//                         </Link>
-	//                         <Link to={`${rowData.id}/variants/create`} viewTransition prefetch="intent">
-	//                             <DropdownMenuItem>Create Variant</DropdownMenuItem>
-	//                         </Link>
-	//                         <DropdownMenuSeparator />
-	//                         <Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
-	//                             <DropdownMenuItem>Update</DropdownMenuItem>
-	//                         </Link>
-	//                         <UpdateStatusForm product={rowData as HighLevelProduct} />
-	//                     </DropdownMenuContent>
-	//                 </DropdownMenu>
-	//             );
-	//         },
-	//     },
-	// ];
-
-	// const tableColumns = useMemo(() => columns, []);
-
-	// const { onPageChange, onPageSizeChange } = GetPaginationControls({
-	//     defaultPage: defaults.DEFAULT_PRODUCTS_PAGE
-	// });
-
-	// const table = useReactTable({
-	//     data: (data.products as HighLevelProduct[]) ?? [],
-	//     columns: tableColumns,
-	//     getCoreRowModel: getCoreRowModel(),
-	//     manualPagination: true,
-	//     pageCount,
-	//     state: {
-	//         pagination: {
-	//             pageIndex,
-	//             pageSize,
-	//         }
-	//     }
-	// });
 
 	return (
 		<>
 			<MetaDetails
-				// metaTitle={`Coupons ${query.trim() ? `| "${query.trim()}"` : ""} | Admin Panel`}
-				metaTitle={`Coupons | Admin Panel`}
+				metaTitle={`Coupons ${query.trim() ? `| "${query.trim()}"` : ""} | Admin Panel`}
 				metaDescription="Manage your store coupons here."
 				metaKeywords="Coupons"
 			/>
@@ -267,485 +257,204 @@ export default function CouponsPage({} // loaderData: { data, query, pageIndex, 
 							<span>Create Coupon</span>
 						</Button>
 					</div>
-					{/* {query && (
-                        <div className="mt-3">
-                            <p>Showing records for "{query?.trim()}"</p>
-                        </div>
-                    )} */}
+					{query && (
+						<div className="mt-3">
+							<p>Showing records for "{query?.trim()}"</p>
+						</div>
+					)}
 				</div>
-				{/* <div className="rounded-md flex flex-col gap-4">
-                    <DataTableViewOptions table={table} disabled={isFetchingThisRoute} />
-                    {isFetchingThisRoute ? (
-                        <DataTableSkeleton noOfSkeletons={4} columns={tableColumns} />
-                    ) : (
-                        <DataTable
-                            table={table}
-                            onPageChange={onPageChange}
-                            onPageSizeChange={onPageSizeChange}
-                            pageSize={pageSize}
-                            total={data.total ?? 0}
-                        />
-                    )}
-                </div> */}
+				<div className="rounded-md flex flex-col gap-4">
+					<PageOptions table={table} disabled={isFetchingThisRoute} />
+					<CouponsArea table={table} columns={tableColumns} />
+				</div>
 			</section>
-
-			{couponTypeDialog && (
-				<CouponTypeSelectDialog open={couponTypeDialog} setOpen={setCouponTypeDialog} />
-			)}
 		</>
 	);
-}
+});
 
-const CouponTypeSelectDialog = memo(
-	({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {
-		return (
-			<Dialog open={open} onOpenChange={setOpen}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Select Coupon Type</DialogTitle>
-						<DialogDescription>
-							Select the type of the coupon you want to create.
-						</DialogDescription>
-					</DialogHeader>
-					{CouponTypeOptions.map((option: CouponTypesOption) => (
-						<Link key={option.value} to={`/coupons/create/${option.value}`}>
-							<div className="px-4 py-4 hover:dark:bg-muted hover:bg-muted-dark cursor-pointer rounded-lg ease-in-out duration-150 transition-colors">
-								<div className="flex items-center gap-4">
-									{option.icon}
-									<div className="flex flex-col flex-1">
-										<p className="text-md">{option.label}</p>
-										<p className="text-sm text-muted-foreground">{option.description}</p>
-									</div>
-									<ChevronRight className="h-5 w-5 text-muted-foreground" />
-								</div>
-							</div>
-						</Link>
-					))}
-					<DialogFooter className="flex justify-end mt-4">
-						<Button variant="outline" size={"sm"} onClick={() => setOpen(false)}>
-							Cancel
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+const CouponsTable = memo(({ table }: { table: Table<HighLevelCoupon> }) => {
+	const { data, pageSize } = useLoaderData<typeof loader>();
+
+	const { onPageChange, onPageSizeChange } = GetPaginationControls({
+		defaultPage: 1,
+	});
+
+	return (
+		<DataTable
+			table={table}
+			onPageChange={onPageChange}
+			onPageSizeChange={onPageSizeChange}
+			pageSize={pageSize}
+			total={data.total ?? 0}
+		/>
+	);
+});
+
+const CouponsGrid = memo(() => {
+	const { data } = useLoaderData<typeof loader>();
+
+	return (
+		<motion.ul
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			transition={{ duration: 0.4, ease: "easeOut" }}
+			className="main-coupons-grid"
+		>
+			{data?.coupons?.map((coupon) => (
+				<li key={coupon.id} className="main-coupons-grid-item">
+					<CouponCard coupon={coupon} />
+				</li>
+			))}
+			<li key={"create-new-coupon"} className="main-coupons-grid-item">
+				<CreateNewCouponCard />
+			</li>
+		</motion.ul>
+	);
+});
+
+const CouponsArea = memo(
+	({ table, columns }: { table: Table<HighLevelCoupon>; columns: ColumnDef<HighLevelCoupon>[] }) => {
+		const { view_mode } = useContext(CouponsPageCtx);
+		console.log("Coupons area re rendered");
+
+		const navigation = useNavigation();
+		const location = useLocation();
+
+		const isFetchingThisRoute = useMemo(
+			() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
+			[navigation.state, navigation.location?.pathname, location.pathname],
 		);
+
+		if (view_mode === "grid") {
+			return isFetchingThisRoute ? <CouponCardSkeleton /> : <CouponsGrid />;
+		} else {
+			return isFetchingThisRoute ? (
+				<DataTableSkeleton noOfSkeletons={4} columns={columns} />
+			) : (
+				<CouponsTable table={table} />
+			);
+		}
 	},
 );
 
-// function UpdateStatusForm({ product }: { product: HighLevelProduct }) {
-//     const defaultValues = {
-//         status: bolleanToStringConverter(product?.status) as "true" | "false",
-//         is_featured: bolleanToStringConverter(product?.is_featured) as "true" | "false",
-//     };
+const CouponTypeSelectDialog = memo(() => {
+	const { isCouponTypeDialogOpen, setCouponTypeDialogState } = useContext(CouponsPageCtx);
 
-//     const { control, reset } = useForm<ProductStatusUpdateFormValues>({
-//         resolver: zodResolver(ProductStatusUpdateInputSchema),
-//         defaultValues,
-//     });
+	const onOpenChange = () => setCouponTypeDialogState(!isCouponTypeDialogOpen);
+	const onCancel = () => setCouponTypeDialogState(false);
 
-//     // Watch form values to trigger submission on change
-//     const status = useWatch({ control, name: "status" });
-//     const isFeatured = useWatch({ control, name: "is_featured" });
+	return (
+		<Dialog open={isCouponTypeDialogOpen} onOpenChange={onOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Select Coupon Type</DialogTitle>
+					<DialogDescription>Select the type of the coupon you want to create.</DialogDescription>
+				</DialogHeader>
+				{CouponTypeOptions.map((option: CouponTypesOption) => (
+					<Link key={option.value} to={`/coupons/create/${option.value}`}>
+						<div className="px-4 py-4 hover:dark:bg-muted hover:bg-muted-dark cursor-pointer rounded-lg ease-in-out duration-150 transition-colors">
+							<div className="flex items-center gap-4">
+								{option.icon}
+								<div className="flex flex-col flex-1">
+									<p className="text-md">{option.label}</p>
+									<p className="text-sm text-muted-foreground">{option.description}</p>
+								</div>
+								<ChevronRight className="h-5 w-5 text-muted-foreground" />
+							</div>
+						</div>
+					</Link>
+				))}
+				<DialogFooter className="flex justify-end mt-4">
+					<Button variant="outline" size={"sm"} onClick={onCancel}>
+						Cancel
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+});
 
-//     const [submittingField, setSubmittingField] = useState<string | null>(null);
+const ViewModeChangeButtons = memo(() => {
+	const { view_mode, setViewMode } = useContext(CouponsPageCtx);
 
-//     const isStatusSubmitting = submittingField === "status";
-//     const isFeaturedSubmitting = submittingField === "is_featured";
+	const onTabChange = useCallback(
+		(value: ViewMode) => {
+			setViewMode(value);
+		},
+		[setViewMode],
+	);
 
-//     const fetcher = useFetcher();
+	const options: { value: ViewMode; label: string; icon: React.ReactNode }[] = useMemo(() => {
+		return [
+			{
+				value: "table",
+				label: "Table",
+				icon: <TableOfContents />,
+			},
+			{
+				value: "grid",
+				label: "Grid",
+				icon: <LayoutGrid />,
+			},
+		];
+	}, []);
 
-//     // Handle fetcher state for toasts and state updates
-//     useEffect(() => {
-//         if (fetcher.data) {
-//             if (fetcher.data.success) {
-//                 toast.success("Status updated successfully");
-//                 const newStatus =
-//                     fetcher.data.status !== undefined
-//                         ? bolleanToStringConverter(fetcher.data.status)
-//                         : (status as "true" | "false");
-//                 const newFeatured =
-//                     fetcher.data.is_featured !== undefined
-//                         ? bolleanToStringConverter(fetcher.data.is_featured)
-//                         : isFeatured;
-//                 reset({
-//                     status: newStatus as "true" | "false",
-//                     is_featured: newFeatured as "true" | "false",
-//                 });
-//                 setSubmittingField(null);
-//             } else if (fetcher.data.error) {
-//                 toast.error(fetcher.data.error);
-//                 setSubmittingField(null);
-//             } else {
-//                 toast.error("Something went wrong");
-//                 setSubmittingField(null);
-//             }
-//         }
-//     }, [fetcher.data, reset, status, isFeatured]);
+	return (
+		<Tabs value={view_mode} onValueChange={(value) => onTabChange(value as ViewMode)}>
+			<TabsList className="h-8 light:bg-muted-dark *:cursor-pointer *:select-none *:dark:hover:bg-muted *:dark:text-secondary-foreground">
+				{options.map((option) => (
+					<TabsTrigger
+						key={option.value}
+						value={option.value}
+						className="data-[state=active]:shadow-xs"
+					>
+						{option.icon}
+						<span className="sr-only">{option.label}</span>
+					</TabsTrigger>
+				))}
+			</TabsList>
+		</Tabs>
+	);
+});
 
-//     // Trigger submission when status or is_featured changes
-//     useEffect(() => {
-//         const initialStatus = bolleanToStringConverter(product?.status) as "true" | "false";
-//         const initialFeatured = bolleanToStringConverter(product?.is_featured) as "true" | "false";
-//         const currentStatus = status !== initialStatus;
-//         const currentFeatured = isFeatured !== initialFeatured;
+function PageOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelCoupon>) {
+	const [searchParams] = useSearchParams();
+	const currentQuery = searchParams.get("q") ?? "";
 
-//         if (currentStatus || currentFeatured) {
-//             const formData = new FormData();
-//             let changedField: string | null = null;
-
-//             if (currentStatus && status !== undefined) {
-//                 formData.append("status", status);
-//                 changedField = "status";
-//             }
-//             if (currentFeatured && isFeatured !== undefined) {
-//                 formData.append("is_featured", isFeatured);
-//                 changedField = "is_featured";
-//             }
-
-//             if (changedField) {
-//                 setSubmittingField(changedField); // Set the submitting field
-//                 fetcher.submit(formData, { method: "post", action: `${product.id}/update` });
-//             }
-//         }
-//     }, [status, isFeatured, product]);
-
-//     const fields = useMemo(
-//         () => [
-//             { label: "Active", value: "true", id: Math.floor(Math.random() * 99999).toString() },
-//             { label: "Inactive", value: "false", id: Math.floor(Math.random() * 99999).toString() },
-//         ],
-//         []
-//     );
-
-//     return (
-//         <>
-//             <DropdownMenuSub>
-//                 <DropdownMenuSubTrigger>Set Status</DropdownMenuSubTrigger>
-//                 <DropdownMenuPortal>
-//                     <DropdownMenuSubContent>
-//                         <DropdownMenuRadioGroup value={status}>
-//                             <Controller
-//                                 name="status"
-//                                 control={control}
-//                                 render={({ field }) => (
-//                                     <>
-//                                         {fields.map((item) => (
-//                                             <DropdownMenuRadioItem
-//                                                 key={item.id}
-//                                                 value={item.value} // Radio items use value for selection
-//                                                 onSelect={(e) => {
-//                                                     e.preventDefault(); // Prevent default close
-//                                                     field.onChange(item.value); // Update form state with string value
-//                                                 }}
-//                                                 className={`cursor-pointer ${
-//                                                     isStatusSubmitting && "text-muted-foreground"
-//                                                 }`}
-//                                                 disabled={isStatusSubmitting}
-//                                             >
-//                                                 {item.label}
-//                                                 {isStatusSubmitting && item.value === status && (
-//                                                     <Loader2 className="animate-spin ml-auto" />
-//                                                 )}
-//                                             </DropdownMenuRadioItem>
-//                                         ))}
-//                                     </>
-//                                 )}
-//                             />
-//                         </DropdownMenuRadioGroup>
-//                     </DropdownMenuSubContent>
-//                 </DropdownMenuPortal>
-//             </DropdownMenuSub>
-
-//             {/* Featured Status Menu */}
-//             <DropdownMenuSub>
-//                 <DropdownMenuSubTrigger>Set Featured Status</DropdownMenuSubTrigger>
-//                 <DropdownMenuPortal>
-//                     <DropdownMenuSubContent>
-//                         <DropdownMenuRadioGroup value={isFeatured}>
-//                             <Controller
-//                                 name="is_featured"
-//                                 control={control}
-//                                 render={({ field }) => (
-//                                     <>
-//                                         {fields.map((item) => (
-//                                             <DropdownMenuRadioItem
-//                                                 key={item.id}
-//                                                 value={item.value} // Radio items use value for selection
-//                                                 onSelect={(e) => {
-//                                                     e.preventDefault(); // Prevent default close
-//                                                     field.onChange(item.value); // Update form state with string value
-//                                                 }}
-//                                                 className={`cursor-pointer ${
-//                                                     isFeaturedSubmitting && "text-muted-foreground"
-//                                                 }`}
-//                                                 disabled={isFeaturedSubmitting}
-//                                             >
-//                                                 {item.label}
-//                                                 {isFeaturedSubmitting && item.value === isFeatured && (
-//                                                     <Loader2 className="animate-spin ml-auto" />
-//                                                 )}
-//                                             </DropdownMenuRadioItem>
-//                                         ))}
-//                                     </>
-//                                 )}
-//                             />
-//                         </DropdownMenuRadioGroup>
-//                     </DropdownMenuSubContent>
-//                 </DropdownMenuPortal>
-//             </DropdownMenuSub>
-//         </>
-//     );
-// }
-
-// function SortSelector() {
-//     const [searchParams] = useSearchParams();
-//     const navigate = useNavigate();
-
-//     const navigation = useNavigation();
-//     const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
-
-//     type sortFormData = Pick<ProductsFilterFormData, "sortBy" | "sortType">;
-
-//     const form = useForm<sortFormData>({
-//         resolver: zodResolver(ProductFilterFormSchema),
-//         defaultValues: {
-//             sortBy:
-//                 (searchParams.get("sortBy") as sortFormData["sortBy"]) ||
-//                 defaults.defaultProductSortByFilter,
-//             sortType:
-//                 (searchParams.get("sortType") as sortFormData["sortType"]) ||
-//                 defaults.defaultProductSortTypeFilter,
-//         },
-//     });
-
-//     const { handleSubmit, control } = form;
-
-//     const onSortSubmit = (values: sortFormData) => {
-//         const currentParams = new URLSearchParams(location.search);
-
-//         // Remove old sort params if they exist
-//         currentParams.delete("sortBy");
-//         currentParams.delete("sortType");
-
-//         // Add new sort params
-//         if (values.sortBy) currentParams.set("sortBy", values.sortBy);
-//         if (values.sortType) currentParams.set("sortType", values.sortType);
-
-//         navigate(`?${currentParams.toString()}`);
-//     };
-
-//     return (
-//         <form onSubmit={handleSubmit(onSortSubmit)} className="space-y-4 flex flex-col p-4 h-full">
-//             <ShadcnForm {...form}>
-//                 {/* Sort by Filter */}
-//                 <FormField
-//                     control={control}
-//                     name="sortBy"
-//                     render={({ field }) => (
-//                         <FormItem>
-//                             <FormLabel>Sort By</FormLabel>
-//                             <FormControl>
-//                                 <div className="*:w-full">
-//                                     <Select value={field.value} onValueChange={field.onChange}>
-//                                         <SelectTrigger>
-//                                             <SelectValue placeholder="Select field" />
-//                                         </SelectTrigger>
-//                                         <SelectContent>
-//                                             <SelectItem value="createdAt">Date Created</SelectItem>
-//                                             <SelectItem value="name">Name</SelectItem>
-//                                             <SelectItem value="status">Status</SelectItem>
-//                                             <SelectItem value="is_featured">Featured</SelectItem>
-//                                             <SelectItem value="free_shipping">Free Shipping</SelectItem>
-//                                             <SelectItem value="id">ID</SelectItem>
-//                                         </SelectContent>
-//                                     </Select>
-//                                 </div>
-//                             </FormControl>
-//                         </FormItem>
-//                     )}
-//                 />
-
-//                 {/* Sort Type Filter */}
-//                 <FormField
-//                     control={control}
-//                     name="sortType"
-//                     render={({ field }) => (
-//                         <FormItem>
-//                             <FormLabel>Sort Direction</FormLabel>
-//                             <FormControl>
-//                                 <div className="*:w-full">
-//                                     <Select value={field.value} onValueChange={field.onChange}>
-//                                         <SelectTrigger>
-//                                             <SelectValue placeholder="asc / desc" />
-//                                         </SelectTrigger>
-//                                         <SelectContent>
-//                                             {sortTypeEnums.map((sortType) => (
-//                                                 <SelectItem key={sortType} value={sortType}>
-//                                                     {sortType === "asc" ? (
-//                                                         <>
-//                                                             <span>Ascending</span>
-//                                                             <ArrowUpNarrowWide />
-//                                                         </>
-//                                                     ) : (
-//                                                         <>
-//                                                             <span>Descending</span>
-//                                                             <ArrowDownWideNarrow />
-//                                                         </>
-//                                                     )}
-//                                                 </SelectItem>
-//                                             ))}
-//                                         </SelectContent>
-//                                     </Select>
-//                                 </div>
-//                             </FormControl>
-//                         </FormItem>
-//                     )}
-//                 />
-//                 <Button type="submit" disabled={isSubmitting} size={"sm"}>
-//                     {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
-//                     Apply
-//                 </Button>
-//             </ShadcnForm>
-//         </form>
-//     );
-// }
-
-// function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelProduct>) {
-//     const navigate = useNavigate();
-//     const location = useLocation();
-//     const isMobile = useIsMobile({ customBreakpoint: 400 });
-
-//     const [searchParams] = useSearchParams();
-//     const currentQuery = searchParams.get("q") ?? "";
-
-//     const activeFiltersCount = getActiveProductsFiltersCount(searchParams);
-//     const [filtersMenuOpen, setFiltersMenuOpen] = useState<boolean>(false);
-
-//     function handleFiltersClick() {
-//         return setFiltersMenuOpen(!filtersMenuOpen);
-//     }
-
-//     function handleResetFilters() {
-//         navigate(getProductsResetFiltersUrl({
-//             defaultPage,
-//             defaultSize,
-//             pathname: location.pathname,
-//             search: location.search
-//         }), { replace: true });
-//     }
-
-//     return (
-//         <>
-//             <div className="w-full flex justify-between gap-4 items-center">
-//                 <div className="flex gap-2 items-center">
-//                     <Form method="get" action="/products">
-//                         <div className="relative">
-//                             <Search
-//                                 className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-//                                 width={18}
-//                             />
-//                             <Input
-//                                 placeholder="Search products"
-//                                 name="q"
-//                                 className="w-full pl-8"
-//                                 id="search"
-//                                 defaultValue={currentQuery.trim()}
-//                                 disabled={disabled}
-//                             />
-//                         </div>
-//                         {/* Invisible submit button: Enter in input triggers submit */}
-//                         <Button type="submit" className="hidden">
-//                             Search
-//                         </Button>
-//                     </Form>
-//                     <DropdownMenu>
-//                         <DropdownMenuTrigger asChild>
-//                             <Button
-//                                 variant="outline"
-//                                 className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-//                                 disabled={disabled}
-//                             >
-//                                 <ArrowUpDown />
-//                                 <span className="hidden md:inline">Sort</span>
-//                             </Button>
-//                         </DropdownMenuTrigger>
-//                         <DropdownMenuContent align={isMobile ? "center" : "start"} className="w-fit">
-//                             <DropdownMenuLabel>Sort Products</DropdownMenuLabel>
-//                             <DropdownMenuSeparator />
-//                             {/* Sorting Select! */}
-//                             <SortSelector />
-//                         </DropdownMenuContent>
-//                     </DropdownMenu>
-//                 </div>
-//                 <div className="flex gap-2 items-center">
-//                     <div className="sm:inline hidden">
-//                         <Button
-//                             variant="outline"
-//                             className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-//                             disabled={disabled}
-//                             onClick={handleResetFilters}
-//                         >
-//                             <RotateCcw />
-//                         </Button>
-//                     </div>
-//                     <div className="flex items-center gap-2">
-//                         <div className="relative">
-//                             <Button
-//                                 variant="outline"
-//                                 size="sm"
-//                                 className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-//                                 disabled={disabled}
-//                                 onClick={handleFiltersClick}
-//                             >
-//                                 <ListFilter />
-//                                 <span className="hidden md:inline">Filters</span>
-//                             </Button>
-//                             <span className="filters-count">
-//                                 {activeFiltersCount > 0 ? activeFiltersCount : ""}
-//                             </span>
-//                         </div>
-//                     </div>
-//                     <DropdownMenu>
-//                         <DropdownMenuTrigger asChild>
-//                             <Button
-//                                 variant="outline"
-//                                 size="sm"
-//                                 className="h-8 flex cursor-pointer select-none dark:hover:bg-muted"
-//                                 disabled={disabled}
-//                             >
-//                                 <Settings2 />
-//                                 <span className="hidden md:inline">Columns</span>
-//                             </Button>
-//                         </DropdownMenuTrigger>
-//                         <DropdownMenuContent align="end" className="w-[150px]">
-//                             <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-//                             <DropdownMenuSeparator />
-//                             {table
-//                                 .getAllColumns()
-//                                 .filter(
-//                                     (column: any) =>
-//                                         typeof column.accessorFn !== "undefined" && column.getCanHide()
-//                                 )
-//                                 .map((column: any) => {
-//                                     return (
-//                                         <DropdownMenuCheckboxItem
-//                                             key={column.id}
-//                                             className="cursor-pointer"
-//                                             checked={column.getIsVisible()}
-//                                             onCheckedChange={(value) => column.toggleVisibility(!!value)}
-//                                         >
-//                                             {column.id}
-//                                         </DropdownMenuCheckboxItem>
-//                                     );
-//                                 })}
-//                         </DropdownMenuContent>
-//                     </DropdownMenu>
-//                 </div>
-//             </div>
-//             {/* <FiltersSheet open={filtersMenuOpen} setOpen={handleFiltersClick} /> */}
-//         </>
-//     );
-// }
+	return (
+		<>
+			<div className="w-full flex justify-between gap-4 items-center">
+				<div>
+					<Form method="get" action="/coupons">
+						<div className="relative">
+							<Search
+								className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+								width={18}
+							/>
+							<Input
+								placeholder="Search coupons"
+								name="q"
+								className="w-full pl-8"
+								id="search"
+								defaultValue={currentQuery.trim()}
+								disabled={disabled}
+							/>
+						</div>
+						{/* Invisible submit button: Enter in input triggers submit */}
+						<Button type="submit" className="hidden">
+							Search
+						</Button>
+					</Form>
+				</div>
+				<div className="flex gap-2 items-center">
+					<ViewModeChangeButtons />
+					<TableColumnsToggle table={table} />
+				</div>
+			</div>
+			{/* <FiltersSheet open={filtersMenuOpen} setOpen={handleFiltersClick} /> */}
+		</>
+	);
+}
 
 // function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boolean) => void }) {
 //     const [searchParams] = useSearchParams();

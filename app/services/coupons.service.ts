@@ -2,12 +2,19 @@ import { asServiceMiddleware } from "~/middlewares/utils";
 import { loggerMiddleware } from "~/middlewares/logger.middleware";
 import type { CouponActionData } from "~/schemas/coupons.schema";
 import { Service } from "~/services/service";
-import type { BuyMinType, CouponType, DiscountCustomerGrps, GroupsConditionRole } from "~/types/coupons";
+import type {
+	BuyMinType,
+	CouponType,
+	DiscountCustomerGrps,
+	GetHighLevelCouponsResp,
+	GroupsConditionRole,
+} from "~/types/coupons";
 import { ApiError } from "~/utils/ApiError";
 import { verifyUser } from "~/middlewares/auth.middleware";
 import { stringToBooleanConverter } from "~/lib/utils";
 import { UseMiddleware } from "~/decorators/useMiddleware";
 import type { TypesToSelect } from "~/components/Coupons/coupons-comp";
+import { defaults } from "~/constants";
 
 export class CouponsService extends Service {
 	// Check for duplicate coupon code
@@ -598,6 +605,74 @@ export class CouponsService extends Service {
 			}
 
 			throw err;
+		}
+	}
+
+	/** Get high level coupons for main page */
+	@UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
+	async getHighLevelCoupons({
+		searchQuery,
+		pageIndex = 0,
+		pageSize = defaults.DEFAULT_COUPONS_PAGE_SIZE,
+	}: {
+		searchQuery?: string;
+		pageIndex?: number;
+		pageSize?: number;
+	}): Promise<GetHighLevelCouponsResp> {
+		const from = pageIndex * pageSize;
+		const to = from + pageSize - 1;
+
+		try {
+			let query = this.supabase
+				.from(this.COUPONS_TABLE)
+				.select("coupon_id, code, status, coupon_type, start_timestamp, end_timestamp, created_at", {
+					count: "exact",
+				});
+
+			if (searchQuery) {
+				query = query.ilike("code", `%${searchQuery}%`);
+			}
+
+			query = query.order("created_at", { ascending: false });
+			query = query.range(from, to);
+
+			const { data, error: fetchError, count } = await query;
+
+			let error: null | ApiError = null;
+
+			if (fetchError || data == null) {
+				error = new ApiError(fetchError.message, 500, [fetchError.details]);
+			}
+
+			return {
+				coupons:
+					data?.flatMap((coupon) => {
+						return {
+							id: coupon.coupon_id,
+							code: coupon.code,
+							coupon_type: coupon.coupon_type,
+							end_timestamp: coupon.end_timestamp,
+							start_timestamp: coupon.start_timestamp,
+							status: coupon.status,
+							created_at: coupon.created_at,
+						};
+					}) ?? null,
+				total: count ?? 0,
+				error: error ?? null,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return {
+					coupons: null,
+					total: 0,
+					error: err,
+				};
+			}
+			return {
+				coupons: null,
+				total: 0,
+				error: new ApiError("Unknown error occured whiel fetching coupons.", 500, [err]),
+			};
 		}
 	}
 }

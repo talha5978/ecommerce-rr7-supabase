@@ -432,12 +432,12 @@ export type Database = {
 				};
 				Insert: {
 					coupon_id: number;
-					group_id?: never;
+					group_id?: number;
 					role: Database["public"]["Enums"]["condition_role"];
 				};
 				Update: {
 					coupon_id?: number;
-					group_id?: never;
+					group_id?: number;
 					role?: Database["public"]["Enums"]["condition_role"];
 				};
 				Relationships: [
@@ -455,6 +455,7 @@ export type Database = {
 					code: string;
 					coupon_id: number;
 					coupon_type: Database["public"]["Enums"]["coupon_type_enum"];
+					created_at: string | null;
 					description: string | null;
 					discount_type: Database["public"]["Enums"]["discount_type"];
 					discount_value: number | null;
@@ -465,12 +466,13 @@ export type Database = {
 					min_purchase_qty: number | null;
 					one_use_per_customer: boolean | null;
 					start_timestamp: string;
-					status: boolean | null;
+					status: boolean;
 				};
 				Insert: {
 					code: string;
 					coupon_id?: number;
 					coupon_type?: Database["public"]["Enums"]["coupon_type_enum"];
+					created_at?: string | null;
 					description?: string | null;
 					discount_type: Database["public"]["Enums"]["discount_type"];
 					discount_value?: number | null;
@@ -481,12 +483,13 @@ export type Database = {
 					min_purchase_qty?: number | null;
 					one_use_per_customer?: boolean | null;
 					start_timestamp: string;
-					status?: boolean | null;
+					status?: boolean;
 				};
 				Update: {
 					code?: string;
 					coupon_id?: number;
 					coupon_type?: Database["public"]["Enums"]["coupon_type_enum"];
+					created_at?: string | null;
 					description?: string | null;
 					discount_type?: Database["public"]["Enums"]["discount_type"];
 					discount_value?: number | null;
@@ -497,7 +500,7 @@ export type Database = {
 					min_purchase_qty?: number | null;
 					one_use_per_customer?: boolean | null;
 					start_timestamp?: string;
-					status?: boolean | null;
+					status?: boolean;
 				};
 				Relationships: [];
 			};
@@ -505,26 +508,26 @@ export type Database = {
 				Row: {
 					coupon_id: number;
 					customer_condition_id: number;
-					customer_type: Database["public"]["Enums"]["customer_type"];
+					customer_type: Database["public"]["Enums"]["customer_type"] | null;
 					min_purchased_amount: number | null;
 				};
 				Insert: {
 					coupon_id: number;
-					customer_condition_id?: never;
-					customer_type: Database["public"]["Enums"]["customer_type"];
+					customer_condition_id?: number;
+					customer_type?: Database["public"]["Enums"]["customer_type"] | null;
 					min_purchased_amount?: number | null;
 				};
 				Update: {
 					coupon_id?: number;
-					customer_condition_id?: never;
-					customer_type?: Database["public"]["Enums"]["customer_type"];
+					customer_condition_id?: number;
+					customer_type?: Database["public"]["Enums"]["customer_type"] | null;
 					min_purchased_amount?: number | null;
 				};
 				Relationships: [
 					{
 						foreignKeyName: "customer_conditions_coupon_id_fkey";
 						columns: ["coupon_id"];
-						isOneToOne: true;
+						isOneToOne: false;
 						referencedRelation: "coupons";
 						referencedColumns: ["coupon_id"];
 					},
@@ -677,7 +680,7 @@ export type Database = {
 				Row: {
 					condition_id: number;
 					group_id: number;
-					min_quantity: number;
+					min_quantity: number | null;
 					operator: Database["public"]["Enums"]["condition_operator"];
 					type: Database["public"]["Enums"]["condition_type"];
 					value_decimal: number | null;
@@ -686,7 +689,7 @@ export type Database = {
 				Insert: {
 					condition_id?: number;
 					group_id: number;
-					min_quantity?: number;
+					min_quantity?: number | null;
 					operator: Database["public"]["Enums"]["condition_operator"];
 					type: Database["public"]["Enums"]["condition_type"];
 					value_decimal?: number | null;
@@ -695,7 +698,7 @@ export type Database = {
 				Update: {
 					condition_id?: number;
 					group_id?: number;
-					min_quantity?: number;
+					min_quantity?: number | null;
 					operator?: Database["public"]["Enums"]["condition_operator"];
 					type?: Database["public"]["Enums"]["condition_type"];
 					value_decimal?: number | null;
@@ -887,10 +890,6 @@ export type Database = {
 					p_product_ids: string[];
 				};
 				Returns: string;
-			};
-			create_coupon: {
-				Args: { input: Json };
-				Returns: number;
 			};
 			get_high_level_collections: {
 				Args: {

@@ -250,7 +250,14 @@ export const ConditionValueCell = memo(
 					<FormField
 						control={control}
 						name={`${name}.${index}.value_decimal`}
-						render={({ field }) => <Input type="number" placeholder="e.g. 50.00" {...field} />}
+						render={({ field }) => (
+							<Input
+								type="number"
+								placeholder="e.g. 50.00"
+								{...field}
+								value={field.value ?? ""}
+							/>
+						)}
 					/>
 				);
 			}

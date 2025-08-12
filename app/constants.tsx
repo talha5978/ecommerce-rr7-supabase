@@ -28,6 +28,8 @@ class DefaultValues {
 	readonly DEFAULT_PRODUCTS_VARIANTS_PAGE = 1;
 	readonly DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE = 20;
 
+	readonly DEFAULT_COUPONS_PAGE_SIZE = 20;
+
 	readonly META_KEYWORDS_VALUE = 25;
 
 	readonly defaultProductSortByFilter = "createdAt";
