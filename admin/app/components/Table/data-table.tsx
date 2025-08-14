@@ -223,7 +223,6 @@ export const DataTable = ({
 	);
 };
 
-
 export const DataTableSkeleton = memo(function DataTableSkeleton({
 	noOfSkeletons = 8,
 	columns,
