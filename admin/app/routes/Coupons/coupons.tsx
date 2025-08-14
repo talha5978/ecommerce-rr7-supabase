@@ -9,7 +9,7 @@ import {
 import { format } from "date-fns";
 import { ChevronRight, LayoutGrid, MoreHorizontal, PlusCircle, Search, TableOfContents } from "lucide-react";
 import { motion } from "motion/react";
-import { memo, useCallback, useContext, useEffect, useMemo } from "react";
+import { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Form, Link, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { CouponCard, CouponCardSkeleton, CreateNewCouponCard } from "~/components/Coupons/CouponCard";
@@ -20,8 +20,7 @@ import {
 	DataTable,
 	DataTableSkeleton,
 	TableColumnsToggle,
-	TableRowSelector,
-	type DataTableViewOptionsProps,
+	TableRowSelector
 } from "~/components/Table/data-table";
 import { Button } from "~/components/ui/button";
 import {
@@ -91,15 +90,8 @@ export default function CouponsMainCtx({}: Route.ComponentProps) {
 
 const CouponsPage = memo(() => {
 	const { data, query, pageIndex, pageSize } = useLoaderData<typeof loader>();
-	const navigation = useNavigation();
-	const location = useLocation();
 
 	const pageCount = useMemo(() => Math.ceil(data.total / pageSize), [data.total, pageSize]);
-
-	const isFetchingThisRoute = useMemo(
-		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname],
-	);
 
 	const { setCouponTypeDialogState } = useContext(CouponsPageCtx);
 
@@ -108,6 +100,7 @@ const CouponsPage = memo(() => {
 		return;
 	};
 	// console.log(data);
+	const [columnVisibility, setColumnVisibility] = useState({});
 
 	useEffect(() => {
 		if (data.error != null && data.error.message) {
@@ -118,8 +111,9 @@ const CouponsPage = memo(() => {
 	const columns: ColumnDef<HighLevelCoupon>[] = [
 		{
 			id: "select",
-			header: ({ table }) => TableRowSelector({ name: "id" }).header({ table }),
-			cell: ({ row }) => TableRowSelector({ name: "id" }).cell({ row }),
+			accessorKey: "select",
+			header: ({ table }) => TableRowSelector({ name: "select" }).header({ table }),
+			cell: ({ row }) => TableRowSelector({ name: "select" }).cell({ row }),
 			enableSorting: false,
 			enableHiding: false,
 		},
@@ -217,18 +211,20 @@ const CouponsPage = memo(() => {
 		},
 	];
 
-	const tableColumns = useMemo(() => columns, []);
+	const tableColumns = useMemo(() => columns, [columnVisibility, data]);
 
 	const table = useReactTable({
-		data: (data.coupons as HighLevelCoupon[]) ?? [],
+		data: (data?.coupons as HighLevelCoupon[]) ?? [],
 		columns: tableColumns,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: true,
+		onColumnVisibilityChange: setColumnVisibility,
 		getPaginationRowModel: getPaginationRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		enableRowSelection: true,
 		pageCount,
 		state: {
+			columnVisibility,
 			pagination: {
 				pageIndex,
 				pageSize,
@@ -260,32 +256,51 @@ const CouponsPage = memo(() => {
 						</div>
 					)}
 				</div>
-				<div className="rounded-md flex flex-col gap-4">
-					<PageOptions table={table} disabled={isFetchingThisRoute} />
-					<CouponsArea table={table} columns={tableColumns} />
+				<div className="rounded-md flex flex-col gap-2">
+					<PageOptions />
+					<CouponsArea table={table} />
 				</div>
 			</section>
 		</>
 	);
 });
 
-const CouponsTable = memo(({ table }: { table: Table<HighLevelCoupon> }) => {
+const CouponsTable = ({ table }: { table: Table<HighLevelCoupon> }) => {
 	const { data, pageSize } = useLoaderData<typeof loader>();
+
+	const navigation = useNavigation();
+	const location = useLocation();
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
 		defaultPage: 1,
 	});
 
-	return (
-		<DataTable
-			table={table}
-			onPageChange={onPageChange}
-			onPageSizeChange={onPageSizeChange}
-			pageSize={pageSize}
-			total={data.total ?? 0}
-		/>
+	const cols = table.getAllColumns();
+
+	const isFetchingThisRoute = useMemo(
+		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
+		[navigation.state, navigation.location?.pathname, location.pathname],
 	);
-});
+
+	return (
+		<div className="flex flex-col gap-4">
+			<div className="w-fit self-end">
+				<TableColumnsToggle table={table} />
+			</div>
+			{isFetchingThisRoute ? (
+				<DataTableSkeleton noOfSkeletons={4} columns={cols} />
+			) : (
+				<DataTable
+					table={table}
+					onPageChange={onPageChange}
+					onPageSizeChange={onPageSizeChange}
+					pageSize={pageSize}
+					total={data.total ?? 0}
+				/>
+			)}
+		</div>
+	);
+};
 
 const CouponsGrid = memo(() => {
 	const { data } = useLoaderData<typeof loader>();
@@ -295,7 +310,7 @@ const CouponsGrid = memo(() => {
 			initial={{ opacity: 0 }}
 			animate={{ opacity: 1 }}
 			transition={{ duration: 0.4, ease: "easeOut" }}
-			className="main-coupons-grid"
+			className="main-coupons-grid mt-2"
 		>
 			{data?.coupons?.map((coupon) => (
 				<li key={coupon.id} className="main-coupons-grid-item">
@@ -309,30 +324,25 @@ const CouponsGrid = memo(() => {
 	);
 });
 
-const CouponsArea = memo(
-	({ table, columns }: { table: Table<HighLevelCoupon>; columns: ColumnDef<HighLevelCoupon>[] }) => {
-		const { view_mode } = useContext(CouponsPageCtx);
-		console.log("Coupons area re rendered");
+const CouponsArea = ({ table }: { table: Table<HighLevelCoupon> }) => {
+	const { view_mode } = useContext(CouponsPageCtx);
+	console.log("Coupons area re rendered");
 
-		const navigation = useNavigation();
-		const location = useLocation();
+	const navigation = useNavigation();
+	const location = useLocation();
 
-		const isFetchingThisRoute = useMemo(
-			() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-			[navigation.state, navigation.location?.pathname, location.pathname],
-		);
+	const isFetchingThisRoute = useMemo(
+		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
+		[navigation.state, navigation.location?.pathname, location.pathname],
+	);
 
-		if (view_mode === "grid") {
-			return isFetchingThisRoute ? <CouponCardSkeleton /> : <CouponsGrid />;
-		} else {
-			return isFetchingThisRoute ? (
-				<DataTableSkeleton noOfSkeletons={4} columns={columns} />
-			) : (
-				<CouponsTable table={table} />
-			);
-		}
-	},
-);
+	if (view_mode === "grid") {
+		return isFetchingThisRoute ? <CouponCardSkeleton className="mt-2" /> : <CouponsGrid />;
+	} else {
+		return <CouponsTable table={table} />;
+	}
+};
+
 
 const CouponTypeSelectDialog = memo(() => {
 	const { isCouponTypeDialogOpen, setCouponTypeDialogState } = useContext(CouponsPageCtx);
@@ -414,9 +424,17 @@ const ViewModeChangeButtons = memo(() => {
 	);
 });
 
-function PageOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelCoupon>) {
+const PageOptions = memo(() => {
 	const [searchParams] = useSearchParams();
 	const currentQuery = searchParams.get("q") ?? "";
+
+	const navigation = useNavigation();
+	const location = useLocation();
+
+	const isFetchingThisRoute = useMemo(
+		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
+		[navigation.state, navigation.location?.pathname, location.pathname],
+	);
 
 	return (
 		<>
@@ -434,7 +452,7 @@ function PageOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelCou
 								className="w-full pl-8"
 								id="search"
 								defaultValue={currentQuery.trim()}
-								disabled={disabled}
+								disabled={isFetchingThisRoute || false}
 							/>
 						</div>
 						{/* Invisible submit button: Enter in input triggers submit */}
@@ -443,15 +461,12 @@ function PageOptions({ table, disabled }: DataTableViewOptionsProps<HighLevelCou
 						</Button>
 					</Form>
 				</div>
-				<div className="flex gap-2 items-center">
-					<ViewModeChangeButtons />
-					<TableColumnsToggle table={table} />
-				</div>
+				<ViewModeChangeButtons />
 			</div>
 			{/* <FiltersSheet open={filtersMenuOpen} setOpen={handleFiltersClick} /> */}
 		</>
 	);
-}
+});
 
 // function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boolean) => void }) {
 //     const [searchParams] = useSearchParams();
