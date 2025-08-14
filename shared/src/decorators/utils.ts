@@ -4,9 +4,10 @@ import {
 	METHOD_CACHE_SYMBOLS,
 	METHOD_MIDDLEWARES,
 	METHOD_WRAPPED,
-} from "~/decorators/keys";
+} from "@ecom/shared/decorators/keys";
+import { ServiceBase } from "@ecom/shared/services/service";
 
-export function composeMiddlewares<TService>(
+export function composeMiddlewares<TService extends ServiceBase = ServiceBase>(
 	middlewares: MiddlewareFn<TService>[],
 	originalCall: (callArgs: unknown[]) => Promise<unknown>,
 	instance: TService,
@@ -63,7 +64,7 @@ export function getOrCreateCacheSymbol(proto: any, methodName: string): symbol {
 }
 
 /** Resolve class + method middlewares for a concrete instance type (casts internally). */
-export function resolveMiddlewaresForInstance<T>(
+export function resolveMiddlewaresForInstance<T extends ServiceBase = ServiceBase>(
 	ctorAny: any,
 	proto: any,
 	methodName: string,

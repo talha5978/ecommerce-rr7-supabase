@@ -10,8 +10,11 @@ import { ApiError } from "@ecom/shared/utils/ApiError";
 import type { TypesToSelect } from "@ecom/shared/types/coupons-comp";
 import { Service } from "@ecom/shared/services/service";
 import { stringToBooleanConverter } from "@ecom/shared/lib/utils";
-
-// coupons-comp ko idher le kr ao
+import { defaults } from "@ecom/shared/constants/constants";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 
 export class CouponsService extends Service {
 	// Check for duplicate coupon code
@@ -257,7 +260,7 @@ export class CouponsService extends Service {
 	}
 
 	/** Create a coupon */
-	// @UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
+	@UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
 	async createCoupon({
 		input,
 		coupon_type,
@@ -607,7 +610,7 @@ export class CouponsService extends Service {
 	}
 
 	/** Get high level coupons for main page */
-	// @UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
+	@UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
 	async getHighLevelCoupons({
 		searchQuery,
 		pageIndex = 0,

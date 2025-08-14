@@ -1,8 +1,8 @@
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import type { GetCurrentUser, GetSession, Login, Logout, VerifyOtp } from "@ecom/shared/types/auth.d";
 import type { AdminUser } from "@ecom/shared/types/user.d";
-import { loggerMiddleware } from "~/middlewares/logger.middleware";
-import { UseClassMiddleware } from "~/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { Service } from "@ecom/shared/services/service";
 
 // @UseClassMiddleware(loggerMiddleware)

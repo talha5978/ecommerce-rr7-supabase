@@ -1,11 +1,11 @@
-import { CLASS_MIDDLEWARES, METHOD_WRAPPED } from "~/decorators/keys";
+import { CLASS_MIDDLEWARES, METHOD_WRAPPED } from "@ecom/shared/decorators/keys";
 import {
 	composeMiddlewares,
 	ensureProtoMaps,
 	getAllMethodNames,
 	getOrCreateCacheSymbol,
 	resolveMiddlewaresForInstance,
-} from "~/decorators/utils";
+} from "@ecom/shared/decorators/utils";
 import type { ServiceBase } from "@ecom/shared/services/service";
 import type { MiddlewareFn } from "@ecom/shared/types/middleware";
 

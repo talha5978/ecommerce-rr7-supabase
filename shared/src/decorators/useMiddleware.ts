@@ -5,8 +5,8 @@ import {
 	ensureProtoMaps,
 	getOrCreateCacheSymbol,
 	resolveMiddlewaresForInstance,
-} from "~/decorators/utils";
-import { METHOD_MIDDLEWARES, METHOD_WRAPPED } from "~/decorators/keys";
+} from "@ecom/shared/decorators/utils";
+import { METHOD_MIDDLEWARES, METHOD_WRAPPED } from "@ecom/shared/decorators/keys";
 
 /** Decorator to apply middleware to a service function. */
 export function UseMiddleware<T extends ServiceBase = ServiceBase>(...methodMiddlewares: MiddlewareFn<T>[]) {
