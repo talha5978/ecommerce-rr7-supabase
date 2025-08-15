@@ -2,7 +2,10 @@ import type { CouponActionData } from "@ecom/shared/schemas/coupons.schema";
 import type {
 	BuyMinType,
 	CouponType,
+	DiscountCondType,
 	DiscountCustomerGrps,
+	FullCoupon,
+	GetFullCoupon,
 	GetHighLevelCouponsResp,
 	GroupsConditionRole,
 } from "@ecom/shared/types/coupons";
@@ -15,6 +18,7 @@ import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { format } from "date-fns";
 
 export class CouponsService extends Service {
 	// Check for duplicate coupon code
@@ -673,6 +677,278 @@ export class CouponsService extends Service {
 				coupons: null,
 				total: 0,
 				error: new ApiError("Unknown error occured whiel fetching coupons.", 500, [err]),
+			};
+		}
+	}
+
+	// utility function to give us fully mapped coupon data 😊
+	// private createFullCouponReturn(couponData: any): FullCoupon {
+	// 	const coupon: FullCoupon = {
+	// 		coupon_type: couponData.coupon_type,
+	// 		created_at: couponData.created_at,
+	// 		code: couponData.code,
+	// 		description: couponData.description,
+	// 		status: couponData.status,
+	// 		discount_type: couponData.discount_type,
+	// 		discount_value: couponData.discount_value,
+	// 		start_timestamp: couponData.start_timestamp,
+	// 		end_timestamp: couponData.end_timestamp,
+	// 		// Other HighLevelCoupon fields if needed...
+	// 		main_simple_conditions: couponData.condition_groups
+	// 			.filter((group: any) => group.role === "discount_application")
+	// 			.flatMap((group: any) =>
+	// 				group.product_conditions.map((cond: any) => ({
+	// 					type: cond.type,
+	// 					operator: cond.operator,
+	// 					value_decimal: cond.value_decimal ? cond.value_decimal.toString() : null,
+	// 					value_ids: cond.value_ids || null,
+	// 				})),
+	// 			),
+
+	// 		buy_x_get_y_conditions: couponData.buy_x_get_y_details
+	// 			? {
+	// 					buy_group: {
+	// 						min_value_type: couponData.buy_x_get_y_details.buy_min_type,
+	// 						min_value: couponData.buy_x_get_y_details.buy_min_value.toString(),
+	// 						entitiy_type: "collection", // Fetch from condition_groups based on buy_group_id
+	// 						ids: [], // Fetch from linking tables based on buy_group_id
+	// 					},
+	// 					get_group: {
+	// 						get_quantity: couponData.buy_x_get_y_details.get_quantity.toString(),
+	// 						discount_percent: couponData.buy_x_get_y_details.get_discount_percent.toString(),
+	// 						entitiy_type: "sku", // Fetch from condition_groups based on get_group_id
+	// 						ids: [], // Fetch from linking tables based on get_group_id
+	// 					},
+	// 				}
+	// 			: null,
+
+	// 		order_conditions: {
+	// 			min_purchase_qty: couponData.min_purchase_qty ? couponData.min_purchase_qty.toString() : null,
+	// 			min_purchase_amount: couponData.min_purchase_amount
+	// 				? couponData.min_purchase_amount.toString()
+	// 				: null,
+	// 			max_uses_per_order: couponData.max_uses_per_order
+	// 				? couponData.max_uses_per_order.toString()
+	// 				: null,
+	// 			conditions: couponData.condition_groups
+	// 				.filter((group: any) => group.role === "eligibility")
+	// 				.flatMap((group: any) =>
+	// 					group.product_conditions.map((cond: any) => ({
+	// 						type: cond.type,
+	// 						operator: cond.operator,
+	// 						value_decimal: cond.value_decimal ? cond.value_decimal.toString() : null,
+	// 						value_ids: cond.value_ids || null,
+	// 						min_quantity: cond.min_quantity.toString(),
+	// 					})),
+	// 				),
+	// 		},
+
+	// 		customer_conditions: couponData.customer_conditions
+	// 			? {
+	// 					customer_group: couponData.customer_conditions.customer_groups || null,
+	// 					customer_emails:
+	// 						couponData.customer_conditions.customer_emails.map((email: any) => email.email) ||
+	// 						[],
+	// 					min_purchased_amount: couponData.customer_conditions.min_purchased_amount
+	// 						? couponData.customer_conditions.min_purchased_amount.toString()
+	// 						: null,
+	// 				}
+	// 			: null,
+
+	// 		usage_conditions: {
+	// 			max_total_uses: couponData.max_total_uses ? couponData.max_total_uses.toString() : null,
+	// 			one_use_per_customer: couponData.one_use_per_customer || null,
+	// 		},
+	// 	};
+
+	// 	return coupon;
+	// }
+
+	/** Get single coupon details for admin panel coupons page */
+	//@UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
+	async getSingleCouponDetails(coupon_id: number): Promise<GetFullCoupon> {
+		try {
+			const { data: couponData, error: couponError } = await this.supabase
+				.from(this.COUPONS_TABLE)
+				.select(
+					`
+					code,
+					coupon_type,
+					created_at,
+					description,
+					discount_type,
+					discount_value,
+					status,
+					start_timestamp,
+					end_timestamp,
+					max_total_uses,
+					max_uses_per_order,
+					min_purchase_amount,
+					min_purchase_qty,
+					one_use_per_customer,
+					${this.CONDITION_GROUPS_TABLE} (
+						role,
+						${this.PRODUCT_CONDITIONS_TABLE} (
+							type,
+							operator,
+							value_decimal,
+							value_ids,
+							min_quantity
+						)
+					),
+					${this.BUY_X_GET_Y_TABLE} (
+						buy_min_type,
+						buy_min_value,
+						get_quantity,
+						get_discount_percent,
+						buy_group: ${this.CONDITION_GROUPS_TABLE}!buy_group_id (
+							role,
+							collections: ${this.CONDITION_GROUP_COLLECTIONS_TABLE} (collection_id),
+							sub_categories: ${this.CONDITION_GROUP_SUB_CATEGORIES_TABLE} (sub_category_id),
+							skus: ${this.CONDITION_GROUP_SKUS_TABLE} (sku_id)
+						),
+						get_group: ${this.CONDITION_GROUPS_TABLE}!get_group_id (
+							role,
+							collections: ${this.CONDITION_GROUP_COLLECTIONS_TABLE} (collection_id),
+							sub_categories: ${this.CONDITION_GROUP_SUB_CATEGORIES_TABLE} (sub_category_id),
+							skus: ${this.CONDITION_GROUP_SKUS_TABLE} (sku_id)
+						)
+					),
+					${this.CUSTOMER_CONDITIONS_TABLE} (
+						customer_type,
+						min_purchased_amount,
+						${this.CUSTOMER_EMAILS_TABLE} (
+							email_id,
+							email
+						)
+					)
+				`,
+				)
+				.eq("coupon_id", coupon_id)
+				.single();
+
+			if (couponError || !couponData) {
+				return {
+					coupon: null,
+					error: new ApiError(`${couponError?.message || "No data found"}`, 404, []),
+				};
+			}
+
+			console.log("couponData: ", couponData);
+
+			const coupon: FullCoupon = {
+				id: coupon_id,
+				coupon_type: couponData.coupon_type,
+				created_at: couponData.created_at || null,
+				code: couponData.code,
+				description: couponData.description ?? null,
+				status: couponData.status,
+				discount_type: couponData.discount_type,
+				discount_value: couponData.discount_value ?? null,
+				start_timestamp: format(couponData.start_timestamp, "PPP hh:mm a"),
+				end_timestamp: format(couponData.end_timestamp, "PPP hh:mm a"),
+
+				main_simple_conditions: couponData.condition_groups
+					.filter((group: any) => (group.role as GroupsConditionRole) === "discount_application")
+					.flatMap((group: any) =>
+						group.product_conditions.map((cond: any) => ({
+							type: cond.type,
+							operator: cond.operator,
+							value_decimal:
+								(cond.type as DiscountCondType) === "price" && cond.value_decimal
+									? cond.value_decimal.toString()
+									: null,
+							value_ids:
+								(cond.type as DiscountCondType) !== "price" && cond.value_ids
+									? cond.value_ids
+									: null,
+						})),
+					),
+
+				buy_x_get_y_conditions:
+					Array.isArray(couponData.buy_x_get_y_details) && couponData.buy_x_get_y_details.length > 0
+						? {
+								buy_group: {
+									min_value_type: couponData.buy_x_get_y_details[0].buy_min_type,
+									min_value:
+										couponData.buy_x_get_y_details[0].buy_min_value?.toString() ?? "",
+									entitiy_type: "collection",
+									ids: [],
+								},
+								get_group: {
+									get_quantity: couponData.buy_x_get_y_details[0].get_quantity.toString(),
+									discount_percent:
+										couponData.buy_x_get_y_details[0].get_discount_percent?.toString() ??
+										"",
+									entitiy_type: "collection",
+									ids: [],
+								},
+							}
+						: null,
+
+				order_conditions: {
+					min_purchase_qty: couponData.min_purchase_qty
+						? couponData.min_purchase_qty.toString()
+						: null,
+					min_purchase_amount: couponData.min_purchase_amount
+						? couponData.min_purchase_amount.toString()
+						: null,
+					max_uses_per_order: couponData.max_uses_per_order
+						? couponData.max_uses_per_order.toString()
+						: null,
+					conditions:
+						Array.isArray(couponData.condition_groups) && couponData.condition_groups.length > 0
+							? couponData.condition_groups
+									.filter(
+										(group: any) => (group.role as GroupsConditionRole) === "eligibility",
+									)
+									.flatMap((group: any) =>
+										group.product_conditions.map((cond: any) => ({
+											type: cond.type,
+											operator: cond.operator,
+											value_decimal: cond.value_decimal
+												? cond.value_decimal.toString()
+												: null,
+											value_ids: cond.value_ids || null,
+											min_quantity: cond.min_quantity.toString(),
+										})),
+									)
+							: null,
+				},
+
+				customer_conditions: {
+					customer_group: couponData.customer_conditions[0]
+						? couponData.customer_conditions[0].customer_type
+						: null,
+					customer_emails: couponData.customer_conditions[0]
+						? (couponData.customer_conditions[0].customer_emails.map(
+								(email: any) => email.email,
+							) as string[])
+						: [],
+					min_purchased_amount:
+						couponData.customer_conditions[0] &&
+						couponData.customer_conditions[0].min_purchased_amount != null
+							? couponData.customer_conditions[0].min_purchased_amount.toString()
+							: null,
+				},
+
+				usage_conditions: {
+					max_total_uses: couponData.max_total_uses ? couponData.max_total_uses.toString() : null,
+					one_use_per_customer: couponData.one_use_per_customer || false,
+				},
+			};
+
+			return { coupon, error: null };
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return {
+					coupon: null,
+					error: err,
+				};
+			}
+			return {
+				coupon: null,
+				error: new ApiError("Unknown error", 500, [err]),
 			};
 		}
 	}

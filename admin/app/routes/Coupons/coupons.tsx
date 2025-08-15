@@ -9,8 +9,18 @@ import {
 import { format } from "date-fns";
 import { ChevronRight, LayoutGrid, MoreHorizontal, PlusCircle, Search, TableOfContents } from "lucide-react";
 import { motion } from "motion/react";
-import { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Form, Link, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
+import { lazy, memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+	Form,
+	Link,
+	Outlet,
+	useLoaderData,
+	useLocation,
+	useNavigate,
+	useNavigation,
+	useParams,
+	useSearchParams,
+} from "react-router";
 import { toast } from "sonner";
 import { CouponCard, CouponCardSkeleton, CreateNewCouponCard } from "~/components/Coupons/CouponCard";
 import CouponsPageContex, { CouponsPageCtx, type ViewMode } from "~/components/Coupons/MainCouponsContext";
@@ -20,7 +30,7 @@ import {
 	DataTable,
 	DataTableSkeleton,
 	TableColumnsToggle,
-	TableRowSelector
+	TableRowSelector,
 } from "~/components/Table/data-table";
 import { Button } from "~/components/ui/button";
 import {
@@ -40,7 +50,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { highLevelCouponsQuery } from "~/queries/coupons.q";
+import { fullCouponQuery, highLevelCouponsQuery } from "~/queries/coupons.q";
 import { CouponTypeOptions } from "~/utils/couponsConstants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
@@ -50,6 +60,9 @@ import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import type { HighLevelCoupon } from "@ecom/shared/types/coupons";
 import { GetFormattedDate } from "@ecom/shared/lib/utils";
 import type { CouponTypesOption } from "@ecom/shared/types/coupons-comp";
+import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+
+const SELECTED_COUPON_DETAILS_TAG = "couponId" as const;
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
 	const {
@@ -81,12 +94,42 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export default function CouponsMainCtx({}: Route.ComponentProps) {
 	return (
-		<CouponsPageContex>
-			<CouponsPage />
-			<CouponTypeSelectDialog />
-		</CouponsPageContex>
+		<>
+			<CouponsPageContex>
+				<CouponsPage />
+				<CouponTypeSelectDialog />
+			</CouponsPageContex>
+			<Outlet />
+		</>
 	);
 }
+
+const getRouteFetchingState = () => {
+	const navigation = useNavigation();
+	const location = useLocation();
+	const params = useParams();
+
+	const isFetchingThisRoute = useMemo(
+		() =>
+			navigation.state === "loading" &&
+			navigation.location?.pathname === location.pathname &&
+			!params[SELECTED_COUPON_DETAILS_TAG] &&
+			params[SELECTED_COUPON_DETAILS_TAG] != null &&
+			params[SELECTED_COUPON_DETAILS_TAG]?.length === 0,
+		[navigation.state, navigation.location?.pathname, location.pathname],
+	);
+
+	return isFetchingThisRoute;
+};
+
+const SeeDetailsButton = memo(({ rowId }: { rowId: number }) => {
+	const suppressNavigation = useSuppressTopLoadingBar();
+	const handleSeeDetailsClick = (id: number) => {
+		suppressNavigation(() => {}).navigate(`coupon/${id}`, { replace: true });
+	};
+
+	return <DropdownMenuItem onClick={() => handleSeeDetailsClick(rowId)}>See details</DropdownMenuItem>;
+});
 
 const CouponsPage = memo(() => {
 	const { data, query, pageIndex, pageSize } = useLoaderData<typeof loader>();
@@ -190,17 +233,13 @@ const CouponsPage = memo(() => {
 							<DropdownMenuItem
 								onClick={() => {
 									navigator.clipboard.writeText(rowData.id.toString());
-									toast.success("Coupon ID copied", {
-										description: rowData.id,
-									});
+									toast.success(`Coupon ID #${rowData.id} copied`);
 								}}
 							>
 								Copy ID
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
-							<Link to={`${rowData.id}/variants`} viewTransition prefetch="intent">
-								<DropdownMenuItem>See details</DropdownMenuItem>
-							</Link>
+							<SeeDetailsButton rowId={rowData.id} />
 							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 								<DropdownMenuItem>Update</DropdownMenuItem>
 							</Link>
@@ -268,19 +307,13 @@ const CouponsPage = memo(() => {
 const CouponsTable = ({ table }: { table: Table<HighLevelCoupon> }) => {
 	const { data, pageSize } = useLoaderData<typeof loader>();
 
-	const navigation = useNavigation();
-	const location = useLocation();
+	const isFetchingThisRoute = getRouteFetchingState();
 
 	const { onPageChange, onPageSizeChange } = GetPaginationControls({
 		defaultPage: 1,
 	});
 
 	const cols = table.getAllColumns();
-
-	const isFetchingThisRoute = useMemo(
-		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname],
-	);
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -328,13 +361,7 @@ const CouponsArea = ({ table }: { table: Table<HighLevelCoupon> }) => {
 	const { view_mode } = useContext(CouponsPageCtx);
 	console.log("Coupons area re rendered");
 
-	const navigation = useNavigation();
-	const location = useLocation();
-
-	const isFetchingThisRoute = useMemo(
-		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname],
-	);
+	const isFetchingThisRoute = getRouteFetchingState();
 
 	if (view_mode === "grid") {
 		return isFetchingThisRoute ? <CouponCardSkeleton className="mt-2" /> : <CouponsGrid />;
@@ -342,7 +369,6 @@ const CouponsArea = ({ table }: { table: Table<HighLevelCoupon> }) => {
 		return <CouponsTable table={table} />;
 	}
 };
-
 
 const CouponTypeSelectDialog = memo(() => {
 	const { isCouponTypeDialogOpen, setCouponTypeDialogState } = useContext(CouponsPageCtx);
@@ -427,14 +453,7 @@ const ViewModeChangeButtons = memo(() => {
 const PageOptions = memo(() => {
 	const [searchParams] = useSearchParams();
 	const currentQuery = searchParams.get("q") ?? "";
-
-	const navigation = useNavigation();
-	const location = useLocation();
-
-	const isFetchingThisRoute = useMemo(
-		() => navigation.state === "loading" && navigation.location?.pathname === location.pathname,
-		[navigation.state, navigation.location?.pathname, location.pathname],
-	);
+	const isFetchingThisRoute = getRouteFetchingState();
 
 	return (
 		<>
@@ -463,354 +482,6 @@ const PageOptions = memo(() => {
 				</div>
 				<ViewModeChangeButtons />
 			</div>
-			{/* <FiltersSheet open={filtersMenuOpen} setOpen={handleFiltersClick} /> */}
 		</>
 	);
 });
-
-// function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boolean) => void }) {
-//     const [searchParams] = useSearchParams();
-//     const navigate = useNavigate();
-//     const location = useLocation();
-//     const currentQuery = searchParams.get("q") || undefined;
-
-//     const currentPageIndex = searchParams.get("page") || defaultPage;
-//     const currentPageSize = searchParams.get("size") || defaultSize;
-
-//     const loaderData = useLoaderData<typeof loader>();
-
-//     const categories: CategoryListRow[] = loaderData.categories.categories as CategoryListRow[];
-//     const navigation = useNavigation();
-//     const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
-
-//     type BoolVals = "true" | "false" | "null";
-//     const createdFromParam = searchParams.get("createdFrom");
-//     const createdToParam = searchParams.get("createdTo");
-
-//     const form = useForm<ProductsFilterFormData>({
-//         resolver: zodResolver(ProductFilterFormSchema),
-//         defaultValues: {
-//             q: currentQuery,
-//             page: currentPageIndex,
-//             size: currentPageSize,
-//             status: (searchParams.get("status") as BoolVals) || "null",
-//             is_featured: (searchParams.get("is_featured") as BoolVals) || "null",
-//             category: searchParams.get("category")?.split(",") ?? [],
-//             sub_category: searchParams.get("sub_category")?.split(",") ?? [],
-//             free_shipping: (searchParams.get("free_shipping") as BoolVals) || "null",
-//             createdAt:
-//                 createdFromParam && createdToParam
-//                     ? {
-//                             from: new Date(createdFromParam),
-//                             to: new Date(createdToParam),
-//                     }
-//                     : null
-//         },
-//     });
-
-//     const { handleSubmit, control, setValue, reset } = form;
-
-//     const selectedCategories = useWatch({ control, name: "category" }) || [];
-//     const selectedSubCategories = useWatch({ control, name: "sub_category" }) || [];
-
-//     const validSubCategoryIds = useMemo(() => {
-//         return categories
-//             .filter((cat) => selectedCategories.includes(cat.id))
-//             .flatMap((cat) => cat.sub_category.map((sc) => sc.id));
-//     }, [categories, selectedCategories]);
-
-//     useEffect(() => {
-//         const filtered = selectedSubCategories.filter((id) => validSubCategoryIds.includes(id));
-//         if (
-//             filtered.length !== selectedSubCategories.length ||
-//             filtered.some((id, i) => id !== selectedSubCategories[i])
-//         ) {
-//             setValue("sub_category", filtered);
-//         }
-//     }, [selectedSubCategories, validSubCategoryIds, setValue]);
-
-//     // Handle form submission
-//     const onFormSubmit = (values: ProductsFilterFormData) => {
-//         console.log(values);
-//         // return;
-//         const params = new URLSearchParams();
-
-//         // Append only explicitly set or changed values
-
-//         if (values.q) params.set("q", values.q);
-//         if (values.status && values.status !== "null") params.set("status", values.status);
-//         if (values.is_featured && values.is_featured !== "null"){
-//             params.set("is_featured", values.is_featured);
-//         }
-//         if (values.category && Array.isArray(values.category) && values.category.length > 0){
-//             params.set("category", values.category!.join(","));
-//         }
-//         if (values.sub_category && Array.isArray(values.sub_category) && values.sub_category!.length > 0) {
-//             params.set("sub_category", values.sub_category!.join(","));
-//         }
-//         if (values.free_shipping && values.free_shipping !== "null")
-//             params.set("free_shipping", values.free_shipping);
-
-//         if (values.createdAt) {
-//             params.set("createdFrom", values.createdAt.from.toISOString());
-//             params.set("createdTo", values.createdAt.to.toISOString());
-//         } else {
-//             params.delete("createdFrom");
-//             params.delete("createdTo");
-//         }
-
-//         if (values.sortBy) params.set("sortBy", values.sortBy);
-//         if (values.sortType) params.set("sortType", values.sortType);
-
-//         // Only append pageIndex and pageSize if they differ from current values or are explicitly set
-//         if (currentPageIndex !== defaultPage) {
-//             params.set("page", String(currentPageIndex));
-//         }
-//         if (currentPageSize !== defaultSize) {
-//             params.set("size", String(currentPageSize));
-//         }
-
-//         // preserve kro unko agr pehly se apply keye hoe hain
-//         const sortBy = searchParams.get("sortBy");
-//         const sortType = searchParams.get("sortType");
-//         if (sortBy) params.set("sortBy", sortBy);
-//         if (sortType) params.set("sortType", sortType);
-
-//         navigate(`?${params.toString()}`);
-//     };
-
-//     function handleReset() {
-//         reset(); // Resets the form state
-//         navigate(getProductsResetFiltersUrl({
-//             defaultPage,
-//             defaultSize,
-//             pathname: location.pathname,
-//             search: location.search
-//         }), { replace: true });
-//         setOpen(false);
-//     }
-
-//     return (
-//         <Sheet open={!!open} onOpenChange={setOpen}>
-//             <SheetContent>
-//                 <SheetHeader>
-//                     <SheetTitle>Product Filters & Sort</SheetTitle>
-//                     <SheetDescription>Sort and filter products by their fields and values</SheetDescription>
-//                 </SheetHeader>
-//                 <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 flex flex-col p-4 h-full">
-//                     <ShadcnForm {...form}>
-//                         <div className="flex justify-between gap-2 items-center">
-//                             <h2 className="text-xl mt-0 font-bold">Filter</h2>
-//                             <Button variant="link" onClick={handleReset}>
-//                                 Reset All
-//                             </Button>
-//                         </div>
-//                         {/* Status Filter */}
-//                         <FormField
-//                             control={control}
-//                             name="status"
-//                             render={({ field }) => (
-//                                 <FormItem>
-//                                     <FormLabel>Status</FormLabel>
-//                                     <FormControl>
-//                                         <div className="*:w-full">
-//                                             <Select value={field.value} onValueChange={field.onChange}>
-//                                                 <SelectTrigger>
-//                                                     <SelectValue placeholder="Select status" />
-//                                                 </SelectTrigger>
-//                                                 <SelectContent>
-//                                                     <SelectItem value="null">Select status</SelectItem>
-//                                                     <SelectItem value="true">Active</SelectItem>
-//                                                     <SelectItem value="false">Inactive</SelectItem>
-//                                                 </SelectContent>
-//                                             </Select>
-//                                         </div>
-//                                     </FormControl>
-//                                 </FormItem>
-//                             )}
-//                         />
-
-//                         {/* Featured Filter */}
-//                         <FormField
-//                             control={control}
-//                             name="is_featured"
-//                             render={({ field }) => (
-//                                 <FormItem>
-//                                     <FormLabel>Featured</FormLabel>
-//                                     <FormControl>
-//                                         <div className="*:w-full">
-//                                             <Select value={field.value} onValueChange={field.onChange}>
-//                                                 <SelectTrigger>
-//                                                     <SelectValue placeholder="Select featured status" />
-//                                                 </SelectTrigger>
-//                                                 <SelectContent>
-//                                                     <SelectItem value="null">
-//                                                         Select featured status
-//                                                     </SelectItem>
-//                                                     <SelectItem value="true">Active</SelectItem>
-//                                                     <SelectItem value="false">Inactive</SelectItem>
-//                                                 </SelectContent>
-//                                             </Select>
-//                                         </div>
-//                                     </FormControl>
-//                                 </FormItem>
-//                             )}
-//                         />
-
-//                         {/* Category Tree */}
-//                         <FormItem>
-//                             <FormLabel>Categories</FormLabel>
-//                             <FormControl className="mt-1">
-//                                 <div className="max-h-64 overflow-y-auto space-y-2">
-//                                     {categories.map((cat) => {
-//                                         const subIds = cat.sub_category.map((sc) => sc.id);
-//                                         const childChecked = subIds.map((id) =>
-//                                             selectedSubCategories.includes(id)
-//                                         );
-//                                         const allChecked = childChecked.every(Boolean);
-//                                         const noneChecked = childChecked.every((c) => !c);
-//                                         const indeterminate = !allChecked && !noneChecked;
-
-//                                         return (
-//                                             <details
-//                                                 key={cat.id}
-//                                                 className="rounded"
-//                                                 open={allChecked || indeterminate}
-//                                             >
-//                                                 <summary className="flex items-center gap-2 cursor-pointer list-none hover:underline underline-offset-4">
-//                                                     <Checkbox
-//                                                         id={`cat-${cat.id}`}
-//                                                         checked={
-//                                                             allChecked
-//                                                                 ? true
-//                                                                 : indeterminate
-//                                                                 ? "indeterminate"
-//                                                                 : false
-//                                                         }
-//                                                         onCheckedChange={(checked) => {
-//                                                             const newSubs = new Set(selectedSubCategories);
-//                                                             subIds.forEach((id) =>
-//                                                                 checked ? newSubs.add(id) : newSubs.delete(id)
-//                                                             );
-
-//                                                             const newCats = new Set(selectedCategories);
-//                                                             checked
-//                                                                 ? newCats.add(cat.id)
-//                                                                 : newCats.delete(cat.id);
-
-//                                                             setValue("sub_category", Array.from(newSubs));
-//                                                             setValue("category", Array.from(newCats));
-//                                                         }}
-//                                                     />
-//                                                     <Label htmlFor={`cat-${cat.id}`} className="font-medium text-sm cursor-pointer">
-//                                                         {cat.category_name}
-//                                                     </Label>
-//                                                 </summary>
-
-//                                                 <div className="pl-4 m-2 mt-2 space-y-1 border-sidebar-border border-l">
-//                                                     {cat.sub_category.map((sub) => (
-//                                                         <div key={sub.id} className="flex items-center gap-2 hover:underline underline-offset-4">
-//                                                             <Checkbox
-//                                                                 id={`subcat-${sub.id}`}
-//                                                                 checked={selectedSubCategories.includes(
-//                                                                     sub.id
-//                                                                 )}
-//                                                                 onCheckedChange={(checked) => {
-//                                                                     const newSubs = new Set(
-//                                                                         selectedSubCategories
-//                                                                     );
-//                                                                     checked
-//                                                                         ? newSubs.add(sub.id)
-//                                                                         : newSubs.delete(sub.id);
-
-//                                                                     // if any child remains, keep parent checked
-//                                                                     const newCats = new Set(
-//                                                                         selectedCategories
-//                                                                     );
-//                                                                     const stillAny = subIds.some((id) =>
-//                                                                         newSubs.has(id)
-//                                                                     );
-//                                                                     stillAny
-//                                                                         ? newCats.add(cat.id)
-//                                                                         : newCats.delete(cat.id);
-
-//                                                                     setValue(
-//                                                                         "sub_category",
-//                                                                         Array.from(newSubs)
-//                                                                     );
-//                                                                     setValue("category", Array.from(newCats));
-//                                                                 }}
-//                                                             />
-//                                                             <Label htmlFor={`subcat-${sub.id}`} className="font-medium text-sm cursor-pointer">
-//                                                                 {sub.sub_category_name}
-//                                                             </Label>
-//                                                         </div>
-//                                                     ))}
-//                                                 </div>
-//                                             </details>
-//                                         );
-//                                     })}
-//                                 </div>
-//                             </FormControl>
-//                         </FormItem>
-
-//                         {/* Free Shipping Filter */}
-//                         <FormField
-//                             control={control}
-//                             name="free_shipping"
-//                             render={({ field }) => (
-//                                 <FormItem>
-//                                     <FormLabel>Free Shipping</FormLabel>
-//                                     <FormControl>
-//                                         <div className="*:w-full">
-//                                             <Select value={field.value} onValueChange={field.onChange}>
-//                                                 <SelectTrigger>
-//                                                     <SelectValue placeholder="Select free shipping" />
-//                                                 </SelectTrigger>
-//                                                 <SelectContent>
-//                                                     <SelectItem value="null">Select free shipping</SelectItem>
-//                                                     <SelectItem value="true">Available</SelectItem>
-//                                                     <SelectItem value="false">Not Available</SelectItem>
-//                                                 </SelectContent>
-//                                             </Select>
-//                                         </div>
-//                                     </FormControl>
-//                                 </FormItem>
-//                             )}
-//                         />
-
-//                         {/* Date Created Filter */}
-//                         <Controller
-//                             control={control}
-//                             name="createdAt"
-//                             render={({ field }) => (
-//                                 <FormItem>
-//                                     <FormLabel>Date Created</FormLabel>
-//                                     <FormControl>
-//                                         <DateRangePicker
-//                                             className="w-full"
-//                                             value={field.value ?? null}
-//                                             onDateRangeChange={field.onChange}
-//                                         />
-//                                     </FormControl>
-//                                     <FormMessage />
-//                                 </FormItem>
-//                             )}
-//                         />
-
-//                         {/* Form Actions */}
-//                         <SheetFooter className="!self-end px-0 w-full">
-//                             <Button type="submit" disabled={isSubmitting}>
-//                                 {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
-//                                 Apply
-//                             </Button>
-//                             <SheetClose asChild>
-//                                 <Button variant="outline">Close</Button>
-//                             </SheetClose>
-//                         </SheetFooter>
-//                     </ShadcnForm>
-//                 </form>
-//             </SheetContent>
-//         </Sheet>
-//     );
-// }
