@@ -45,7 +45,7 @@ function Button({
 	const Comp = asChild ? Slot : "button";
 
 	return (
-		<motion.div whileTap={{ scale: 0.95 }} transition={{ duration: 0.1, ease: "easeInOut" }}>
+		<motion.div whileTap={{ scale: 0.95 }} transition={{ duration: 0.1, ease: "easeInOut" }} tabIndex={-1}>
 			<Comp
 				data-slot="button"
 				className={cn(buttonVariants({ variant, size, className }))}
@@ -59,4 +59,4 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantPr
 	asChild?: boolean;
 }
 
-export { Button, buttonVariants, ButtonProps };
+export { Button, buttonVariants, type ButtonProps };
