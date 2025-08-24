@@ -15,7 +15,12 @@ import {
 import { OPTIONAL_PRODUCT_ATTRIBS, REQUIRED_VARIANT_ATTRIBS } from "@ecom/shared/constants/constants";
 import { GetAllProductAttribsInput } from "@ecom/shared/types/attributes.d";
 import { Service } from "@ecom/shared/services/service";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductAttributesService>(verifyUser))
 export class ProductAttributesService extends Service {
 	/** Fetch product attributes types for index page */
 	async getHighLevelProductAttributes(): Promise<HighLevelProductAttributesResponse> {
@@ -72,7 +77,7 @@ export class ProductAttributesService extends Service {
 			}
 
 			const { data, error: queryError } = await query;
-			console.log(data);
+			//console.log(data);
 
 			let error: null | ApiError = null;
 			if (queryError) {

@@ -36,6 +36,11 @@ function createSupabaseServerClient(request: Request) {
 					);
 				},
 			},
+			global: {
+				headers: {
+					Cookie: request.headers.get("Cookie") || "",
+				},
+			},
 		},
 	);
 

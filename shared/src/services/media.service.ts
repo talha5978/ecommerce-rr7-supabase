@@ -3,7 +3,12 @@ import type { UploadMediaResponse } from "@ecom/shared/types/media";
 import { Service } from "@ecom/shared/services/service";
 import { compressImage } from "@ecom/shared/utils/ImageCompression";
 import { generateFilePath } from "@ecom/shared/utils/generateSlug";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<MediaService>(verifyUser))
 export class MediaService extends Service {
 	/** Uploads image to supabase storage */
 	async uploadImage(file: File): Promise<UploadMediaResponse> {

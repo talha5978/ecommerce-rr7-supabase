@@ -4,6 +4,7 @@ dist
 
 .vscode/
 README.md
+TODOS.md
 
 logs/
 *.log

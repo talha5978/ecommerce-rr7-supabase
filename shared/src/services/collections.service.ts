@@ -15,7 +15,12 @@ import { stringToBooleanConverter } from "@ecom/shared/lib/utils";
 import { CollectionFilers } from "@ecom/shared/schemas/collections-filter.schema";
 import { Service } from "@ecom/shared/services/service";
 import { COUPONS_COLLECTIONS_PAGE_SIZE, defaults } from "@ecom/shared/constants/constants";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "../middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<CollectionsService>(verifyUser))
 export class CollectionsService extends Service {
 	/** Fetch collections for index page */
 	async getHighLevelCollections(

@@ -2,7 +2,12 @@ import { ApiError } from "@ecom/shared/utils/ApiError";
 import type { MetaUpdationPayload } from "@ecom/shared/types/meta_details.d";
 import type { MetaDetailsActionData } from "@ecom/shared/schemas/meta-details.schema";
 import { Service } from "@ecom/shared/services/service";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<MetaDetailsService>(verifyUser))
 export class MetaDetailsService extends Service {
 	/** Create meta details row */
 	async createMetaDetails(input: MetaDetailsActionData): Promise<string> {

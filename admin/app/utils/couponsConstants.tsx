@@ -22,6 +22,7 @@ import { type UseFormResetField, type UseFormSetValue } from "react-hook-form";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { CouponTypesOption, Groups, TypesToSelect } from "@ecom/shared/types/coupons-comp";
 import { CouponFormValues } from "@ecom/shared/schemas/coupons.schema";
+import { format } from "date-fns";
 
 export const discount_type_fields: { label: string; value: DiscountType; example: string }[] = [
 	{
@@ -255,3 +256,19 @@ export function resetParamsOnTypeChange({
 		}
 	}).setSearchParams(newParams, true);
 }
+
+export const getFullDateTimeFormat = (timeStamp: string) => format(timeStamp, "PPP hh:mm a");
+
+export const getCouponStatus = (startTimestamp: string, endTimestamp: string) => {
+	const now = new Date();
+	const start = new Date(startTimestamp);
+	const end = new Date(endTimestamp);
+
+	if (now < start) {
+		return "Scheduled";
+	} else if (now >= start && now < end) {
+		return "Live";
+	} else if (now >= end) {
+		return "Expired";
+	}
+};

@@ -20,7 +20,12 @@ import { VariantsAttributesService } from "./variant-attributes.service";
 import { VariantAttributeInput } from "@ecom/shared/types/variant-attributes";
 import { ProductsService } from "./products.service";
 import { ProductAttributeRow } from "@ecom/shared/types/attributes";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductVariantsService>(verifyUser))
 export class ProductVariantsService extends Service {
 	/** Fetch products variants for a product */
 	async getProductVariants(

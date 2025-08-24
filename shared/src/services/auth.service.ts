@@ -5,7 +5,7 @@ import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { Service } from "@ecom/shared/services/service";
 
-// @UseClassMiddleware(loggerMiddleware)
+@UseClassMiddleware(loggerMiddleware)
 export class AuthService extends Service {
 	async getCurrentUser(): Promise<GetCurrentUser> {
 		try {

@@ -67,9 +67,9 @@ export const mainNavItems: NavItem[] = [
 				icon: <Archive />,
 			},
 			{
-				title: "New Coupon",
-				url: "/coupons/new",
-				icon: <Gift />,
+				title: "New Collection",
+				url: "/collections/create",
+				icon: <Tag />,
 			},
 		],
 	},

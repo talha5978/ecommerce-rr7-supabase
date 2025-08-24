@@ -20,7 +20,12 @@ import type {
 	SubCategoryActionData,
 	SubCategoryUpdateActionData,
 } from "@ecom/shared/schemas/category.schema";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<CategoryService>(verifyUser))
 export class CategoryService extends Service {
 	/** Fetch categoreies list where each category has at least one sub category (to be used for mutations and other tasks like in product creation page, updation page, theri filters and more...) */
 	async getAllCategories({

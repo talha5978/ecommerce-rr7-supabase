@@ -4,7 +4,12 @@ import type {
 	ProductRAttributeInput,
 } from "@ecom/shared/types/product-r-attributes";
 import { Service } from "@ecom/shared/services/service";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductRAttributesService>(verifyUser))
 export class ProductRAttributesService extends Service {
 	/** Create bulk of product related attributes */
 	async createBulkProductAttributes(

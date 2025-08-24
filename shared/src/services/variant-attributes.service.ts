@@ -5,7 +5,12 @@ import type {
 	VariantAttributeInput,
 } from "@ecom/shared/types/variant-attributes";
 import { Service } from "@ecom/shared/services/service";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<VariantsAttributesService>(verifyUser))
 export class VariantsAttributesService extends Service {
 	/** Create bulk of variant attributes */
 	async createBulkVariantAttributes(

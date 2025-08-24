@@ -1,18 +1,22 @@
 import type { FullCoupon, GetFullCoupon } from "@ecom/shared/types/coupons";
 import { memo, useMemo } from "react";
-import { Badge } from "../ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { cn } from "@ecom/shared/lib/utils";
 import { DollarSignIcon, PercentIcon, ShoppingBagIcon, TagIcon } from "lucide-react";
 import { format } from "date-fns";
-import { Button } from "../ui/button";
+import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
+import { discount_type_fields, getCouponStatus, getFullDateTimeFormat } from "~/utils/couponsConstants";
+import StatusBadge from "../status-badge";
+import { Separator } from "../ui/separator";
 
 interface CouponDetailsCardProps {
 	data: GetFullCoupon;
 	className?: string;
 }
 
-export const CouponDetailsDialog = memo(({ data, className }: CouponDetailsCardProps) => {
+export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) => {
 	const coupon = data.coupon;
 	if (coupon == null || data.error != null) {
 		return <p>No data</p>;
@@ -35,14 +39,10 @@ export const CouponDetailsDialog = memo(({ data, className }: CouponDetailsCardP
 		usage_conditions,
 	} = coupon;
 
-	const calculatedStatus = useMemo(() => {
-		const now = new Date();
-		const start = new Date(start_timestamp);
-		const end = new Date(end_timestamp);
-		if (now < start) return "Scheduled";
-		if (now > end) return "Expired";
-		return "Live";
-	}, [start_timestamp, end_timestamp]);
+	const calculatedStatus = useMemo(
+		() => getCouponStatus(start_timestamp, end_timestamp),
+		[start_timestamp, end_timestamp],
+	);
 
 	const getDiscountIcon = () => {
 		switch (discount_type.toLowerCase()) {
@@ -57,19 +57,18 @@ export const CouponDetailsDialog = memo(({ data, className }: CouponDetailsCardP
 		}
 	};
 
-	const createdAtLabel = (timestamp: string) => format(new Date(timestamp), "MMM dd, yyyy HH:mm");
-
 	const generalItems = useMemo(
 		() => [
-			{ heading: "Code", value: code },
-			{ heading: "Description", value: description || "N/A" },
-			{ heading: "Coupon Type", value: coupon_type },
+			{ heading: "Coupon Type", value: coupon_type.charAt(0).toUpperCase() + coupon_type.slice(1) },
 			{ heading: "Status", value: status ? "Active" : "Inactive" },
-			{ heading: "Discount Type", value: discount_type },
+			{
+				heading: "Discount Type",
+				value: discount_type_fields.find((field) => field.value === discount_type)?.label || "N/A",
+			},
 			{ heading: "Discount Value", value: discount_value ? `${discount_value}` : "N/A" },
-			{ heading: "Starts", value: start_timestamp },
-			{ heading: "Expires", value: end_timestamp },
-			{ heading: "Created", value: created_at || "" },
+			{ heading: "Starts", value: getFullDateTimeFormat(start_timestamp) },
+			{ heading: "Expires", value: getFullDateTimeFormat(end_timestamp) },
+			{ heading: "Created at", value: created_at ? getFullDateTimeFormat(created_at) : "" },
 		],
 		[
 			code,
@@ -87,7 +86,7 @@ export const CouponDetailsDialog = memo(({ data, className }: CouponDetailsCardP
 	return (
 		<Card
 			className={cn(
-				"rounded-md border shadow-sm hover:shadow-lg transition-shadow duration-150",
+				"rounded-2xl border shadow-sm hover:shadow-lg transition-shadow duration-150",
 				className,
 			)}
 		>
@@ -97,21 +96,27 @@ export const CouponDetailsDialog = memo(({ data, className }: CouponDetailsCardP
 						<div className="p-2 bg-primary/10 rounded-md">{getDiscountIcon()}</div>
 						<div>
 							<CardTitle className="text-xl font-semibold tracking-tight">{code}</CardTitle>
-							<p
-								className={cn(
-									"text-sm font-medium",
-									calculatedStatus === "Live" && "text-success/80",
-									calculatedStatus === "Expired" && "text-destructive/70",
-									calculatedStatus === "Scheduled" && "text-warning",
-								)}
-							>
-								{calculatedStatus}
-							</p>
+							<p className="text-sm">{description}</p>
 						</div>
 					</div>
-					<Badge variant={status ? "success" : "destructive"} className="capitalize">
-						{status ? "Active" : "Inactive"}
-					</Badge>
+					<StatusBadge
+						variant={
+							calculatedStatus === "Live"
+								? "success"
+								: calculatedStatus === "Expired"
+									? "destructive"
+									: "warning"
+						}
+						icon={
+							calculatedStatus === "Live"
+								? "tick"
+								: calculatedStatus === "Expired"
+									? "cross"
+									: "dot"
+						}
+					>
+						{calculatedStatus}
+					</StatusBadge>
 				</div>
 			</CardHeader>
 			<CardContent className="px-6 py-4 flex flex-col gap-6">
@@ -251,48 +256,72 @@ export const CouponDetailsDialog = memo(({ data, className }: CouponDetailsCardP
 					</div>
 				</div>
 
-				{/* Customer Conditions */}
-				<div>
-					<h3 className="text-lg font-semibold mb-2">Customer Conditions</h3>
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-						<p>
-							<span className="font-medium">Customer Group:</span>{" "}
-							{customer_conditions.customer_group || "N/A"}
-						</p>
-						<p>
-							<span className="font-medium">Min Purchased Amount:</span>{" "}
-							{customer_conditions.min_purchased_amount || "N/A"}
-						</p>
-						<p>
-							<span className="font-medium">Customer Emails:</span>{" "}
-							{customer_conditions.customer_emails.length > 0
-								? customer_conditions.customer_emails.join(", ")
-								: "None"}
-						</p>
-					</div>
-				</div>
+				<div className="flex gap-4 md:flex-row flex-col *:w-full">
+					{/* Customer Conditions */}
+					<Card className="flex gap-4 flex-col rounded-2xl border shadow-sm hover:shadow-lg transition-shadow duration-150">
+						<CardHeader>Customer Conditions</CardHeader>
+						<Separator />
+						<CardContent>
+							<div className="flex flex-col gap-4 text-sm">
+								<p>
+									<span className="font-medium">Customer Group:</span>{" "}
+									<span className="capitalize">
+										{customer_conditions.customer_group || "N/A"}
+									</span>
+								</p>
+								<p>
+									<span className="font-medium">Min Purchased Amount:</span>{" "}
+									{customer_conditions.min_purchased_amount || "N/A"}
+								</p>
+								<div className="flex gap-1 flex-col">
+									<span className="font-medium">Customer Emails:</span>{" "}
+									{customer_conditions.customer_emails.length > 0 ? (
+										<div className="flex gap-2 flex-wrap">
+											{customer_conditions.customer_emails.map((email, index) => (
+												<a
+													key={index}
+													href={`mailto:${email}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="inline-flex items-center gap-1.5 rounded border bg-transparent px-2.5 text-sm focus:outline-hidden"
+												>
+													{email}
+												</a>
+											))}
+										</div>
+									) : (
+										<span>None</span>
+									)}
+								</div>
+							</div>
+						</CardContent>
+					</Card>
 
-				{/* Usage Conditions */}
-				<div>
-					<h3 className="text-lg font-semibold mb-2">Usage Conditions</h3>
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-						<p>
-							<span className="font-medium">Max Total Uses:</span>{" "}
-							{usage_conditions.max_total_uses || "Unlimited"}
-						</p>
-						<p>
-							<span className="font-medium">One Use/Customer:</span>{" "}
-							{usage_conditions.one_use_per_customer ? "Yes" : "No"}
-						</p>
-					</div>
+					{/* Usage Conditions */}
+					<Card className="flex gap-4 flex-col rounded-2xl border shadow-sm hover:shadow-lg transition-shadow duration-150">
+						<CardHeader>Usage Conditions</CardHeader>
+						<Separator />
+						<CardContent>
+							<div className="flex flex-col gap-4 text-sm">
+								<p>
+									<span className="font-medium">Max Total Uses:</span>{" "}
+									{usage_conditions.max_total_uses || "Unlimited"}
+								</p>
+								<p>
+									<span className="font-medium">One Use/Customer:</span>{" "}
+									{usage_conditions.one_use_per_customer ? "Yes" : "No"}
+								</p>
+							</div>
+						</CardContent>
+					</Card>
 				</div>
 
 				{/* Actions */}
 				<div className="flex items-center justify-end gap-2 pt-4 border-t">
-					<Button variant="outline" size="sm">
-						Back
-					</Button>
-					<Button size="sm">Edit</Button>
+					<Link to={"/coupons"} viewTransition prefetch="intent">
+						<Button variant="outline">Go Back</Button>
+					</Link>
+					<Button>Edit</Button>
 				</div>
 			</CardContent>
 		</Card>

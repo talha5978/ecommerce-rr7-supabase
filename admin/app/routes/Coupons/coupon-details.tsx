@@ -1,12 +1,11 @@
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { type Route } from "./+types/coupon-details";
 import { fullCouponQuery } from "~/queries/coupons.q";
-import { CouponDetailsDialog } from "~/components/Coupons/CouponDetailsDialog";
+import { CouponDetails } from "~/components/Coupons/CouponDetails";
 import type { GetFullCoupon } from "@ecom/shared/types/coupons";
-import { Suspense, useCallback } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/dialog";
-import { Await, useNavigate, useParams } from "react-router";
-import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+import { Suspense } from "react";
+import { Await } from "react-router";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	const selectedCouponParam = params.couponId;
@@ -22,36 +21,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	};
 };
 
-export default function CouponDetails({ loaderData: { data } }: Route.ComponentProps) {
-	const params = useParams();
-	console.log(params);
-	const navigate = useNavigate();
-	const suppressNavigation = useSuppressTopLoadingBar();
-
-	const closeDialog = useCallback(
-		(open: boolean) => {
-			if (!open) {
-				suppressNavigation(() => {}).navigate("/coupons", { replace: true });
-			}
-		},
-		[navigate],
-	);
-
+export default function CouponDetailsPage({ loaderData: { data } }: Route.ComponentProps) {
 	return (
-		<Dialog open onOpenChange={closeDialog}>
-			<DialogContent className="sm:max-w-[calc(100%-10rem)] h-[80vh]">
-				<DialogHeader>
-					<DialogTitle>Coupon Details</DialogTitle>
-					<DialogDescription>Select all the details related to this coupon.</DialogDescription>
-				</DialogHeader>
-				<div className="overflow-y-auto">
-					<Suspense fallback={<>Loading.......</>}>
-						<Await resolve={data as Promise<GetFullCoupon>}>
-							{(resolvedData: GetFullCoupon) => <CouponDetailsDialog data={resolvedData} />}
-						</Await>
-					</Suspense>
-				</div>
-			</DialogContent>
-		</Dialog>
+		<>
+			<MetaDetails
+				metaTitle={`Coupon Details | Admin Panel`}
+				metaDescription="See all the related details for the coupon."
+				metaKeywords="Coupons, Coupon, Coupon details"
+			/>
+			<Suspense fallback={<>Loading coupon data.......</>}>
+				<Await resolve={data as Promise<GetFullCoupon>}>
+					{(resolvedData: GetFullCoupon) => <CouponDetails data={resolvedData} />}
+				</Await>
+			</Suspense>
+		</>
 	);
 }

@@ -6,17 +6,14 @@ import {
 	useReactTable,
 	type ColumnDef,
 } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { ChevronRight, LayoutGrid, MoreHorizontal, PlusCircle, Search, TableOfContents } from "lucide-react";
 import { motion } from "motion/react";
-import { lazy, memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
 	Form,
 	Link,
-	Outlet,
 	useLoaderData,
 	useLocation,
-	useNavigate,
 	useNavigation,
 	useParams,
 	useSearchParams,
@@ -50,8 +47,8 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { fullCouponQuery, highLevelCouponsQuery } from "~/queries/coupons.q";
-import { CouponTypeOptions } from "~/utils/couponsConstants";
+import { highLevelCouponsQuery } from "~/queries/coupons.q";
+import { CouponTypeOptions, getFullDateTimeFormat } from "~/utils/couponsConstants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { Route } from "./+types/coupons";
@@ -94,13 +91,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export default function CouponsMainCtx({}: Route.ComponentProps) {
 	return (
-		<>
-			<CouponsPageContex>
-				<CouponsPage />
-				<CouponTypeSelectDialog />
-			</CouponsPageContex>
-			<Outlet />
-		</>
+		<CouponsPageContex>
+			<CouponsPage />
+			<CouponTypeSelectDialog />
+		</CouponsPageContex>
 	);
 }
 
@@ -125,7 +119,7 @@ const getRouteFetchingState = () => {
 const SeeDetailsButton = memo(({ rowId }: { rowId: number }) => {
 	const suppressNavigation = useSuppressTopLoadingBar();
 	const handleSeeDetailsClick = (id: number) => {
-		suppressNavigation(() => {}).navigate(`coupon/${id}`, { replace: true });
+		suppressNavigation(() => {}).navigate(`coupon/${id}`);
 	};
 
 	return <DropdownMenuItem onClick={() => handleSeeDetailsClick(rowId)}>See details</DropdownMenuItem>;
@@ -186,13 +180,13 @@ const CouponsPage = memo(() => {
 		{
 			id: "Start",
 			accessorKey: "start_timestamp",
-			cell: (info) => format(info.row.original.start_timestamp, "PPP hh:mm a"),
+			cell: (info) => getFullDateTimeFormat(info.row.original.start_timestamp),
 			header: () => "Start",
 		},
 		{
 			id: "End",
 			accessorKey: "end_timestamp",
-			cell: (info) => format(info.row.original.end_timestamp, "PPP hh:mm a"),
+			cell: (info) => getFullDateTimeFormat(info.row.original.end_timestamp),
 			header: () => "End",
 		},
 		{
@@ -384,7 +378,12 @@ const CouponTypeSelectDialog = memo(() => {
 					<DialogDescription>Select the type of the coupon you want to create.</DialogDescription>
 				</DialogHeader>
 				{CouponTypeOptions.map((option: CouponTypesOption) => (
-					<Link key={option.value} to={`/coupons/create/${option.value}`}>
+					<Link
+						key={option.value}
+						to={`/coupons/create/${option.value}`}
+						viewTransition
+						prefetch="intent"
+					>
 						<div className="px-4 py-4 hover:dark:bg-muted hover:bg-muted-dark cursor-pointer rounded-lg ease-in-out duration-150 transition-colors">
 							<div className="flex items-center gap-4">
 								{option.icon}

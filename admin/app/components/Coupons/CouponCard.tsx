@@ -9,6 +9,8 @@ import { motion } from "motion/react";
 import { CouponsPageCtx } from "~/components/Coupons/MainCouponsContext";
 import type { HighLevelCoupon } from "@ecom/shared/types/coupons";
 import { cn } from "@ecom/shared/lib/utils";
+import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+import { getCouponStatus } from "~/utils/couponsConstants";
 
 interface Props {
 	coupon: HighLevelCoupon;
@@ -23,18 +25,35 @@ const createdAtLabel = (date: string | null) => {
 	return date ? `${formatDistanceToNow(new Date(date), { addSuffix: true })}` : "-";
 };
 
-const getCouponStatus = (startTimestamp: string, endTimestamp: string) => {
-	const now = new Date();
-	const start = new Date(startTimestamp);
-	const end = new Date(endTimestamp);
-
-	if (now < start) {
-		return "Scheduled";
-	} else if (now >= start && now < end) {
-		return "Live";
-	} else if (now >= end) {
-		return "Expired";
+const SeeDetailsButton = ({ couponId }: { couponId: number }) => {
+	if (!couponId) {
+		return (
+			<button
+				type="button"
+				className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition"
+				disabled
+			>
+				<ListMinus className="h-4 w-4" />
+				See details
+			</button>
+		);
 	}
+
+	const suppressNavigation = useSuppressTopLoadingBar();
+	const handleSeeDetailsClick = (id: number) => {
+		suppressNavigation(() => {}).navigate(`coupon/${id}`);
+	};
+
+	return (
+		<button
+			type="button"
+			className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition"
+			onClick={() => handleSeeDetailsClick(Number(couponId))}
+		>
+			<ListMinus className="h-4 w-4" />
+			See details
+		</button>
+	);
 };
 
 const BodyItem = memo(({ value, heading, ...props }: { value: JSX.Element | string; heading: string }) => {
@@ -136,13 +155,7 @@ export const CouponCard = memo(({ coupon, className = "", ...props }: Props) => 
 				<div className="flex xl:items-center xl:gap-1 gap-2 xl:flex-row flex-col justify-between">
 					<div className="text-xs text-muted-foreground">Quick actions</div>
 					<div className="flex items-center gap-2 *:cursor-pointer">
-						<button
-							type="button"
-							className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition"
-						>
-							<ListMinus className="h-4 w-4" />
-							See details
-						</button>
+						<SeeDetailsButton couponId={id} />
 						<button
 							type="button"
 							className="inline-flex items-center gap-1 rounded-md border px-3 py-1 text-xs font-medium text-muted-foreground hover:opacity-90 transition"

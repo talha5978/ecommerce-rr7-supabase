@@ -17,7 +17,11 @@ import { MediaService } from "@ecom/shared/services/media.service";
 import { stringToBooleanConverter } from "@ecom/shared/lib/utils";
 import { ProductRAttributesService } from "@ecom/shared/services/product-r-attributes.service";
 import type { ProductAttributeRow } from "@ecom/shared/types/attributes";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
+import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
+import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 
+@UseClassMiddleware(loggerMiddleware, verifyUser)
 export class ProductsService extends Service {
 	/** Fetch product name to show on varaint creation and updation page as a disabled field! */
 	async getProductName(product_id: string): Promise<ProductNameResponse> {

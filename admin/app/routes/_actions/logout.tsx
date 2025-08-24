@@ -19,6 +19,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	await queryClient.invalidateQueries({ queryKey: ["current_user"] });
+	queryClient.clear();
 
 	return redirect("/", { headers });
 }

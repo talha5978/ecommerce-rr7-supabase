@@ -18,8 +18,9 @@ import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
-import { format } from "date-fns";
+import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 
+@UseClassMiddleware(loggerMiddleware)
 export class CouponsService extends Service {
 	// Check for duplicate coupon code
 	private async checkForDuplicateCode(input_code: string) {
@@ -264,7 +265,7 @@ export class CouponsService extends Service {
 	}
 
 	/** Create a coupon */
-	@UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
+	@UseMiddleware(asServiceMiddleware<CouponsService>(verifyUser))
 	async createCoupon({
 		input,
 		coupon_type,
@@ -614,7 +615,7 @@ export class CouponsService extends Service {
 	}
 
 	/** Get high level coupons for main page */
-	@UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
+	@UseMiddleware(asServiceMiddleware<CouponsService>(verifyUser))
 	async getHighLevelCoupons({
 		searchQuery,
 		pageIndex = 0,
@@ -765,7 +766,7 @@ export class CouponsService extends Service {
 	// }
 
 	/** Get single coupon details for admin panel coupons page */
-	//@UseMiddleware(loggerMiddleware, asServiceMiddleware<CouponsService>(verifyUser))
+	@UseMiddleware(asServiceMiddleware<CouponsService>(verifyUser))
 	async getSingleCouponDetails(coupon_id: number): Promise<GetFullCoupon> {
 		try {
 			const { data: couponData, error: couponError } = await this.supabase
@@ -845,8 +846,8 @@ export class CouponsService extends Service {
 				status: couponData.status,
 				discount_type: couponData.discount_type,
 				discount_value: couponData.discount_value ?? null,
-				start_timestamp: format(couponData.start_timestamp, "PPP hh:mm a"),
-				end_timestamp: format(couponData.end_timestamp, "PPP hh:mm a"),
+				start_timestamp: couponData.start_timestamp,
+				end_timestamp: couponData.end_timestamp,
 
 				main_simple_conditions: couponData.condition_groups
 					.filter((group: any) => (group.role as GroupsConditionRole) === "discount_application")
