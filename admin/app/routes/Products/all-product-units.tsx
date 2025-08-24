@@ -378,7 +378,6 @@ export function ProductsDialog({ open, setOpen }: { open: boolean; setOpen: (ope
 					<DialogTitle>Select Product</DialogTitle>
 					<DialogDescription>Select a product you want to create a variant for.</DialogDescription>
 				</DialogHeader>
-				{/* TODO: CREATE A fallback for the products dialog suspense */}
 				<Suspense fallback={<div className="text-lg text-red-700">Loading...</div>}>
 					<Await resolve={productsList}>
 						{({ products }) => (

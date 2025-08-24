@@ -175,7 +175,7 @@ export class CouponsService extends Service {
 		const { error, data: condition_data } = await this.supabase
 			.from(this.PRODUCT_CONDITIONS_TABLE)
 			.insert({
-				// @ts-ignore //TODO: Check group_id!!
+				// @ts-ignore
 				group_id,
 				type: condition.type,
 				operator: condition.operator,

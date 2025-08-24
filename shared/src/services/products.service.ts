@@ -37,7 +37,6 @@ export class ProductsService extends Service {
 		};
 	}
 
-	// TODO: ⬇⬇⬇⬇ APPLY PAGINATION HERE IF IT IS IN DIALOG THEN APPLY INFINITE SCROLL IN THAT SELECT.. ⬇⬇⬇⬇
 	/** Fetch product names list to show in the dialoge on all product units page */
 	async getProductNamesList(): Promise<ProductNamesListResponse> {
 		try {

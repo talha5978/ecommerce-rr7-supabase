@@ -348,8 +348,6 @@ export function ProductSelectionDialog({
 		setOpen(false);
 	};
 
-	//TODO: Show a sheet where we display the information of product when we click on the name of product in the table list
-
 	const showMoreProducts = (subId: string) => {
 		setProductsToShow((prev) => {
 			const current = prev[subId] || productsPageSize;
