@@ -8,7 +8,6 @@ export const loggerMiddleware = createServiceMiddleware<ServiceBase>(async (ctx,
 	try {
 		console.log(`\x1b[35m📑 [${ctx.methodName}] service called at ${currentDate} \x1b[0m`);
 		const next_process = await next();
-		console.log(`\x1b[35m [${ctx.methodName}] service successfully finished \x1b[0m`);
 		return next_process;
 	} catch (error) {
 		if (error instanceof ApiError && error.details.length) {
@@ -20,5 +19,7 @@ export const loggerMiddleware = createServiceMiddleware<ServiceBase>(async (ctx,
 			console.error(`🔴\x1b[31m ERROR - `, error, currentDate, "\x1b[0m");
 		}
 		throw error;
+	} finally {
+		console.log(`\x1b[35m [${ctx.methodName}] service finished \x1b[0m`);
 	}
 });

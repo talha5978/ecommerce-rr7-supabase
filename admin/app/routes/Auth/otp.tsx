@@ -82,8 +82,8 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
-	console.log("User in login otp: ", user);
+	const resp = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const user = resp?.user ?? null;
 
 	if (user) {
 		return redirect("/");

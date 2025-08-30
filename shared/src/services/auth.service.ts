@@ -54,8 +54,8 @@ export class AuthService extends Service {
 				last_name: userDetails.last_name ?? null,
 				phone_number: userDetails.phone_number ?? null,
 				role: {
-					role_id: userDetails.user_roles?.id ?? 2,
-					role_name: userDetails.user_roles?.role_name ?? "admin",
+					role_id: userDetails.user_roles.id,
+					role_name: userDetails.user_roles.role_name,
 				},
 			};
 

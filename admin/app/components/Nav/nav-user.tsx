@@ -1,7 +1,6 @@
 import { IconNotification, IconSettings, IconUserCircle } from "@tabler/icons-react";
 import { Mail } from "lucide-react";
-import { useLoaderData } from "react-router";
-
+import { useRouteLoaderData } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -15,7 +14,7 @@ import {
 import type { AdminUser } from "@ecom/shared/types/user";
 
 export function UserButton() {
-	const { user } = useLoaderData();
+	const { user } = useRouteLoaderData("root");
 	const currentUser: AdminUser = user as AdminUser;
 
 	return (

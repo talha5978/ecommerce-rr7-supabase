@@ -2,7 +2,6 @@ import { type RouteConfig, route, index, prefix } from "@react-router/dev/routes
 
 export default [
 	...prefix("/login", [index("./routes/Auth/login.tsx"), route("otp", "./routes/Auth/otp.tsx")]),
-
 	route("/logout", "./routes/_actions/logout.tsx"),
 
 	route("/", "./routes/layout.tsx", [

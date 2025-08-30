@@ -5,7 +5,8 @@ import { AuthService } from "@ecom/shared/services/auth.service";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
 
 export async function action({ request }: ActionFunctionArgs) {
-	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
+	const resp = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const user = resp?.user ?? null;
 
 	if (!user) {
 		return redirect("/login");
@@ -15,13 +16,13 @@ export async function action({ request }: ActionFunctionArgs) {
 	const { error, headers } = await authService.logout();
 
 	if (error) {
-		return { error: error.message };
+		throw new Response(error.message || "Failed to logout", { status: 400, headers });
 	}
 
 	await queryClient.invalidateQueries({ queryKey: ["current_user"] });
 	queryClient.clear();
 
-	return redirect("/", { headers });
+	return redirect("/login", { headers });
 }
 
 export default function LogoutRoute() {

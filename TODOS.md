@@ -2,7 +2,7 @@
 
 // PRIMARY 🔴
 
-// TODO: Agr aik browser mien ham log in hain to dusray browser mien cache shared ni hoga LEKIN!! ab cache wali functionality kam hi ni kr rhi, har baar new request jati hai service pr (isko debug krna hai k q ni arha data cache se)
+// TODO: Check on roles managment for admin, employee and general user
 
 // Secondary 🟢
 

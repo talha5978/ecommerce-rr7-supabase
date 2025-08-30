@@ -63,7 +63,8 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const { user } = await queryClient.fetchQuery(currentUserQuery({ request }));
+	const resp = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const user = resp?.user ?? null;
 	// console.log(user);
 
 	if (user) {
