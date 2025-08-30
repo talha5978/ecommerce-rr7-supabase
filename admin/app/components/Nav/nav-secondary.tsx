@@ -1,6 +1,4 @@
-import * as React from "react";
-import { type Icon } from "@tabler/icons-react";
-
+import { memo, type ComponentPropsWithoutRef } from "react";
 import {
 	SidebarGroup,
 	SidebarGroupContent,
@@ -9,22 +7,15 @@ import {
 	SidebarMenuItem,
 } from "~/components/ui/sidebar";
 import { Link } from "react-router";
+import { secondaryNavItems } from "@ecom/shared/constants/nav-items";
+import type { NavSubItem } from "@ecom/shared/types/nav";
 
-export function NavSecondary({
-	items,
-	...props
-}: {
-	items: {
-		title: string;
-		url: string;
-		icon: Icon;
-	}[];
-} & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+export const NavSecondary = memo(({ ...props }: ComponentPropsWithoutRef<typeof SidebarGroup>) => {
 	return (
 		<SidebarGroup {...props}>
 			<SidebarGroupContent>
 				<SidebarMenu>
-					{items.map((item) => (
+					{secondaryNavItems.map((item: NavSubItem) => (
 						<SidebarMenuItem key={item.title}>
 							<SidebarMenuButton asChild>
 								<Link to={item.url} viewTransition>
@@ -38,4 +29,4 @@ export function NavSecondary({
 			</SidebarGroupContent>
 		</SidebarGroup>
 	);
-}
+});

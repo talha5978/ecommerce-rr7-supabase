@@ -12,9 +12,7 @@ import {
 } from "~/components/ui/sidebar";
 import { Link } from "react-router";
 import { ShoppingBagIcon } from "lucide-react";
-import LogoutButton from "../Auth/logout-button";
-import { mainNavItems, secondaryNavItems } from "@ecom/shared/constants/constants";
-import type { NavItem } from "@ecom/shared/types/nav";
+import LogoutButton from "~/components/Auth/logout-button";
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 	return (
@@ -32,10 +30,10 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
-				<NavMain items={mainNavItems as NavItem[]} />
+				<NavMain />
 			</SidebarContent>
 			<SidebarFooter>
-				<NavSecondary items={secondaryNavItems} className="mt-auto" />
+				<NavSecondary className="mt-auto" />
 				<LogoutButton />
 			</SidebarFooter>
 		</Sidebar>

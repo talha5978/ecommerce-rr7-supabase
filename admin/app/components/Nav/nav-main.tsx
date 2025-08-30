@@ -1,4 +1,5 @@
-import { NavLink, useLocation, useResolvedPath } from "react-router";
+import { memo } from "react";
+import { NavLink, useLocation, useResolvedPath, useRouteLoaderData } from "react-router";
 import {
 	SidebarGroup,
 	SidebarGroupContent,
@@ -8,9 +9,15 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubItem,
 } from "~/components/ui/sidebar";
-import type { NavItem, NavSubItem } from "@ecom/shared/types/nav";
+import type { NavSubItem } from "@ecom/shared/types/nav";
+import { mainNavItems } from "@ecom/shared/constants/nav-items";
+import { PolicyManager } from "@ecom/shared/permissions/policyManager";
+import { getAccessibleNavItems } from "@ecom/shared/utils/getAccessibleNavItems";
+import { type loader as RootLoader } from "~/root";
+import { UserRole } from "@ecom/shared/permissions/permissions.enum";
+import type { AdminUser } from "@ecom/shared/types/user";
 
-function SubItem({ url, icon, title }: NavSubItem) {
+const SubItem = memo(({ url, icon, title }: NavSubItem) => {
 	const location = useLocation();
 	const resolved = useResolvedPath(url);
 
@@ -31,14 +38,25 @@ function SubItem({ url, icon, title }: NavSubItem) {
 			</SidebarMenuButton>
 		</SidebarMenuSubItem>
 	);
-}
+});
 
-export function NavMain({ items }: { items: NavItem[] }) {
+export function NavMain() {
+	const loaderData = useRouteLoaderData<typeof RootLoader>("root");
+	const user: AdminUser | null = loaderData?.user ?? null;
+
+	let navItems = mainNavItems;
+
+	if (user) {
+		const policy = new PolicyManager(user.role.role_name as UserRole);
+		const filteredNav = getAccessibleNavItems(mainNavItems, policy);
+		navItems = filteredNav;
+	}
+
 	return (
 		<SidebarGroup>
 			<SidebarGroupContent className="flex flex-col gap-2">
 				<SidebarMenu>
-					{items.map((item) => (
+					{navItems.map((item) => (
 						<SidebarMenuItem key={item.title}>
 							<span className="font-medium text-muted-foreground">{item.title}</span>
 							<SidebarMenuSub className="mt-1">
