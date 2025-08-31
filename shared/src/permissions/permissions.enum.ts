@@ -49,5 +49,4 @@ export enum Permission {
 	MANAGE_COUPONS = "manage_coupons",
 
 	// Non-Service related permissions
-	ACCESS_DASHBOARD = "access_dashboard",
 }

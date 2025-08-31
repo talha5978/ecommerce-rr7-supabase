@@ -54,14 +54,25 @@ import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { Route } from "./+types/coupons";
 import { defaults } from "@ecom/shared/constants/constants";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
-import type { HighLevelCoupon } from "@ecom/shared/types/coupons";
+import type { GetHighLevelCouponsResp, HighLevelCoupon } from "@ecom/shared/types/coupons";
 import { GetFormattedDate } from "@ecom/shared/lib/utils";
 import type { CouponTypesOption } from "@ecom/shared/types/coupons-comp";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
+import { protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 const SELECTED_COUPON_DETAILS_TAG = "couponId" as const;
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+type LoaderReturn = {
+	data: GetHighLevelCouponsResp;
+	query: string;
+	pageIndex: number;
+	pageSize: number;
+};
+
+export const loader = protectLoader<LoaderReturn>({
+	permissions: Permission.MANAGE_COUPONS,
+})(async ({ request }: Route.LoaderArgs) => {
 	const {
 		q: searchQuery,
 		pageIndex,
@@ -73,12 +84,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 	});
 
 	const data = await queryClient.fetchQuery(
-		highLevelCouponsQuery({
-			request,
-			searchQuery,
-			pageIndex,
-			pageSize,
-		}),
+		highLevelCouponsQuery({ request, searchQuery, pageIndex, pageSize }),
 	);
 
 	return {
@@ -87,7 +93,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		pageIndex,
 		pageSize,
 	};
-};
+});
 
 export default function CouponsMainCtx({}: Route.ComponentProps) {
 	return (

@@ -2,11 +2,7 @@ import { createServiceMiddleware, getOrCreatePolicyManager } from "@ecom/shared/
 import type { ServiceBase } from "@ecom/shared/services/service";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { type Permission } from "@ecom/shared/permissions/permissions.enum";
-
-type Opts = {
-	permissions: Permission[];
-	require?: "all" | "any";
-};
+import type { Opts } from "@ecom/shared/types/permissions";
 
 const DEFAULT_REQUIRE_MODE = "all";
 

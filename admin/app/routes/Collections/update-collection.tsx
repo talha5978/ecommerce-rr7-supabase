@@ -11,9 +11,7 @@ import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
-	ActionFunctionArgs,
 	Await,
-	LoaderFunctionArgs,
 	useActionData,
 	useNavigate,
 	useNavigation,
@@ -63,15 +61,19 @@ import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { CollectionsService } from "@ecom/shared/services/collections.service";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { bolleanToStringConverter } from "@ecom/shared/lib/utils";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import { COLLECTION_IMG_DIMENSIONS, defaults } from "@ecom/shared/constants/constants";
-import type { CollectionDataItemsResponse, SelectedProduct } from "@ecom/shared/types/collections";
+import type { CollectionDataItemsResponse, GetFullCollection, SelectedProduct } from "@ecom/shared/types/collections";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 function getSimpleFields() {
 	return ["name", "description", "status", "sort_order"] as const;
 }
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.UPDATE_COLLECTIONS
+})(async ({ request, params }: Route.ActionArgs) => {
 	const collectionId = (params.collectionId as string) || "";
 	if (!collectionId || collectionId == "") {
 		throw new Response("Collection ID is required", { status: 400 });
@@ -141,9 +143,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
-};
+});
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+type LoaderReturn = {
+	collectionResp: GetFullCollection;
+	collectionsDataItems: Promise<CollectionDataItemsResponse>;
+}
+
+export const loader = protectLoader<LoaderReturn>({
+	permissions: Permission.UPDATE_COLLECTIONS
+})(async ({ request, params }: Route.LoaderArgs) => {
 	const collection_id = params.collectionId;
 
 	if (!collection_id) {
@@ -168,7 +177,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	);
 
 	return { collectionResp, collectionsDataItems };
-};
+});
 
 export default function UpdateCollectionPage({
 	loaderData: {

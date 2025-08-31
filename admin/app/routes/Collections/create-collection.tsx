@@ -11,9 +11,7 @@ import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
-	ActionFunctionArgs,
 	Await,
-	LoaderFunctionArgs,
 	useActionData,
 	useNavigate,
 	useNavigation,
@@ -57,11 +55,15 @@ import {
 import { CollectionsService } from "@ecom/shared/services/collections.service";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ApiError } from "@ecom/shared/utils/ApiError";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import type { CollectionDataItemsResponse, SelectedProduct } from "@ecom/shared/types/collections";
 import { COLLECTION_IMG_DIMENSIONS, defaults } from "@ecom/shared/constants/constants";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.CREATE_COLLECTIONS
+})(async ({ request }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
 
@@ -113,9 +115,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
-};
+});
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = protectLoader<{
+	collectionsDataItems: Promise<CollectionDataItemsResponse>
+}>({
+	permissions: Permission.CREATE_COLLECTIONS
+})(async ({ request }: Route.LoaderArgs) => {
 	const { searchParams } = new URL(request.url);
 	const categoryPageParam = Number(searchParams.get(CATEGORY_PAGE_TAG));
 	const productPageParam = Number(searchParams.get(PRODUCT_PAGE_TAG));
@@ -132,7 +138,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	return { collectionsDataItems };
-};
+});
 
 export default function CreateCollectionPage({ loaderData: { collectionsDataItems } }: Route.ComponentProps) {
 	const navigate = useNavigate();

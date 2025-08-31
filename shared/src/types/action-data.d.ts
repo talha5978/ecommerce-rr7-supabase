@@ -5,3 +5,13 @@ export type ActionResponse =
 			validationErrors?: Record<string, string[]>;
 	  }
 	| undefined;
+
+export type ActionReturn =
+	| {
+			success: boolean;
+			error?: undefined;
+	  }
+	| {
+			success: boolean;
+			error: any;
+	  };

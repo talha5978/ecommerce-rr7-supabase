@@ -1,6 +1,4 @@
 import {
-	ActionFunctionArgs,
-	LoaderFunctionArgs,
 	useActionData,
 	useNavigate,
 	useNavigation,
@@ -8,7 +6,7 @@ import {
 } from "react-router";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { singleCategoryQuery } from "~/queries/categories.q";
-import { Route } from "./+types/update-category";
+import type { Route } from "./+types/update-category";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
@@ -40,10 +38,15 @@ import {
 } from "@ecom/shared/schemas/category.schema";
 import { CategoryService } from "@ecom/shared/services/category.service";
 import { ApiError } from "@ecom/shared/utils/ApiError";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import { defaults } from "@ecom/shared/constants/constants";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import type { GetCategoryResponse } from "@ecom/shared/types/category";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = protectLoader<{ data: GetCategoryResponse }>({
+	permissions: Permission.UPDATE_CATEGORIES
+})(async ({ params, request }: Route.LoaderArgs) => {
 	const categoryId = (params.categoryId as string) || "";
 	if (!categoryId || categoryId == "") {
 		throw new Response("Category ID is required", { status: 400 });
@@ -54,9 +57,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	return {
 		data,
 	};
-};
+});
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.UPDATE_CATEGORIES
+})(async ({ request, params }: Route.ActionArgs) => {
 	const categoryId = (params.categoryId as string) || "";
 	if (!categoryId || categoryId == "") {
 		throw new Response("Category ID is required", { status: 400 });
@@ -116,7 +121,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
-};
+});
 
 export default function UpdateCategoryForm({
 	loaderData: {

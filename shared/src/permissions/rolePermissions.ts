@@ -7,8 +7,6 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
 		Permission.ADD_ADMINS,
 		Permission.REMOVE_ADMINS,
 
-		Permission.ACCESS_DASHBOARD,
-
 		Permission.CREATE_META_DETAILS,
 		Permission.UPDATE_META_DETAILS,
 		Permission.DELETE_META_DETAILS,
@@ -43,7 +41,6 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
 	],
 	[UserRole.EMPLOYEE]: [
 		Permission.ADD_USERS,
-		Permission.ACCESS_DASHBOARD,
 		Permission.CREATE_COLLECTIONS,
 		Permission.UPDATE_COLLECTIONS,
 		Permission.UPLOAD_IMAGES,

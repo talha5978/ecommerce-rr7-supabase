@@ -1,12 +1,13 @@
 import { defaults } from "@ecom/shared/constants/constants";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import {
 	SubCategoryActionDataSchema,
 	SubCategoryInputSchema,
 	type SubCategoryFormValues,
 } from "@ecom/shared/schemas/category.schema";
 import { CategoryService } from "@ecom/shared/services/category.service";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -35,8 +36,11 @@ import {
 	TagsInputList,
 } from "~/components/ui/tags-input";
 import { Textarea } from "~/components/ui/textarea";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.CREATE_SUB_CATEGORIES
+})(async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
 	console.log("Form data: ", formData);
 
@@ -97,7 +101,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
-};
+});
+
+export const loader = protectLoader({
+	permissions: Permission.CREATE_SUB_CATEGORIES,
+})(async () => {
+	return null;
+});
 
 export default function CreateCategoryPage() {
 	const navigate = useNavigate();

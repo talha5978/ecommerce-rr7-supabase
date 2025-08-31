@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DollarSign, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { LoaderFunctionArgs, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
+import { useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import { toast } from "sonner";
 import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
 import MultipleImagesInput from "~/components/Custom-Inputs/multiple-images-input";
@@ -25,15 +25,20 @@ import {
 import { ProductVariantsService } from "@ecom/shared/services/product-variants.service";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ApiError } from "@ecom/shared/utils/ApiError";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import {
 	DISABLED_DEFAULT_VARIANT_MESSAGE,
 	PRODUCT_IMG_DIMENSIONS,
 	REQUIRED_VARIANT_ATTRIBS,
 } from "@ecom/shared/constants/constants";
-import type { AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
+import type { AllProductAttributesResponse, AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
+import type { VariantConstraintsData } from "@ecom/shared/types/product-variants";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
-export const action = async ({ request, params }: Route.ActionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.CREATE_PRODUCT_VARIANTS
+})(async ({ request, params }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	console.log("Form data: ", formData);
 	const productId = (params.productId as string) || "";
@@ -92,9 +97,16 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 			error: errorMessage,
 		};
 	}
-};
+});
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+type LoaderReturn = {
+	data: AllProductAttributesResponse;
+	constraints: VariantConstraintsData;
+}
+
+export const loader = protectLoader<LoaderReturn>({
+	permissions: Permission.CREATE_PRODUCT_VARIANTS
+})(async ({ request, params }: Route.LoaderArgs) => {
 	const productId = (params.productId as string) || "";
 	if (!productId || productId == "") {
 		throw new Response("Product ID is required", { status: 400 });
@@ -110,7 +122,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	//console.log("Constrains data in loader:", constraints);
 
 	return { data, constraints };
-};
+});
 
 export default function CreateProductVariantPage({
 	params,

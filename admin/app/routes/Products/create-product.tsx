@@ -1,17 +1,9 @@
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PlusCircle } from "lucide-react";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import {
-	ActionFunctionArgs,
-	Link,
-	LoaderFunctionArgs,
-	useActionData,
-	useNavigate,
-	useNavigation,
-	useSubmit,
-} from "react-router";
+import { Link, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import { toast } from "sonner";
 import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
 import ImageInput from "~/components/Custom-Inputs/image-input";
@@ -42,12 +34,21 @@ import {
 	ProductInputSchema,
 } from "@ecom/shared/schemas/product.schema";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { defaults, PRODUCT_IMG_DIMENSIONS } from "@ecom/shared/constants/constants";
+import type {
+	AllProductAttributesResponse,
+	AttributeType,
+	ProductAttribute,
+} from "@ecom/shared/types/attributes";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import type { GetAllCategoriesResponse } from "@ecom/shared/types/category";
 import { ProductsService } from "@ecom/shared/services/products.service";
 import { ApiError } from "@ecom/shared/utils/ApiError";
-import { defaults, PRODUCT_IMG_DIMENSIONS } from "@ecom/shared/constants/constants";
-import type { AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.CREATE_PRODUCTS,
+})(async ({ request }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
 
@@ -70,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	};
 
 	const parseResult = ProductActionDataSchema.safeParse(data);
-	console.log("Parse result: ", parseResult?.error);
+	//console.log("Parse result: ", parseResult?.error);
 
 	if (!parseResult.success) {
 		return new Response(JSON.stringify({ validationErrors: parseResult.error.flatten().fieldErrors }), {
@@ -104,9 +105,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
+});
+
+type LoaderReturn = {
+	categories: GetAllCategoriesResponse;
+	optional_attributes: AllProductAttributesResponse;
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = protectLoader<LoaderReturn>({
+	permissions: Permission.CREATE_PRODUCTS,
+})(async ({ request }: Route.LoaderArgs) => {
 	const categories = await queryClient.fetchQuery(categoriesQuery({ request }));
 
 	const optional_attributes = await queryClient.fetchQuery(
@@ -117,7 +125,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	return { categories, optional_attributes };
-};
+});
 
 export default function CreateBasicProductPage({
 	loaderData: { categories: loaderCategories, optional_attributes },
@@ -215,7 +223,7 @@ export default function CreateBasicProductPage({
 
 		submit(formData, {
 			method: "POST",
-			action: "/products/create",
+			action: "/create-product",
 			encType: "multipart/form-data",
 		});
 	}

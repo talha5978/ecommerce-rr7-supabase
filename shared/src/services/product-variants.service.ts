@@ -347,7 +347,9 @@ export class ProductVariantsService extends Service {
 	}
 
 	/** Get constraints like if we already have a variant which is set to default for variant creation page and updation page */
-	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCT_VARIANTS, Permission.UPDATE_PRODUCT_VARIANTS]))
+	@UseMiddleware(
+		requireAllPermissions([Permission.CREATE_PRODUCT_VARIANTS, Permission.UPDATE_PRODUCT_VARIANTS]),
+	)
 	async getConstaintsForVariantMutations(product_id: string): Promise<VariantConstraintsData> {
 		try {
 			const { data, error: defaultFetchError } = await this.supabase

@@ -26,10 +26,14 @@ import {
 } from "@ecom/shared/schemas/category.schema";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ApiError } from "@ecom/shared/utils/ApiError";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import { defaults } from "@ecom/shared/constants/constants";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.CREATE_CATEGORIES
+})(async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
 	console.log("Form data: ", formData);
 
@@ -88,7 +92,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
-};
+});
+
+export const loader = protectLoader({
+	permissions: Permission.CREATE_CATEGORIES,
+})(async () => {
+	return null;
+});
 
 export default function CreateCategoryPage() {
 	const navigate = useNavigate();

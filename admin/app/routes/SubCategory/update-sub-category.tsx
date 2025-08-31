@@ -39,11 +39,16 @@ import {
 import { Route } from "./+types/update-sub-category";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { CategoryService } from "@ecom/shared/services/category.service";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { defaults } from "@ecom/shared/constants/constants";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import type { GetSubCategoryResponse } from "@ecom/shared/types/category";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = protectLoader<{ data: GetSubCategoryResponse }>({
+	permissions: Permission.UPDATE_SUB_CATEGORIES
+})(async ({ params, request }: Route.LoaderArgs) => {
 	const subCategoryId = (params.subCategoryId as string) || "";
 	if (!subCategoryId || subCategoryId == "") {
 		throw new Response("Sub category ID is required", { status: 400 });
@@ -54,9 +59,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	return {
 		data,
 	};
-};
+});
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.UPDATE_SUB_CATEGORIES
+})(async ({ request, params }: Route.ActionArgs) => {
 	const subCategoryId = (params.subCategoryId as string) || "";
 	const parentCategoryId = (params.categoryId as string) || "";
 
@@ -115,7 +122,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
-};
+});
 
 export default function UpdateCategoryForm({
 	loaderData: {

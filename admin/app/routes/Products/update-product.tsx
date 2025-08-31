@@ -50,9 +50,18 @@ import {
 import { ProductsService } from "@ecom/shared/services/products.service";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ApiError } from "@ecom/shared/utils/ApiError";
-import type { AttributeType, ProductAttribute, ProductAttributeRow } from "@ecom/shared/types/attributes";
+import type {
+	AllProductAttributesResponse,
+	AttributeType,
+	ProductAttribute,
+	ProductAttributeRow,
+} from "@ecom/shared/types/attributes";
 import { defaults, OPTIONAL_PRODUCT_ATTRIBS, PRODUCT_IMG_DIMENSIONS } from "@ecom/shared/constants/constants";
-import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { protectAction, protectLoader } from "~/utils/routeGuards";
+import type { GetSingleProductResponse } from "@ecom/shared/types/products";
+import type { GetAllCategoriesResponse } from "@ecom/shared/types/category";
 
 function getSimpleFields() {
 	return [
@@ -66,7 +75,9 @@ function getSimpleFields() {
 	] as const;
 }
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = protectAction<ActionReturn>({
+	permissions: Permission.CREATE_PRODUCTS,
+})(async ({ request, params }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
 
@@ -146,9 +157,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			error: errorMessage,
 		};
 	}
+});
+
+type LoaderReturn = {
+	data: {
+		productResp: GetSingleProductResponse;
+		categoriesResp: GetAllCategoriesResponse;
+		optional_attributes: AllProductAttributesResponse;
+	};
 };
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = protectLoader<LoaderReturn>({
+	permissions: Permission.CREATE_PRODUCTS,
+})(async ({ request, params }: Route.LoaderArgs) => {
 	const prodId = (params.productId as string) || "";
 	if (!prodId || prodId == "") {
 		throw new Response("Product ID is required", { status: 400 });
@@ -172,7 +193,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			optional_attributes: attribs_for_product,
 		},
 	};
-};
+});
 
 export default function UpdateProductPage({
 	loaderData: {

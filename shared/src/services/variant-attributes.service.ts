@@ -16,7 +16,9 @@ import { Permission } from "@ecom/shared/permissions/permissions.enum";
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<VariantsAttributesService>(verifyUser))
 export class VariantsAttributesService extends Service {
 	/** Create bulk of variant attributes */
-	@UseMiddleware(requireAnyPermission([Permission.CREATE_PRODUCT_VARIANTS, Permission.UPDATE_PRODUCT_VARIANTS]))
+	@UseMiddleware(
+		requireAnyPermission([Permission.CREATE_PRODUCT_VARIANTS, Permission.UPDATE_PRODUCT_VARIANTS]),
+	)
 	async createBulkVariantAttributes(
 		input: VariantAttributeInput[],
 	): Promise<VariantAttributeCreateResponse> {

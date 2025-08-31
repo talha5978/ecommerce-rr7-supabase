@@ -267,7 +267,10 @@ export class CouponsService extends Service {
 	}
 
 	/** Create a coupon */
-	@UseMiddleware(asServiceMiddleware<CouponsService>(verifyUser), requireAllPermissions([Permission.MANAGE_COUPONS]))
+	@UseMiddleware(
+		asServiceMiddleware<CouponsService>(verifyUser),
+		requireAllPermissions([Permission.MANAGE_COUPONS]),
+	)
 	async createCoupon({
 		input,
 		coupon_type,
@@ -617,7 +620,10 @@ export class CouponsService extends Service {
 	}
 
 	/** Get high level coupons for main page */
-	@UseMiddleware(asServiceMiddleware<CouponsService>(verifyUser), requireAllPermissions([Permission.MANAGE_COUPONS]))
+	@UseMiddleware(
+		asServiceMiddleware<CouponsService>(verifyUser),
+		requireAllPermissions([Permission.MANAGE_COUPONS]),
+	)
 	async getHighLevelCoupons({
 		searchQuery,
 		pageIndex = 0,
@@ -768,7 +774,10 @@ export class CouponsService extends Service {
 	// }
 
 	/** Get single coupon details for admin panel coupons page */
-	@UseMiddleware(asServiceMiddleware<CouponsService>(verifyUser), requireAllPermissions([Permission.MANAGE_COUPONS]))
+	@UseMiddleware(
+		asServiceMiddleware<CouponsService>(verifyUser),
+		requireAllPermissions([Permission.MANAGE_COUPONS]),
+	)
 	async getSingleCouponDetails(coupon_id: number): Promise<GetFullCoupon> {
 		try {
 			const { data: couponData, error: couponError } = await this.supabase

@@ -246,7 +246,13 @@ export class CategoryService extends Service {
 	}
 
 	/**   Create a new category along with the meta details */
-	@UseMiddleware(requireAllPermissions([Permission.CREATE_CATEGORIES, Permission.CREATE_META_DETAILS, Permission.DELETE_META_DETAILS]))
+	@UseMiddleware(
+		requireAllPermissions([
+			Permission.CREATE_CATEGORIES,
+			Permission.CREATE_META_DETAILS,
+			Permission.DELETE_META_DETAILS,
+		]),
+	)
 	async createCategoryWithMeta(input: CategoryActionData): Promise<void> {
 		const { category_name, description, sort_order, meta_details } = input;
 
@@ -269,7 +275,13 @@ export class CategoryService extends Service {
 	}
 
 	/** Create a new category along with the meta details */
-	@UseMiddleware(requireAllPermissions([Permission.CREATE_SUB_CATEGORIES, Permission.CREATE_META_DETAILS, Permission.DELETE_META_DETAILS]))
+	@UseMiddleware(
+		requireAllPermissions([
+			Permission.CREATE_SUB_CATEGORIES,
+			Permission.CREATE_META_DETAILS,
+			Permission.DELETE_META_DETAILS,
+		]),
+	)
 	async createSubCategoryWithMeta(input: SubCategoryActionData): Promise<void> {
 		const { sub_category_name, description, sort_order, meta_details, parent_id } = input;
 
