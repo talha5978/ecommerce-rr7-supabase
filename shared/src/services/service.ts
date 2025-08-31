@@ -2,17 +2,26 @@ import { type SupabaseClient } from "@supabase/supabase-js";
 import { STORAGE_BUCKETS } from "@ecom/shared/constants/constants";
 import { createSupabaseServerClient } from "@ecom/shared/lib/supabase/supabase.server";
 import { type Database } from "@ecom/shared/types/supabase";
+import { UserRole } from "@ecom/shared/permissions/permissions.enum";
+
+type ServiceBaseCurrentUser = {
+	id: string;
+	email: string;
+	role: UserRole;
+};
 
 export interface ServiceBase {
 	supabase: SupabaseClient<Database>;
 	headers: Headers;
 	request: Request;
+	currentUser?: ServiceBaseCurrentUser | null | undefined;
 }
 
 export class Service implements ServiceBase {
 	supabase;
 	readonly headers;
 	readonly request;
+	currentUser?: ServiceBaseCurrentUser | null | undefined = null;
 
 	protected readonly IMAGES_BUCKET = STORAGE_BUCKETS.images;
 

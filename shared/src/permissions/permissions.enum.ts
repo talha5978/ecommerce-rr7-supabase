@@ -16,6 +16,10 @@ export enum Permission {
 	UPDATE_PRODUCTS = "update_products",
 	DELETE_PRODUCTS = "delete_products",
 
+	CREATE_PRODUCT_VARIANTS = "create_product_variants",
+	UPDATE_PRODUCT_VARIANTS = "update_product_variants",
+	DELETE_PRODUCT_VARIANTS = "delete_product_variants",
+
 	CREATE_COLLECTIONS = "create_collections",
 	UPDATE_COLLECTIONS = "update_collections",
 	DELETE_COLLECTIONS = "delete_collections",

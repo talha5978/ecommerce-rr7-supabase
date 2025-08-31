@@ -13,8 +13,13 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
 		Permission.UPDATE_PRODUCTS,
 		Permission.DELETE_PRODUCTS,
 
+		Permission.CREATE_PRODUCT_VARIANTS,
+		Permission.UPDATE_PRODUCT_VARIANTS,
+		Permission.DELETE_PRODUCT_VARIANTS,
+
 		Permission.CREATE_COLLECTIONS,
 		Permission.UPDATE_COLLECTIONS,
+		Permission.DELETE_COLLECTIONS,
 
 		Permission.MANAGE_COUPONS,
 	],

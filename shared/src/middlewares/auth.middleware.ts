@@ -3,6 +3,7 @@ import { type ServiceBase } from "@ecom/shared/services/service";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
 import { createServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { UserRole } from "@ecom/shared/permissions/permissions.enum";
 
 export const verifyUser = createServiceMiddleware<ServiceBase>(async (ctx, next) => {
 	try {
@@ -18,6 +19,12 @@ export const verifyUser = createServiceMiddleware<ServiceBase>(async (ctx, next)
 
 		if (user == null && noUserError) {
 			throw noUserError ?? new ApiError("User not found", 401, []);
+		} else {
+			service.currentUser = {
+				id: user?.id ?? "",
+				email: user?.email ?? "",
+				role: user?.role.role_name as UserRole,
+			};
 		}
 
 		return next();
@@ -25,8 +32,3 @@ export const verifyUser = createServiceMiddleware<ServiceBase>(async (ctx, next)
 		throw error;
 	}
 });
-
-// export const authorizeRole = createServiceMiddleware<ServiceBase>(async (ctx, next) => {
-// 	// TODO: Add role managment logic here
-// 	// for this create a policy based role management system
-// });
