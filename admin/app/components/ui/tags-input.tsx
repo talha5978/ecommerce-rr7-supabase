@@ -2,7 +2,6 @@ import { cn } from "@ecom/shared/lib/utils";
 import * as TagsInputPrimitive from "@diceui/tags-input";
 import { RefreshCcw, X } from "lucide-react";
 import * as React from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 
 const TagsInput = React.forwardRef<
 	React.ComponentRef<typeof TagsInputPrimitive.Root>,
@@ -104,19 +103,13 @@ const CustomTagsInputClear = React.forwardRef<
 	<TagsInputPrimitive.Clear
 		data-slot="tags-input-clear"
 		ref={ref}
-		className={cn("sm:w-fit w-full", className)}
+		className={cn("sm:w-fit w-full CustomTagsInputClear", className)}
 		{...props}
 	>
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<div className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointe border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 size-9 cursor-pointer">
-					<RefreshCcw className="h-4 w-4" />
-				</div>
-			</TooltipTrigger>
-			<TooltipContent>
-				<p>Reset</p>
-			</TooltipContent>
-		</Tooltip>
+		<div className="wrapper inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointe border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 sm:size-9 h-9 w-full cursor-pointer">
+			<RefreshCcw className="h-4 w-4 refresh-icon" />
+			<p className="sm:hidden inline">Reset</p>
+		</div>
 	</TagsInputPrimitive.Clear>
 ));
 

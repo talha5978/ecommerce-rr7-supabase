@@ -272,3 +272,11 @@ input::-webkit-inner-spin-button {
 .main-coupons-grid-item {
 	@apply col-span-12 min-[490px]:col-span-6 min-[800px]:col-span-4 min-[1200px]:col-span-3;
 }
+
+.CustomTagsInputClear .wrapper .refresh-icon {
+	@apply transition duration-300;
+}
+
+.CustomTagsInputClear .wrapper:hover .refresh-icon {
+	@apply transform rotate-45;
+}
