@@ -4,7 +4,7 @@ import { ApiError } from "@ecom/shared/utils/ApiError";
 import { type Permission } from "@ecom/shared/permissions/permissions.enum";
 
 type Opts = {
-	permissions: Permission | Permission[];
+	permissions: Permission[];
 	require?: "all" | "any";
 };
 
@@ -17,7 +17,7 @@ const DEFAULT_REQUIRE_MODE = "all";
  */
 
 export function createPermissionMiddleware<T extends ServiceBase = ServiceBase>(opts: Opts) {
-	const permissions = Array.isArray(opts.permissions) ? opts.permissions : [opts.permissions];
+	const permissions = opts.permissions;
 	const requireMode = opts.require ?? DEFAULT_REQUIRE_MODE;
 
 	return createServiceMiddleware<T>(async (ctx, next) => {
@@ -44,8 +44,8 @@ export function createPermissionMiddleware<T extends ServiceBase = ServiceBase>(
 
 /** Convenience helpers for this middleware */
 
-export const requirePermission = <T extends ServiceBase = ServiceBase>(perm: Permission) =>
-	createPermissionMiddleware<T>({ permissions: perm, require: "all" });
+export const requireAllPermissions = <T extends ServiceBase = ServiceBase>(perms: Permission[]) =>
+	createPermissionMiddleware<T>({ permissions: perms, require: "all" });
 
 export const requireAnyPermission = <T extends ServiceBase = ServiceBase>(...perms: Permission[]) =>
 	createPermissionMiddleware<T>({ permissions: perms, require: "any" });
