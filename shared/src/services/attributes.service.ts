@@ -19,6 +19,9 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductAttributesService>(verifyUser))
 export class ProductAttributesService extends Service {
@@ -152,6 +155,7 @@ export class ProductAttributesService extends Service {
 	}
 
 	/** Create product attribute */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_ATTRIBUTES]))
 	async createProductAttribute(input: ProductAttributeActionData): Promise<void> {
 		const { attribute_type, name, value } = input;
 
@@ -175,6 +179,7 @@ export class ProductAttributesService extends Service {
 	}
 
 	/** Fetch single product attribute row based on the id of attribute that we have selected! This is used for the updation processs*/
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_ATTRIBUTES]))
 	async getSinlgeProductAttribute(attribute_id: string): Promise<SingleProductAttributeResponse> {
 		try {
 			const { data, error: queryError } = await this.supabase
@@ -204,6 +209,7 @@ export class ProductAttributesService extends Service {
 	}
 
 	/** Update attribute row from db using ID*/
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_ATTRIBUTES]))
 	async updateProductAttribute(
 		attribute_id: string,
 		input: Partial<ProductAttributesUpdateActionData>,

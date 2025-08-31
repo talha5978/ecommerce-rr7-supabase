@@ -47,5 +47,5 @@ export function createPermissionMiddleware<T extends ServiceBase = ServiceBase>(
 export const requireAllPermissions = <T extends ServiceBase = ServiceBase>(perms: Permission[]) =>
 	createPermissionMiddleware<T>({ permissions: perms, require: "all" });
 
-export const requireAnyPermission = <T extends ServiceBase = ServiceBase>(...perms: Permission[]) =>
+export const requireAnyPermission = <T extends ServiceBase = ServiceBase>(perms: Permission[]) =>
 	createPermissionMiddleware<T>({ permissions: perms, require: "any" });

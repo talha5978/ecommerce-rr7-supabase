@@ -8,10 +8,14 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
+import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductRAttributesService>(verifyUser))
 export class ProductRAttributesService extends Service {
 	/** Create bulk of product related attributes */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCT_R_ATTRIBUTES]))
 	async createBulkProductAttributes(
 		input: ProductRAttributeInput[],
 	): Promise<ProductRAttributeCreateResponse> {
@@ -31,20 +35,8 @@ export class ProductRAttributesService extends Service {
 		};
 	}
 
-	/** Delete a row of variant attributes table*/
-	async deleteVariantAttribute(variant_id: string, attribute_id: string): Promise<void> {
-		const { error } = await this.supabase
-			.from(this.PRODUCT_ATTRIBUTES_TABLE)
-			.delete()
-			.eq("variant_id", variant_id)
-			.eq("attribute_id", attribute_id);
-
-		if (error) {
-			throw new ApiError(error.message, 500, [error.details]);
-		}
-	}
-
 	/** Delete bulk rows of product attributes table (by product id and array of attribute ids associated with that product) */
+	@UseMiddleware(requireAllPermissions([Permission.DELETE_PRODUCT_R_ATTRIBUTES]))
 	async deleteBulkProductRAttributes({
 		product_id,
 		attributes_ids,

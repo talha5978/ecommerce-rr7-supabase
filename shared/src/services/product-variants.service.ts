@@ -24,6 +24,9 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { UseMiddleware } from "@ecom/shared//decorators/useMiddleware";
+import { requireAllPermissions } from "@ecom/shared//middlewares/permissions.middleware";
+import { Permission } from "@ecom/shared//permissions/permissions.enum";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductVariantsService>(verifyUser))
 export class ProductVariantsService extends Service {
@@ -159,6 +162,7 @@ export class ProductVariantsService extends Service {
 	}
 
 	/** Create Product Variant Row */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCT_VARIANTS]))
 	async createProductVaraint(productId: string, input: ProductVariantActionData): Promise<void> {
 		const {
 			images,
@@ -260,6 +264,7 @@ export class ProductVariantsService extends Service {
 	}
 
 	/** Duplicate a product Variant Row */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCT_VARIANTS]))
 	async createProductVaraintDuplicate(input: DuplicateVariantActionData): Promise<void> {
 		const {
 			images,
@@ -342,6 +347,7 @@ export class ProductVariantsService extends Service {
 	}
 
 	/** Get constraints like if we already have a variant which is set to default for variant creation page and updation page */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCT_VARIANTS, Permission.UPDATE_PRODUCT_VARIANTS]))
 	async getConstaintsForVariantMutations(product_id: string): Promise<VariantConstraintsData> {
 		try {
 			const { data, error: defaultFetchError } = await this.supabase
@@ -389,6 +395,7 @@ export class ProductVariantsService extends Service {
 	}
 
 	/** Get a product variant (for update) */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_PRODUCT_VARIANTS]))
 	async getVariantData(variant_id: string): Promise<SingleProductVariantResponse> {
 		try {
 			const { data, error: dbError } = await this.supabase
@@ -451,6 +458,7 @@ export class ProductVariantsService extends Service {
 	}
 
 	/** Update a product variant */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_PRODUCT_VARIANTS]))
 	async updateProductVaraint(variant_id: string, input: ProductVariantUpdateActionData): Promise<void> {
 		const {
 			images,

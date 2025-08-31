@@ -24,6 +24,9 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
+import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<CategoryService>(verifyUser))
 export class CategoryService extends Service {
@@ -243,6 +246,7 @@ export class CategoryService extends Service {
 	}
 
 	/**   Create a new category along with the meta details */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_CATEGORIES, Permission.CREATE_META_DETAILS, Permission.DELETE_META_DETAILS]))
 	async createCategoryWithMeta(input: CategoryActionData): Promise<void> {
 		const { category_name, description, sort_order, meta_details } = input;
 
@@ -265,6 +269,7 @@ export class CategoryService extends Service {
 	}
 
 	/** Create a new category along with the meta details */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_SUB_CATEGORIES, Permission.CREATE_META_DETAILS, Permission.DELETE_META_DETAILS]))
 	async createSubCategoryWithMeta(input: SubCategoryActionData): Promise<void> {
 		const { sub_category_name, description, sort_order, meta_details, parent_id } = input;
 
@@ -327,6 +332,7 @@ export class CategoryService extends Service {
 	}
 
 	/**  Update product category with its meta details */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_CATEGORIES, Permission.UPDATE_META_DETAILS]))
 	async updateCategory(categoryId: string, input: Partial<CategoryUpdateActionData>): Promise<void> {
 		const { category_name, description, sort_order, meta_details } = input;
 		// Fetch meta_details ID
@@ -367,6 +373,7 @@ export class CategoryService extends Service {
 	}
 
 	/**  Get full sub category */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_SUB_CATEGORIES]))
 	async getSubCategoryById(sub_category_id: string): Promise<GetSubCategoryResponse> {
 		try {
 			const { data: subCategoryData, error: queryError } = await this.supabase
@@ -405,6 +412,7 @@ export class CategoryService extends Service {
 	}
 
 	/** Update sub category with its meta details */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_SUB_CATEGORIES, Permission.UPDATE_META_DETAILS]))
 	async updateSubCategory(sub_category_id: string, input: Partial<SubCategoryUpdateActionData>) {
 		const { sub_category_name, description, sort_order, meta_details } = input;
 		// Fetch meta_details ID

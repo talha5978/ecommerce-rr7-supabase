@@ -9,10 +9,14 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
+import { requireAllPermissions, requireAnyPermission } from "@ecom/shared/middlewares/permissions.middleware";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<VariantsAttributesService>(verifyUser))
 export class VariantsAttributesService extends Service {
 	/** Create bulk of variant attributes */
+	@UseMiddleware(requireAnyPermission([Permission.CREATE_PRODUCT_VARIANTS, Permission.UPDATE_PRODUCT_VARIANTS]))
 	async createBulkVariantAttributes(
 		input: VariantAttributeInput[],
 	): Promise<VariantAttributeCreateResponse> {
@@ -33,6 +37,7 @@ export class VariantsAttributesService extends Service {
 	}
 
 	/** Fetch variant attributes for a variant using variant id */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCT_VARIANTS]))
 	async getVariantAttributes(variant_id: string): Promise<GetVariantAttributesResponse> {
 		const { data, error: dbError } = await this.supabase
 			.from(this.VARIANT_ATTRIBUTES_TABLE)
@@ -50,20 +55,8 @@ export class VariantsAttributesService extends Service {
 		};
 	}
 
-	/** Delete a row of variant attributes table*/
-	async deleteVariantAttribute(variant_id: string, attribute_id: string): Promise<void> {
-		const { error } = await this.supabase
-			.from(this.VARIANT_ATTRIBUTES_TABLE)
-			.delete()
-			.eq("variant_id", variant_id)
-			.eq("attribute_id", attribute_id);
-
-		if (error) {
-			throw new ApiError(error.message, 500, [error.details]);
-		}
-	}
-
 	/** Delete bulk rows of variant attributes table (by variant id and array of attribute ids associated with that variant) */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_PRODUCT_VARIANTS]))
 	async deleteBulkVariantAttributes({
 		variant_id,
 		attributes_ids,

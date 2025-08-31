@@ -21,6 +21,9 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { UseMiddleware } from "@ecom/shared//decorators/useMiddleware";
+import { requireAllPermissions } from "@ecom/shared//middlewares/permissions.middleware";
+import { Permission } from "@ecom/shared//permissions/permissions.enum";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductsService>(verifyUser))
 export class ProductsService extends Service {
@@ -219,6 +222,7 @@ export class ProductsService extends Service {
 	}
 
 	/** Create Product Row and its meta details */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCTS]))
 	async createProduct(input: ProductActionData): Promise<void> {
 		const {
 			cover_image,
@@ -297,6 +301,7 @@ export class ProductsService extends Service {
 	}
 
 	/** Get full single product details including its meta details */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_PRODUCTS]))
 	async getFullSingleProduct(productId: string): Promise<GetSingleProductResponse> {
 		try {
 			let { data, error: queryError } = await this.supabase
@@ -349,6 +354,7 @@ export class ProductsService extends Service {
 	}
 
 	/** Update Product Row */
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_PRODUCTS]))
 	async updateProduct(input: ProductUpdateActionData, productId: string): Promise<void> {
 		const {
 			cover_image,

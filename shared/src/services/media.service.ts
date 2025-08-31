@@ -7,10 +7,14 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
+import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<MediaService>(verifyUser))
 export class MediaService extends Service {
 	/** Uploads image to supabase storage */
+	@UseMiddleware(requireAllPermissions([Permission.UPLOAD_IMAGES]))
 	async uploadImage(file: File): Promise<UploadMediaResponse> {
 		const compressedBuffer = await compressImage(file);
 		const filePath = generateFilePath(file);
@@ -31,6 +35,7 @@ export class MediaService extends Service {
 	}
 
 	/** Deletes image from supabase storage */
+	@UseMiddleware(requireAllPermissions([Permission.DELETE_IMAGES]))
 	async deleteImage(imagePath: string): Promise<void> {
 		const { error: deleteError } = await this.supabase.storage
 			.from(this.IMAGES_BUCKET)

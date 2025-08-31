@@ -6,10 +6,14 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
+import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
+import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<MetaDetailsService>(verifyUser))
 export class MetaDetailsService extends Service {
 	/** Create meta details row */
+	@UseMiddleware(requireAllPermissions([Permission.CREATE_META_DETAILS]))
 	async createMetaDetails(input: MetaDetailsActionData): Promise<string> {
 		const { meta_description, meta_title, url_key, meta_keywords } = input;
 
@@ -35,6 +39,7 @@ export class MetaDetailsService extends Service {
 		return metaData.id;
 	}
 
+	@UseMiddleware(requireAllPermissions([Permission.UPDATE_META_DETAILS]))
 	async updateMetaDetails({
 		meta_details,
 		metaDetailsId,
@@ -61,6 +66,7 @@ export class MetaDetailsService extends Service {
 		}
 	}
 
+	@UseMiddleware(requireAllPermissions([Permission.DELETE_META_DETAILS]))
 	async deleteMetaDetails(metaDetailsId: string): Promise<void> {
 		const { error: metaError } = await this.supabase
 			.from(this.META_DETAILS_TABLE)
