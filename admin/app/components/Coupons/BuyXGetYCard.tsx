@@ -15,7 +15,7 @@ import {
 	getAllSearchParams,
 	typesToSelect,
 	typeToParamMap,
-} from "~/utils/couponsConstants";
+} from "@ecom/shared/constants/couponsConstants";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { SearchBar } from "~/components/Coupons/SearchBar";
 import { LineSkeleton } from "./Skeletons/LineSkeleton";

@@ -10,7 +10,7 @@ import { CouponsPageCtx } from "~/components/Coupons/MainCouponsContext";
 import type { HighLevelCoupon } from "@ecom/shared/types/coupons";
 import { cn } from "@ecom/shared/lib/utils";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
-import { getCouponStatus } from "~/utils/couponsConstants";
+import { getCouponStatus } from "@ecom/shared/constants/couponsConstants";
 
 interface Props {
 	coupon: HighLevelCoupon;

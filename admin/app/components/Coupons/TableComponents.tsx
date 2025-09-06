@@ -10,7 +10,7 @@ import {
 	getAllSearchParams,
 	typesToSelect,
 	typeToParamMap,
-} from "~/utils/couponsConstants";
+} from "@ecom/shared/constants/couponsConstants";
 import { Input } from "~/components/ui/input";
 import { CategoriesSelectionArea } from "~/components/Coupons/SelectionAreas/CategoriesSelectionArea";
 import {
@@ -33,7 +33,7 @@ import { LineSkeleton } from "./Skeletons/LineSkeleton";
 import { SKUsSelectionArea } from "./SelectionAreas/SKUSelectionArea";
 import { CollectionsSelectionArea } from "./SelectionAreas/CollectionsSelectionArea";
 import { CouponFormValues } from "@ecom/shared/schemas/coupons.schema";
-import {
+import type {
 	FixedProductsGroupOpts,
 	OrdersGroupOpts,
 	SelectionDialogProps,

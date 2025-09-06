@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import { getPageSearchTag } from "~/utils/couponsConstants";
+import { getPageSearchTag } from "@ecom/shared/constants/couponsConstants";
 import { PaginationSkeleton } from "~/components/Coupons/Skeletons/PaginationSkeleton";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { useSearchParams } from "react-router";

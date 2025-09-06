@@ -48,7 +48,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { highLevelCouponsQuery } from "~/queries/coupons.q";
-import { CouponTypeOptions, getFullDateTimeFormat } from "~/utils/couponsConstants";
+import { CouponTypeOptions, getFullDateTimeFormat } from "@ecom/shared/constants/couponsConstants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { Route } from "./+types/coupons";

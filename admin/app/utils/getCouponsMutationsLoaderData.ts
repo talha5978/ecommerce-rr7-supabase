@@ -3,7 +3,7 @@ import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { categoriesQuery } from "~/queries/categories.q";
 import { collectionsNameQuery } from "~/queries/collections.q";
 import { skuNamesQuery } from "~/queries/products.q";
-import { groups, typeToParamMap } from "./couponsConstants";
+import { groups, typeToParamMap } from "@ecom/shared/constants/couponsConstants";
 import type { GetAllCategoriesResponse } from "@ecom/shared/types/category";
 import type { SKUsNamesListResponse } from "@ecom/shared/types/products";
 import type { CollectionsNamesListResponse } from "@ecom/shared/types/collections";

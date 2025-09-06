@@ -22,6 +22,7 @@ import { type LoginFormData, loginSchema } from "@ecom/shared/schemas/login.sche
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import type { ActionResponse } from "@ecom/shared/types/action-data";
+import type { GetCurrentUser } from "@ecom/shared/types/auth";
 
 export async function action({ request }: ActionFunctionArgs) {
 	try {
@@ -63,7 +64,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const resp = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const resp: GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
 	const user = resp?.user ?? null;
 	// console.log(user);
 

@@ -9,6 +9,7 @@ import { ThemeProvider } from "~/components/Theme/theme-provder";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
 import { useState } from "react";
 import { TopLoadingBar } from "~/components/Loaders/TopLoadingBar";
+import type { GetCurrentUser } from "@ecom/shared/types/auth";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -35,7 +36,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		throw redirect("/login");
 	}
 
-	const resp = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const resp : GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
 
 	const user = resp?.user ?? null;
 	const error = resp?.error ?? null;

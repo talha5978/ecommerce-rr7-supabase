@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { Controller, useForm } from "react-hook-form";
-import { CondTypeLabels, getNameSearchTag, getPageSearchTag } from "~/utils/couponsConstants";
+import { CondTypeLabels, getNameSearchTag, getPageSearchTag } from "@ecom/shared/constants/couponsConstants";
 import { Search, X } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { BuyXGetYGroupOpts, SearchBarProps } from "@ecom/shared/types/coupons-comp";

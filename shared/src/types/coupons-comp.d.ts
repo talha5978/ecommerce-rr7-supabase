@@ -2,7 +2,7 @@ import type { GetAllCategoriesResponse } from "@ecom/shared/types/category";
 import type { CollectionsNamesListResponse } from "@ecom/shared/types/collections";
 import type { CouponType } from "@ecom/shared/types/coupons";
 import type { SKUsNamesListResponse } from "@ecom/shared/types/products";
-import { groups, typesToSelect } from "@ecom/shared/utils/couponsConstants";
+import { groups, typesToSelect } from "@ecom/shared/constants/couponsConstants";
 
 export type BuyXGetYGroupOpts = "buy" | "get";
 export type FixedProductsGroupOpts = "fix";

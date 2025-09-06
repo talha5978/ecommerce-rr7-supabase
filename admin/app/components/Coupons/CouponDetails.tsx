@@ -7,7 +7,7 @@ import { DollarSignIcon, PercentIcon, ShoppingBagIcon, TagIcon } from "lucide-re
 import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
-import { discount_type_fields, getCouponStatus, getFullDateTimeFormat } from "~/utils/couponsConstants";
+import { discount_type_fields, getCouponStatus, getFullDateTimeFormat } from "@ecom/shared/constants/couponsConstants";
 import StatusBadge from "../status-badge";
 import { Separator } from "../ui/separator";
 

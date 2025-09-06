@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { type JSX } from "react";
 import { type UseFormResetField, type UseFormSetValue } from "react-hook-form";
-import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { CouponTypesOption, Groups, TypesToSelect } from "@ecom/shared/types/coupons-comp";
 import { CouponFormValues } from "@ecom/shared/schemas/coupons.schema";
 import { format } from "date-fns";
@@ -232,29 +231,6 @@ export function resetFieldValsOnTypeChange({
 	} else if (prevDiscountType === "fixed_order" || prevDiscountType === "percentage_order") {
 		setValue("discount_value", "");
 	}
-}
-
-// This function is used to reset the search params of products selections component dialogs in coupons when type changes
-export function resetParamsOnTypeChange({
-	searchParams,
-	suppressNavigation,
-}: {
-	searchParams: URLSearchParams;
-	suppressNavigation: ReturnType<typeof useSuppressTopLoadingBar>;
-}) {
-	// Clear related search parameters
-	const newParams = new URLSearchParams(searchParams);
-	suppressNavigation(() => {
-		const groups = ["fix", "buy", "get"]; // groups to remove when the type changes
-
-		for (const group of groups) {
-			for (const type of typesToSelect) {
-				newParams.delete(`${group}_${typeToParamMap[type]}`);
-				newParams.delete(`${group}_${type}_search`);
-				newParams.delete(`${group}_${type}_page`);
-			}
-		}
-	}).setSearchParams(newParams, true);
 }
 
 export const getFullDateTimeFormat = (timeStamp: string) => format(timeStamp, "PPP hh:mm a");

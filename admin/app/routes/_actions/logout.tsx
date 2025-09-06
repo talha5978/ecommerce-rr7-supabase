@@ -3,9 +3,10 @@ import { redirect } from "react-router";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { AuthService } from "@ecom/shared/services/auth.service";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
+import type { GetCurrentUser } from "@ecom/shared/types/auth";
 
 export async function action({ request }: ActionFunctionArgs) {
-	const resp = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const resp: GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
 	const user = resp?.user ?? null;
 
 	if (!user) {

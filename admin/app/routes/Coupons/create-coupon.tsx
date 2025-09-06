@@ -53,8 +53,9 @@ import {
 	discount_type_fields,
 	getDiscountAmntConstraint,
 	resetFieldValsOnTypeChange,
-	resetParamsOnTypeChange,
-} from "~/utils/couponsConstants";
+	typesToSelect,
+	typeToParamMap
+} from "@ecom/shared/constants/couponsConstants";
 import { getMappedData } from "~/utils/getCouponsMutationsLoaderData";
 import type { Route } from "./+types/create-coupon";
 import {
@@ -72,6 +73,29 @@ import {
 	CouponInputSchema,
 } from "@ecom/shared/schemas/coupons.schema";
 import { CouponsService } from "@ecom/shared/services/coupons.service";
+
+// This function is used to reset the search params of products selections component dialogs in coupons when type changes
+export function resetParamsOnTypeChange({
+	searchParams,
+	suppressNavigation,
+}: {
+	searchParams: URLSearchParams;
+	suppressNavigation: ReturnType<typeof useSuppressTopLoadingBar>;
+}) {
+	// Clear related search parameters
+	const newParams = new URLSearchParams(searchParams);
+	suppressNavigation(() => {
+		const groups = ["fix", "buy", "get"]; // groups to remove when the type changes
+
+		for (const group of groups) {
+			for (const type of typesToSelect) {
+				newParams.delete(`${group}_${typeToParamMap[type]}`);
+				newParams.delete(`${group}_${type}_search`);
+				newParams.delete(`${group}_${type}_page`);
+			}
+		}
+	}).setSearchParams(newParams, true);
+}
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
 	const couponType = params.couponType;
