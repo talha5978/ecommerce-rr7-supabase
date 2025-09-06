@@ -18,7 +18,7 @@ import { COUPONS_COLLECTIONS_PAGE_SIZE, defaults } from "@ecom/shared/constants/
 import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
-import { asServiceMiddleware } from "../middlewares/utils";
+import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<CollectionsService>(verifyUser))
 export class CollectionsService extends Service {
@@ -333,14 +333,7 @@ export class CollectionsService extends Service {
 		input: CollectionUpdateActionData,
 	): Promise<{ error: ApiError | null }> {
 		const {
-			added_product_ids,
-			removed_product_ids,
 			image, // New image to be uploaded
-			meta_details,
-			name,
-			description,
-			sort_order,
-			status,
 			removed_image,
 		} = input;
 
