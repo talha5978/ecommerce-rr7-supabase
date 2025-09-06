@@ -180,7 +180,7 @@ const CouponsPage = memo(() => {
 		{
 			id: "Uses",
 			accessorKey: "uses",
-			cell: (info) => "N/A",
+			cell: (_) => "N/A",
 			header: () => "Uses",
 		},
 		{

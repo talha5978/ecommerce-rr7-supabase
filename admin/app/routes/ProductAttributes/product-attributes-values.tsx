@@ -1,7 +1,7 @@
-import { Link, LoaderFunctionArgs, Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
 import { Route } from "./+types/product-attributes-values";
 import { Button } from "~/components/ui/button";
-import { Dot, MoreHorizontal, PlusCircle, Search, Settings2 } from "lucide-react";
+import { Dot, MoreHorizontal, PlusCircle, Search } from "lucide-react";
 import {
 	DataTable,
 	DataTableSkeleton,
@@ -10,11 +10,8 @@ import {
 } from "~/components/Table/data-table";
 import {
 	DropdownMenu,
-	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import {
@@ -35,7 +32,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "~/components/ui/input";
 import { useState } from "react";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	const attributeType = params.attributeType as AttributeType;
 	if (!attributeType) {
 		throw new Response("Attribute type is required", { status: 400 });

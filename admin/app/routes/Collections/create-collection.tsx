@@ -10,13 +10,7 @@ import {
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import {
-	Await,
-	useActionData,
-	useNavigate,
-	useNavigation,
-	useSubmit,
-} from "react-router";
+import { Await, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import { toast } from "sonner";
 import {
 	CATEGORY_PAGE_TAG,
@@ -62,7 +56,7 @@ import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.CREATE_COLLECTIONS
+	permissions: Permission.CREATE_COLLECTIONS,
 })(async ({ request }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	// console.log("Form data: ", formData);
@@ -118,9 +112,9 @@ export const action = protectAction<ActionReturn>({
 });
 
 export const loader = protectLoader<{
-	collectionsDataItems: Promise<CollectionDataItemsResponse>
+	collectionsDataItems: Promise<CollectionDataItemsResponse>;
 }>({
-	permissions: Permission.CREATE_COLLECTIONS
+	permissions: Permission.CREATE_COLLECTIONS,
 })(async ({ request }: Route.LoaderArgs) => {
 	const { searchParams } = new URL(request.url);
 	const categoryPageParam = Number(searchParams.get(CATEGORY_PAGE_TAG));

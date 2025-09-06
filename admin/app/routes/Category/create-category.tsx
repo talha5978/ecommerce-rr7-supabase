@@ -32,7 +32,7 @@ import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.CREATE_CATEGORIES
+	permissions: Permission.CREATE_CATEGORIES,
 })(async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
 	console.log("Form data: ", formData);

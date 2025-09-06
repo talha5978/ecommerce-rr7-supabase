@@ -1,4 +1,3 @@
-import { lazy } from "react";
 import { SiteHeader } from "~/components/Nav/site-header";
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { useIsMobile } from "~/hooks/use-mobile";

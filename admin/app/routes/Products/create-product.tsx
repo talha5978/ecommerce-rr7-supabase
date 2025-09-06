@@ -407,7 +407,7 @@ export default function CreateBasicProductPage({
 										<FormField
 											control={control}
 											name="cover_image"
-											render={({ field }) => (
+											render={() => (
 												<FormItem>
 													<FormLabel>Cover Image</FormLabel>
 													<FormControl>

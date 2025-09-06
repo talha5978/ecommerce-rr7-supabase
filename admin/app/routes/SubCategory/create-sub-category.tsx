@@ -39,7 +39,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.CREATE_SUB_CATEGORIES
+	permissions: Permission.CREATE_SUB_CATEGORIES,
 })(async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
 	console.log("Form data: ", formData);

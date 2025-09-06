@@ -1,13 +1,15 @@
-import type { FullCoupon, GetFullCoupon } from "@ecom/shared/types/coupons";
+import type { GetFullCoupon } from "@ecom/shared/types/coupons";
 import { memo, useMemo } from "react";
-import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { cn } from "@ecom/shared/lib/utils";
 import { DollarSignIcon, PercentIcon, ShoppingBagIcon, TagIcon } from "lucide-react";
-import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
-import { discount_type_fields, getCouponStatus, getFullDateTimeFormat } from "@ecom/shared/constants/couponsConstants";
+import {
+	discount_type_fields,
+	getCouponStatus,
+	getFullDateTimeFormat,
+} from "@ecom/shared/constants/couponsConstants";
 import StatusBadge from "../status-badge";
 import { Separator } from "../ui/separator";
 

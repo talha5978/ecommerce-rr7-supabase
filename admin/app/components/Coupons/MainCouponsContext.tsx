@@ -11,9 +11,9 @@ type CouponsPageCtxType = {
 
 const initialCtxState: CouponsPageCtxType = {
 	view_mode: "table",
-	setViewMode: (mode) => {},
+	setViewMode: (_) => {},
 	isCouponTypeDialogOpen: false,
-	setCouponTypeDialogState: (state) => {},
+	setCouponTypeDialogState: (_) => {},
 };
 
 export const CouponsPageCtx = createContext<CouponsPageCtxType>(initialCtxState);

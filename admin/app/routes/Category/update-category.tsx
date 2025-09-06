@@ -1,9 +1,4 @@
-import {
-	useActionData,
-	useNavigate,
-	useNavigation,
-	useSubmit,
-} from "react-router";
+import { useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { singleCategoryQuery } from "~/queries/categories.q";
 import type { Route } from "./+types/update-category";
@@ -45,7 +40,7 @@ import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import type { GetCategoryResponse } from "@ecom/shared/types/category";
 
 export const loader = protectLoader<{ data: GetCategoryResponse }>({
-	permissions: Permission.UPDATE_CATEGORIES
+	permissions: Permission.UPDATE_CATEGORIES,
 })(async ({ params, request }: Route.LoaderArgs) => {
 	const categoryId = (params.categoryId as string) || "";
 	if (!categoryId || categoryId == "") {
@@ -60,7 +55,7 @@ export const loader = protectLoader<{ data: GetCategoryResponse }>({
 });
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.UPDATE_CATEGORIES
+	permissions: Permission.UPDATE_CATEGORIES,
 })(async ({ request, params }: Route.ActionArgs) => {
 	const categoryId = (params.categoryId as string) || "";
 	if (!categoryId || categoryId == "") {

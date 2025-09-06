@@ -10,13 +10,7 @@ import {
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import {
-	Await,
-	useActionData,
-	useNavigate,
-	useNavigation,
-	useSubmit,
-} from "react-router";
+import { Await, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import { toast } from "sonner";
 import {
 	CATEGORY_PAGE_TAG,
@@ -63,7 +57,11 @@ import { ApiError } from "@ecom/shared/utils/ApiError";
 import { bolleanToStringConverter } from "@ecom/shared/lib/utils";
 import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
 import { COLLECTION_IMG_DIMENSIONS, defaults } from "@ecom/shared/constants/constants";
-import type { CollectionDataItemsResponse, GetFullCollection, SelectedProduct } from "@ecom/shared/types/collections";
+import type {
+	CollectionDataItemsResponse,
+	GetFullCollection,
+	SelectedProduct,
+} from "@ecom/shared/types/collections";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
@@ -72,7 +70,7 @@ function getSimpleFields() {
 }
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.UPDATE_COLLECTIONS
+	permissions: Permission.UPDATE_COLLECTIONS,
 })(async ({ request, params }: Route.ActionArgs) => {
 	const collectionId = (params.collectionId as string) || "";
 	if (!collectionId || collectionId == "") {
@@ -148,10 +146,10 @@ export const action = protectAction<ActionReturn>({
 type LoaderReturn = {
 	collectionResp: GetFullCollection;
 	collectionsDataItems: Promise<CollectionDataItemsResponse>;
-}
+};
 
 export const loader = protectLoader<LoaderReturn>({
-	permissions: Permission.UPDATE_COLLECTIONS
+	permissions: Permission.UPDATE_COLLECTIONS,
 })(async ({ request, params }: Route.LoaderArgs) => {
 	const collection_id = params.collectionId;
 

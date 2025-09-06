@@ -1,4 +1,9 @@
-import type { AllProductAttributesResponse, AttributeType, ProductAttribute, ProductAttributeRow } from "@ecom/shared/types/attributes";
+import type {
+	AllProductAttributesResponse,
+	AttributeType,
+	ProductAttribute,
+	ProductAttributeRow,
+} from "@ecom/shared/types/attributes";
 import {
 	DISABLED_DEFAULT_VARIANT_MESSAGE,
 	PRODUCT_IMG_DIMENSIONS,
@@ -52,7 +57,7 @@ function getSimpleFields() {
 }
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.UPDATE_PRODUCT_VARIANTS
+	permissions: Permission.UPDATE_PRODUCT_VARIANTS,
 })(async ({ request, params }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	// Get the variant ID from params
@@ -147,10 +152,10 @@ type LoaderReturn = {
 	variantData: SingleProductVariantResponse;
 	attributesData: AllProductAttributesResponse;
 	constraints: VariantConstraintsData;
-}
+};
 
 export const loader = protectLoader<LoaderReturn>({
-	permissions: Permission.UPDATE_PRODUCT_VARIANTS
+	permissions: Permission.UPDATE_PRODUCT_VARIANTS,
 })(async ({ request, params }: Route.LoaderArgs) => {
 	const variant_id = (params.variantId as string) || "";
 	const product_id = (params.productId as string) || "";

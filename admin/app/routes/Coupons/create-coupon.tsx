@@ -54,7 +54,7 @@ import {
 	getDiscountAmntConstraint,
 	resetFieldValsOnTypeChange,
 	typesToSelect,
-	typeToParamMap
+	typeToParamMap,
 } from "@ecom/shared/constants/couponsConstants";
 import { getMappedData } from "~/utils/getCouponsMutationsLoaderData";
 import type { Route } from "./+types/create-coupon";

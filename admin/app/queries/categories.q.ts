@@ -39,7 +39,6 @@ interface categoriesQueryArgs {
 	autoRun?: boolean;
 	group?: Groups;
 	pageIndex?: number;
-	productCount?: boolean;
 	searchQuery?: string;
 }
 
@@ -65,7 +64,6 @@ export const categoriesQuery = ({
 	autoRun = false,
 	group,
 	pageIndex,
-	productCount,
 	searchQuery,
 }: categoriesQueryArgs) => {
 	return queryOptions<GetAllCategoriesResponse>({

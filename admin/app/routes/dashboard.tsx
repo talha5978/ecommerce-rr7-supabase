@@ -1,6 +1,6 @@
 import { Route } from "./+types/dashboard";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request: _ }: Route.LoaderArgs) {
 	return {};
 }
 

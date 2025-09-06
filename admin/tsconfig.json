@@ -30,8 +30,8 @@
 		"noEmit": false,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
-		"strict": true
-		// "noUnusedLocals": true, // Report errors on unused locals
-		// "noUnusedParameters": true // Report errors on unused parameters
+		"strict": true,
+		"noUnusedLocals": true, // Report errors on unused locals
+		"noUnusedParameters": true // Report errors on unused parameters
 	}
 }

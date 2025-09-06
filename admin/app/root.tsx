@@ -36,7 +36,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		throw redirect("/login");
 	}
 
-	const resp : GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const resp: GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
 
 	const user = resp?.user ?? null;
 	const error = resp?.error ?? null;

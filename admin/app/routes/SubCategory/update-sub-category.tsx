@@ -8,14 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import {
-	ActionFunctionArgs,
-	LoaderFunctionArgs,
-	useActionData,
-	useNavigate,
-	useNavigation,
-	useSubmit,
-} from "react-router";
+import { useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import { toast } from "sonner";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
@@ -47,7 +40,7 @@ import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import type { GetSubCategoryResponse } from "@ecom/shared/types/category";
 
 export const loader = protectLoader<{ data: GetSubCategoryResponse }>({
-	permissions: Permission.UPDATE_SUB_CATEGORIES
+	permissions: Permission.UPDATE_SUB_CATEGORIES,
 })(async ({ params, request }: Route.LoaderArgs) => {
 	const subCategoryId = (params.subCategoryId as string) || "";
 	if (!subCategoryId || subCategoryId == "") {
@@ -62,7 +55,7 @@ export const loader = protectLoader<{ data: GetSubCategoryResponse }>({
 });
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.UPDATE_SUB_CATEGORIES
+	permissions: Permission.UPDATE_SUB_CATEGORIES,
 })(async ({ request, params }: Route.ActionArgs) => {
 	const subCategoryId = (params.subCategoryId as string) || "";
 	const parentCategoryId = (params.categoryId as string) || "";

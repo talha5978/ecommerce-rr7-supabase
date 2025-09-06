@@ -31,13 +31,17 @@ import {
 	PRODUCT_IMG_DIMENSIONS,
 	REQUIRED_VARIANT_ATTRIBS,
 } from "@ecom/shared/constants/constants";
-import type { AllProductAttributesResponse, AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
+import type {
+	AllProductAttributesResponse,
+	AttributeType,
+	ProductAttribute,
+} from "@ecom/shared/types/attributes";
 import type { VariantConstraintsData } from "@ecom/shared/types/product-variants";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 export const action = protectAction<ActionReturn>({
-	permissions: Permission.CREATE_PRODUCT_VARIANTS
+	permissions: Permission.CREATE_PRODUCT_VARIANTS,
 })(async ({ request, params }: Route.ActionArgs) => {
 	const formData = await request.formData();
 	console.log("Form data: ", formData);
@@ -102,10 +106,10 @@ export const action = protectAction<ActionReturn>({
 type LoaderReturn = {
 	data: AllProductAttributesResponse;
 	constraints: VariantConstraintsData;
-}
+};
 
 export const loader = protectLoader<LoaderReturn>({
-	permissions: Permission.CREATE_PRODUCT_VARIANTS
+	permissions: Permission.CREATE_PRODUCT_VARIANTS,
 })(async ({ request, params }: Route.LoaderArgs) => {
 	const productId = (params.productId as string) || "";
 	if (!productId || productId == "") {

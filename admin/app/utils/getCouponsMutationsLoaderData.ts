@@ -52,7 +52,6 @@ export const getRelevantData = ({ entityType, group, request }: FetchDataFuncPro
 					request,
 					autoRun: true,
 					group,
-					productCount: true,
 					pageIndex,
 					searchQuery: trimmedSearchQuery,
 				}),

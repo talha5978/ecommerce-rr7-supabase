@@ -2,15 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PlusCircle } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import {
-	ActionFunctionArgs,
-	Link,
-	LoaderFunctionArgs,
-	useActionData,
-	useNavigate,
-	useNavigation,
-	useSubmit,
-} from "react-router";
+import { Link, useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
 import { toast } from "sonner";
 import AttributeSelect from "~/components/Custom-Inputs/attributes-select";
 import ImageInput from "~/components/Custom-Inputs/image-input";
@@ -559,7 +551,7 @@ export default function UpdateProductPage({
 										<FormField
 											control={control}
 											name="cover_image"
-											render={({ field }) => (
+											render={() => (
 												<FormItem>
 													<FormLabel>Cover Image</FormLabel>
 													<FormControl>
