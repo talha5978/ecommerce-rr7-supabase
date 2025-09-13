@@ -21,7 +21,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "~/components/ui/dialog";
-import { Button } from "../ui/button";
+import { Button } from "~/components/ui/button";
 import { SearchBar } from "~/components/Coupons/SearchBar";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { Await, useLoaderData, useSearchParams } from "react-router";

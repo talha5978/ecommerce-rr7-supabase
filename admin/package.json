@@ -1,5 +1,5 @@
 {
-	"name": "ecommerce-rr7-supabase-admin",
+	"name": "admin",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -82,7 +82,6 @@
 		"vite": "^6.3.3",
 		"vite-plugin-compression": "^0.5.1",
 		"vite-plugin-inspect": "^11.3.0",
-		"vite-plugin-svgr": "^4.3.0",
 		"vite-tsconfig-paths": "^5.1.4"
 	}
 }

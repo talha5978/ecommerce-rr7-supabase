@@ -2,7 +2,7 @@ import { useFormContext, Controller } from "react-hook-form";
 import { FormControl, FormItem } from "~/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import type { AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
-import { Button } from "../ui/button";
+import { Button } from "~/components/ui/button";
 
 interface AttributeSelectProps {
 	name: string;

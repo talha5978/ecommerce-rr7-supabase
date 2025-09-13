@@ -1,3 +1,19 @@
+// Front Panel -----
+
+// PRIMARY 🔴
+
+// TODO: 
+	-- Create a service function to fetch categories for front panel (to use in header and also in other pages as well)
+	-- Create a service function to fetch collections for front panel (to use in header and also in other pages as well)
+	-- Create a tanstack react query file with type definations
+	-- Fetch the categories and collections in the home route loader and then pass on the data to the header
+	-- Blocks header will display the categories and collections
+	-- Design inspiration [[text](https://www.ismailsclothing.com/)]
+
+
+############################################################################################
+
+
 // Admin -----
 
 // PRIMARY 🔴

@@ -463,4 +463,7 @@ export class CategoryService extends Service {
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
+
+	/** Get all categories and sub categories for front pane */
+	// PENDING SERVICE FUNCTION
 }

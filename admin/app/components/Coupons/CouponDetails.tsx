@@ -11,7 +11,7 @@ import {
 	getFullDateTimeFormat,
 } from "@ecom/shared/constants/couponsConstants";
 import StatusBadge from "../status-badge";
-import { Separator } from "../ui/separator";
+import { Separator } from "~/components/ui/separator";
 
 interface CouponDetailsCardProps {
 	data: GetFullCoupon;
