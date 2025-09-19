@@ -1,4 +1,3 @@
-"use client";
 import { motion, AnimatePresence, Transition, Variants, Variant, MotionConfig } from "motion/react";
 import { cn } from "@ecom/shared/lib/utils";
 import React, { createContext, useContext, useState, ReactNode } from "react";
