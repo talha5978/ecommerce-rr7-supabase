@@ -38,6 +38,7 @@ export default defineConfig({
 		},
 	},
 	optimizeDeps: {
+		exclude: ["crypto"],
 		// Pre-bundling to optimize dev performance
 		include: [
 			"@tabler/icons-react",

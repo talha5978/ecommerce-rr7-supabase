@@ -233,7 +233,7 @@ export function resetFieldValsOnTypeChange({
 	}
 }
 
-export const getFullDateTimeFormat = (timeStamp: string) => format(timeStamp, "PPP hh:mm a");
+export const getFullDateTimeFormat = (timeStamp: string) => format(new Date(timeStamp), "PPP hh:mm a");
 
 export const getCouponStatus = (startTimestamp: string, endTimestamp: string) => {
 	const now = new Date();

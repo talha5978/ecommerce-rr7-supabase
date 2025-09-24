@@ -4,13 +4,15 @@ import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { AuthService } from "@ecom/shared/services/auth.service";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
 import type { GetCurrentUser } from "@ecom/shared/types/auth";
+import { extractAuthId } from "@ecom/shared/lib/auth-utils.server";
 
 export async function action({ request }: ActionFunctionArgs) {
-	const resp: GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
-	const user = resp?.user ?? null;
+	const authId = extractAuthId(request);
+	let resp: GetCurrentUser | null = null;
 
-	if (!user) {
-		return redirect("/login");
+	if (authId) {
+		resp = await queryClient.fetchQuery(currentUserQuery({ request, authId }));
+		if (resp?.user?.id) return redirect("/login");
 	}
 
 	const authService = new AuthService(request);

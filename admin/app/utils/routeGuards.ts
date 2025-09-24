@@ -7,6 +7,7 @@ import { UserRole } from "@ecom/shared/permissions/permissions.enum";
 import type { Permission } from "@ecom/shared/permissions/permissions.enum";
 import type { RequirePram } from "@ecom/shared/types/permissions";
 import type { GetCurrentUser } from "@ecom/shared/types/auth";
+import { extractAuthId } from "@ecom/shared/lib/auth-utils.server";
 
 type ProtectorProps = {
 	permissions: Permission | Permission[];
@@ -32,7 +33,8 @@ export async function withRoutePermission(
 	} = opts;
 	const perms = Array.isArray(permissions) ? permissions : [permissions];
 
-	const queryDesc = currentUserQuery({ request: args.request });
+	const authId = extractAuthId(args.request);
+	const queryDesc = currentUserQuery({ request: args.request, authId });
 
 	let result: GetCurrentUser | undefined;
 	if (cacheFirst) {

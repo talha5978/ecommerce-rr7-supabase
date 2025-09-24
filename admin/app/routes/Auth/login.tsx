@@ -22,7 +22,7 @@ import { type LoginFormData, loginSchema } from "@ecom/shared/schemas/login.sche
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import type { ActionResponse } from "@ecom/shared/types/action-data";
-import type { GetCurrentUser } from "@ecom/shared/types/auth";
+import { extractAuthId } from "@ecom/shared/lib/auth-utils.server";
 
 export async function action({ request }: ActionFunctionArgs) {
 	try {
@@ -64,15 +64,12 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const resp: GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
-	const user = resp?.user ?? null;
-	// console.log(user);
-
-	if (user) {
-		return redirect("/");
+	const authId = extractAuthId(request);
+	if (authId) {
+		const resp = await queryClient.fetchQuery(currentUserQuery({ request, authId }));
+		if (resp?.user?.id) return redirect("/");
 	}
-
-	return null;
+	return { user: null };
 }
 
 function Login() {

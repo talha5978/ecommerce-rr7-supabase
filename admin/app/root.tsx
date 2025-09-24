@@ -1,13 +1,12 @@
-import { Links, Meta, Outlet, redirect, Scripts, ScrollRestoration, useLoaderData } from "react-router";
+import { Links, Meta, Outlet, redirect, Scripts, ScrollRestoration } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { Toaster } from "~/components/ui/sonner";
 import ErrorPage from "~/components/Error/ErrorPage";
-import { dehydrate, HydrationBoundary, QueryClientProvider } from "@tanstack/react-query";
-import { createQueryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ThemeProvider } from "~/components/Theme/theme-provder";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
-import { useState } from "react";
 import { TopLoadingBar } from "~/components/Loaders/TopLoadingBar";
 import type { GetCurrentUser } from "@ecom/shared/types/auth";
 
@@ -25,60 +24,41 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
-	console.log("Layout loader ran ⚡");
+	const url = new URL(request.url);
+	const pathname = url.pathname;
+	console.log("⚡ Root loader ran for", pathname);
 
-	const queryClient = createQueryClient();
+	if (pathname.startsWith("/login")) {
+		console.log("➡️ Public route, skipping user fetch");
+		const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
+		const { authId } = genAuthSecurity(request);
 
-	try {
-		await queryClient.prefetchQuery(currentUserQuery({ request }));
-	} catch (error) {
-		console.error("Error prefetching current user query:", error);
-		throw redirect("/login");
+		if (authId) {
+			const resp: GetCurrentUser = await queryClient.fetchQuery(currentUserQuery({ request, authId }));
+			if (resp?.user) return redirect("/");
+		}
+
+		return { user: null, error: null };
 	}
 
-	const resp: GetCurrentUser | undefined = queryClient.getQueryData(currentUserQuery({ request }).queryKey);
+	const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
+	const { authId, headers } = genAuthSecurity(request);
+
+	const resp: GetCurrentUser = await queryClient.fetchQuery(currentUserQuery({ request, authId }));
 
 	const user = resp?.user ?? null;
 	const error = resp?.error ?? null;
 
-	const url = new URL(request.url);
-	const pathname = url.pathname;
-
-	if (pathname === "/login" || pathname.startsWith("/login")) {
-		if (user) {
-			return redirect("/");
-		}
-
-		return { user, error, dehydratedState: undefined };
-	}
-
 	if (!user || error) {
-		console.error("User not found. Redirecting to login");
-		return redirect("/login");
+		console.warn("❌ No user, redirecting to /login");
+		return redirect("/login", { headers });
 	}
 
-	console.log("User found:", user.email);
-
-	return { user, error, dehydratedState: dehydrate(queryClient) };
+	console.log("✅ User found:", user?.email);
+	return { user, error };
 }
-
-let isInitialRequest = true;
-
-export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
-	if (isInitialRequest) {
-		isInitialRequest = false;
-		return await serverLoader();
-	}
-	return { dehydratedState: undefined };
-}
-
-clientLoader.hydrate = true as const;
 
 export function Layout({ children }: { children: React.ReactNode }) {
-	const [queryClient] = useState(() => createQueryClient());
-	const loaderData = useLoaderData<typeof loader>();
-	const dehydratedState = loaderData?.dehydratedState;
-
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
@@ -88,9 +68,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
-				<QueryClientProvider client={queryClient}>
-					<HydrationBoundary state={dehydratedState}>{children}</HydrationBoundary>
-				</QueryClientProvider>
+				<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 				<ScrollRestoration />
 				<Scripts />
 			</body>

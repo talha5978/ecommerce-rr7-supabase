@@ -8,6 +8,7 @@ function createSupabaseServerClient(request: Request) {
 	/* In production max cookie age is 1 day but in dev. it is 1 year */
 	const maxCookieAge = 60 * 60 * 24 * (process.env.VITE_ENV === "production" ? 1 : 365);
 
+	// @ts-ignore
 	const supabase: SupabaseClient<Database> = createServerClient(
 		process.env.VITE_SUPABASE_URL!,
 		process.env.VITE_SUPABASE_ANON_KEY!,
