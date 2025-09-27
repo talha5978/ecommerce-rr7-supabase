@@ -223,7 +223,6 @@ export default function CreateBasicProductPage({
 
 		submit(formData, {
 			method: "POST",
-			action: "/create-product",
 			encType: "multipart/form-data",
 		});
 	}
