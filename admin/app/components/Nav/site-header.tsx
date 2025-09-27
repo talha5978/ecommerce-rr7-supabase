@@ -2,7 +2,8 @@ import { Separator } from "~/components/ui/separator";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { ThemeToggleButton } from "~/components/Theme/theme-toggle";
 import { usePageTitle } from "~/hooks/use-page-title";
-import { UserButton } from "./nav-user";
+import { UserButton } from "~/components/Nav/nav-user";
+import GlobalSearch from "~/components/Nav/global-search";
 
 export function SiteHeader() {
 	const pageTitle = usePageTitle();
@@ -14,6 +15,7 @@ export function SiteHeader() {
 				<Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
 				<span className="text-base font-medium">{pageTitle}</span>
 				<div className="ml-auto flex items-center gap-2">
+					<GlobalSearch />
 					<ThemeToggleButton />
 					<UserButton />
 				</div>
