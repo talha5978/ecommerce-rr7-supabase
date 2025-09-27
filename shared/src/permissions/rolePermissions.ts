@@ -29,6 +29,10 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
 		Permission.CREATE_PRODUCT_R_ATTRIBUTES,
 		Permission.DELETE_PRODUCT_R_ATTRIBUTES,
 
+		Permission.CREATE_ATTRIBUTES,
+		Permission.UPDATE_ATTRIBUTES,
+		Permission.DELETE_ATTRIBUTES,
+
 		Permission.CREATE_PRODUCT_VARIANTS,
 		Permission.UPDATE_PRODUCT_VARIANTS,
 		Permission.DELETE_PRODUCT_VARIANTS,
