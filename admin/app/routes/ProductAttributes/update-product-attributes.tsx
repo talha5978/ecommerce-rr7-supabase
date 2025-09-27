@@ -251,11 +251,11 @@ export default function UpdateProductAttributes({
 									".
 								</AlertDescription>
 							</Alert>
-							<Button type="submit" disabled={isSubmitting}>
+							<Button type="submit" disabled={isSubmitting} className="w-full">
 								{isSubmitting && <Loader2 className="animate-spin" />}
 								<span>Save</span>
 							</Button>
-							<SheetClose asChild>
+							<SheetClose asChild className="w-full">
 								<Button variant="outline">Close</Button>
 							</SheetClose>
 						</SheetFooter>
