@@ -12,7 +12,7 @@ const FeaturedProductsSection = memo(function FeaturedProductsSectionFunc({
 			<h2 className="text-2xl font-semibold">Featured</h2>
 			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
 				{products.map((product: FP_Featured_Product) => (
-					<FeaturedProductCard product={product} key={product.id}/>
+					<FeaturedProductCard product={product} key={product.id} />
 				))}
 			</div>
 		</section>

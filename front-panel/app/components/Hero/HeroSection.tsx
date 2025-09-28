@@ -11,9 +11,7 @@ import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
 
 const HeroSectionContainer = memo(function HeroSectionContainerFunc({ data }: { data: PureThing[] }) {
 	return (
-		<Carousel
-			className="max-container"
-		>
+		<Carousel className="max-container">
 			<CarouselContent>
 				{Array.from({ length: data.length }).map((_, index) => (
 					<CarouselItem key={index} className="flex items-center justify-center">

@@ -12,7 +12,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const featured_products = await queryClient.fetchQuery(get_FP_featuredProducts({ request }));
 	const hero_sections = await queryClient.fetchQuery(getAllFPHeroSections({ request }));
 	console.log(hero_sections);
-	
+
 	return { header_categories, featured_products, hero_sections };
 };
 

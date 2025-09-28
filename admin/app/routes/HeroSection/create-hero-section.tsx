@@ -54,7 +54,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 		await queryClient.invalidateQueries({ queryKey: ["highLvlHeroSections"] });
 		await queryClient.invalidateQueries({ queryKey: ["fp_hero_sections"] });
-		
+
 		return { success: true };
 	} catch (error: any) {
 		const errorMessage =
