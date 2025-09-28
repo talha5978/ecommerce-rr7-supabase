@@ -23,10 +23,19 @@
 		"build:all": "npm run build:shared && npm run build:admin && npm run build:front",
 		"typecheck": "npm -ws --if-present run typecheck",
 		"check-format": "prettier --check \"**/*.{js,ts,tsx,jsx,json,md,css,scss}\"",
-		"format": "prettier --write \"**/*.{js,ts,tsx,jsx,json,md,css,scss}\""
+		"format": "prettier --write \"**/*.{js,ts,tsx,jsx,json,md,css,scss}\"",
+		"prepare": "husky",
+		"postinstall": "husky install"
+	},
+	"lint-staged": {
+		"**/*.{js,ts,tsx,jsx,json,md,css,scss}": [
+			"prettier --write"
+		]
 	},
 	"devDependencies": {
 		"concurrently": "^8.0.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.2.3",
 		"prettier": "^3.6.2"
 	}
 }
