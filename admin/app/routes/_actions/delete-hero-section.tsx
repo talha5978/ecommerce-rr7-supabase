@@ -16,9 +16,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		const heroSectionService = new HeroSectionsService(request);
 		await heroSectionService.deleteHeroSection(Number(heroSectionId));
 
-        await queryClient.invalidateQueries({ queryKey: ["fp_hero_sections"] });
-        await queryClient.invalidateQueries({ queryKey: ["highLvlHeroSections"] });
-        await queryClient.invalidateQueries({ queryKey: ["getHeroSectionById"] });
+		await queryClient.invalidateQueries({ queryKey: ["fp_hero_sections"] });
+		await queryClient.invalidateQueries({ queryKey: ["highLvlHeroSections"] });
+		await queryClient.invalidateQueries({ queryKey: ["getHeroSectionById"] });
 
 		return { success: true };
 	} catch (error: any) {
