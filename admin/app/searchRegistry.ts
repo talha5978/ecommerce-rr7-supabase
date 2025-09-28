@@ -115,4 +115,20 @@ export const searchRegistry: SearchEntry[] = [
 		url: "/coupons/create/automatic",
 		entry_type: "page",
 	},
+
+	// Hero sections
+	{
+		id: "hero-sections",
+		label: "Hero Sections",
+		keywords: ["hero section", "hero content"],
+		url: "/hero-sections/",
+		entry_type: "page",
+	},
+	{
+		id: "create-hero-section",
+		label: "Create Hero Section",
+		keywords: ["new hero section", "add hero section", "new hero content", "add hero content"],
+		url: "/hero-sections/create",
+		entry_type: "page",
+	},
 ];
