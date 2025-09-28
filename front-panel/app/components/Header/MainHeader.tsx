@@ -6,7 +6,7 @@ import AccountSection from "~/components/Header/AccountSection";
 
 export default function MainHeader() {
 	return (
-		<div className="container mx-auto px-4 py-5 flex items-center justify-between">
+		<div className="container mx-auto px-4 pt-5 pb-4 flex items-center justify-between">
 			{/* Logo */}
 			<Link to={"/"}>
 				<span>

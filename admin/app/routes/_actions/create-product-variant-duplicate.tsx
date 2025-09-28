@@ -50,6 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		await queryClient.invalidateQueries({ queryKey: ["allProductUnits"] });
 		await queryClient.invalidateQueries({ queryKey: ["products"] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", data.product_id] });
+		await queryClient.invalidateQueries({ queryKey: ["fp_featured_products"] });
 
 		return { success: true };
 	} catch (error: any) {

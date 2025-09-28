@@ -88,6 +88,7 @@ export const action = protectAction<ActionReturn>({
 		await productService.createProduct(parseResult.data);
 
 		await queryClient.invalidateQueries({ queryKey: ["products"] });
+		await queryClient.invalidateQueries({ queryKey: ["fp_featured_products"] });
 		await queryClient.invalidateQueries({ queryKey: ["productNames"] });
 		await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });
 

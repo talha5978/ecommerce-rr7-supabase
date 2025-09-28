@@ -7,6 +7,7 @@ import {
 	House,
 	LinkIcon,
 	Megaphone,
+	RectangleHorizontal,
 	TableProperties,
 	Tag,
 	Users,
@@ -95,6 +96,16 @@ export const mainNavItems: NavItem[] = [
 				title: "Announcements",
 				url: "/announcements",
 				icon: <Megaphone />,
+			},
+		],
+	},
+	{
+		title: "Content",
+		items: [
+			{
+				title: "Hero Sections",
+				url: "/hero-sections",
+				icon: <RectangleHorizontal />,
 			},
 		],
 	},

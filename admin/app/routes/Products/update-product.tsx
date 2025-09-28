@@ -123,6 +123,7 @@ export const action = protectAction<ActionReturn>({
 		await productService.updateProduct(parseResult.data, productId);
 
 		await queryClient.invalidateQueries({ queryKey: ["products"] });
+		await queryClient.invalidateQueries({ queryKey: ["fp_featured_products"] });
 		await queryClient.invalidateQueries({ queryKey: ["fullProduct", productId] });
 
 		// if name is updated then we invalidate the cache for the variant constraints service function because it also fetches the product name and also the cache that fetches the products names list in the all units page dialog

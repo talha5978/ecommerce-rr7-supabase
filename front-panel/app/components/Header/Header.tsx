@@ -1,12 +1,13 @@
 import MainHeader from "~/components/Header/MainHeader";
-import BlocksSubHeader from "~/components/Header/SubHeader_Blocks";
+import CategoriesSubHeader from "~/components/Header/CategoriesSubHeader";
+import { type FP_HeaderCategory } from "@ecom/shared/types/category";
 
-export default function Header() {
+export default function Header({ categories }: { categories: FP_HeaderCategory[] }) {
 	return (
-		<header className="w-full border-b-2 border-b-accent">
-			<div className="flex flex-col gap-5">
+		<header className="max-container mb-4">
+			<div>
 				<MainHeader />
-				{/* <BlocksSubHeader /> */}
+				<CategoriesSubHeader categories={categories} />
 			</div>
 		</header>
 	);

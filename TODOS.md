@@ -18,7 +18,6 @@
 
 // PRIMARY 🔴
 
-// TODO: FIX random many requests for root loader problem because current user query runs many times like after a random action or page navigation or no user found if logged out - ALSO ONE MORE SIMILAR PROBLEM WHICH IS WHEN WE CREATE AN ACTION LIKE WE UPDATE THE STATUS OF COLLECTION FROM THEIR PAGE BUT THE SERVICE IS CALLED MANY TIMES YA PAGE NAVIGATE KRIEN TO BOHOT DFA CURRENT USER QUERY CHALAY GI.. isko optimize krooooooooo
 
 // Secondary 🟢
 

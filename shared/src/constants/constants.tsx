@@ -16,6 +16,8 @@ class DefaultValues {
 
 	readonly DEFAULT_COUPONS_PAGE_SIZE = 20;
 
+	readonly DEFAULT_HERO_SECTIONS_PAGE_SIZE = 10;
+
 	readonly META_KEYWORDS_VALUE = 25;
 
 	readonly defaultProductSortByFilter = "createdAt";
@@ -56,6 +58,11 @@ export const PRODUCT_IMG_DIMENSIONS = {
 export const COLLECTION_IMG_DIMENSIONS = {
 	min: { width: 600, height: 400 },
 	max: { width: 1600, height: 1200 },
+};
+
+export const HERO_SECTION_DIMENSIONS = {
+	min: { width: 320, height: 180 },
+	max: { width: 1920, height: 1080 },
 };
 
 export const REQUIRED_VARIANT_ATTRIBS = ["color", "size"];

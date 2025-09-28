@@ -1,7 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-	// Allows to automatically instanciate createClient with right options
+	// Allows to automatically instantiate createClient with right options
 	// instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
 	__InternalSupabase: {
 		PostgrestVersion: "12.2.3 (519615d)";
@@ -16,10 +16,10 @@ export type Database = {
 		Functions: {
 			graphql: {
 				Args: {
+					extensions?: Json;
 					operationName?: string;
 					query?: string;
 					variables?: Json;
-					extensions?: Json;
 				};
 				Returns: Json;
 			};
@@ -106,6 +106,7 @@ export type Database = {
 					last_name: string;
 					phone_number: string | null;
 					role: number;
+					status: boolean;
 					user_id: string;
 				};
 				Insert: {
@@ -114,6 +115,7 @@ export type Database = {
 					last_name: string;
 					phone_number?: string | null;
 					role: number;
+					status?: boolean;
 					user_id: string;
 				};
 				Update: {
@@ -122,6 +124,7 @@ export type Database = {
 					last_name?: string;
 					phone_number?: string | null;
 					role?: number;
+					status?: boolean;
 					user_id?: string;
 				};
 				Relationships: [
@@ -559,6 +562,36 @@ export type Database = {
 					},
 				];
 			};
+			hero_sections: {
+				Row: {
+					created_at: string;
+					description: string;
+					id: number;
+					image: string;
+					sort_order: number;
+					status: boolean;
+					url: string;
+				};
+				Insert: {
+					created_at?: string;
+					description: string;
+					id?: number;
+					image: string;
+					sort_order?: number;
+					status?: boolean;
+					url: string;
+				};
+				Update: {
+					created_at?: string;
+					description?: string;
+					id?: number;
+					image?: string;
+					sort_order?: number;
+					status?: boolean;
+					url?: string;
+				};
+				Relationships: [];
+			};
 			meta_details: {
 				Row: {
 					createdAt: string;
@@ -878,36 +911,36 @@ export type Database = {
 		Functions: {
 			create_collection: {
 				Args: {
-					p_name: string;
 					p_description: string;
 					p_image_url: string;
-					p_url_key: string;
-					p_meta_title: string;
 					p_meta_description: string;
 					p_meta_keywords: string;
+					p_meta_title: string;
+					p_name: string;
+					p_product_ids: string[];
 					p_sort_order: number;
 					p_status: boolean;
-					p_product_ids: string[];
+					p_url_key: string;
 				};
 				Returns: string;
 			};
 			get_high_level_collections: {
 				Args: {
-					p_search_term?: string;
 					p_page?: number;
 					p_page_size?: number;
+					p_search_term?: string;
 					p_sort_by?: string;
 					p_sort_direction?: string;
 				};
 				Returns: {
-					id: string;
-					name: string;
-					image_url: string;
-					status: boolean;
 					created_at: string;
-					url_key: string;
+					id: string;
+					image_url: string;
+					name: string;
 					products_count: number;
+					status: boolean;
 					total_count: number;
+					url_key: string;
 				}[];
 			};
 			get_product_attribute_types: {
@@ -919,19 +952,19 @@ export type Database = {
 			};
 			update_collection: {
 				Args: {
+					p_added_product_ids: string[];
 					p_collection_id: string;
-					p_name: string;
 					p_description: string;
 					p_image_url: string;
+					p_meta_description: string;
+					p_meta_details_id: string;
+					p_meta_keywords: string;
+					p_meta_title: string;
+					p_name: string;
+					p_removed_product_ids: string[];
 					p_sort_order: number;
 					p_status: boolean;
-					p_meta_details_id: string;
 					p_url_key: string;
-					p_meta_title: string;
-					p_meta_description: string;
-					p_meta_keywords: string;
-					p_added_product_ids: string[];
-					p_removed_product_ids: string[];
 				};
 				Returns: undefined;
 			};

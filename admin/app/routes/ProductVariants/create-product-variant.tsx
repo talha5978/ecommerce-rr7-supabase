@@ -82,6 +82,7 @@ export const action = protectAction<ActionReturn>({
 		await variantService.createProductVaraint(productId, parseResult.data);
 
 		await queryClient.invalidateQueries({ queryKey: ["products"] });
+		await queryClient.invalidateQueries({ queryKey: ["fp_featured_products"] });
 		await queryClient.invalidateQueries({ queryKey: ["productVariants", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["fullProduct", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", productId] });

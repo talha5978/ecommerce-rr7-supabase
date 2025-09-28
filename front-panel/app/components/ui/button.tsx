@@ -59,6 +59,23 @@ function Button({
 	);
 }
 
+export function PureShadcnButton({
+	className,
+	variant,
+	size,
+	asChild = false,
+	...props
+}: ComponentProps<"button"> &
+	VariantProps<typeof buttonVariants> & {
+		asChild?: boolean;
+	}) {
+	const Comp = asChild ? Slot : "button";
+
+	return (
+		<Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />
+	);
+}
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
 	asChild?: boolean;
 }

@@ -26,10 +26,10 @@ export const links: Route.LinksFunction = () => [
 export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url);
 	const pathname = url.pathname;
-	console.log("⚡ Root loader ran for", pathname);
+	// console.log("⚡ Root loader ran for", pathname);
 
 	if (pathname.startsWith("/login")) {
-		console.log("➡️ Public route, skipping user fetch");
+		// console.log("➡️ Public route, skipping user fetch");
 		const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
 		const { authId } = genAuthSecurity(request);
 

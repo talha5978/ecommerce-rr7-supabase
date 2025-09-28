@@ -1,5 +1,5 @@
 import { ImageIcon, XCircleIcon } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type HtmlHTMLAttributes } from "react";
 import Dropzone, { FileRejection } from "react-dropzone";
 import { useFormContext } from "react-hook-form";
 import {
@@ -24,6 +24,7 @@ export type ImgDimensions = {
 type ImageInputProps = {
 	name: string;
 	dimensions: ImgDimensions;
+	className?: HtmlHTMLAttributes<HTMLDivElement>["className"];
 };
 
 type ImagePreviewProps = {
@@ -67,7 +68,7 @@ const ImagePreview = ({ url, onRemove }: ImagePreviewProps) => (
 	</div>
 );
 
-export default function ImageInput({ name, dimensions }: ImageInputProps) {
+export default function ImageInput({ name, dimensions, className }: ImageInputProps) {
 	const { setValue, watch, setError, clearErrors } = useFormContext();
 	const formValue = watch(name);
 
@@ -174,7 +175,7 @@ export default function ImageInput({ name, dimensions }: ImageInputProps) {
 
 	return (
 		<>
-			<div className="w-full max-w-[300px]">
+			<div className={cn("w-full max-w-[300px]", className)}>
 				{previewUrl && !uploadError ? (
 					<ImagePreview url={previewUrl} onRemove={handleRemove} />
 				) : (

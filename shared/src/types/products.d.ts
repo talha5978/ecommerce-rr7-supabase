@@ -59,3 +59,17 @@ export type SKUsNamesListResponse = {
 	total: number;
 	error: ApiError | null;
 };
+
+// Front-panel
+export type FP_Featured_Product = {
+	id: string;
+	name: string;
+	cover_image: string;
+	available_sizes: string[];
+	original_price: number;
+};
+
+export type FP_Featured_Products_Response = {
+	products: FP_Featured_Product[] | null;
+	error: ApiError | null;
+};

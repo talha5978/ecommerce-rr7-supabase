@@ -62,6 +62,12 @@ export default [
 			route("coupon/:couponId", "./routes/Coupons/coupon-details.tsx"),
 			route("create/:couponType", "./routes/Coupons/create-coupon.tsx"),
 		]),
+
+		...prefix("/hero-sections", [
+			index("./routes/HeroSection/hero-section.tsx"),
+			route("create", "./routes/HeroSection/create-hero-section.tsx"),
+			route(":hero_section_id/update", "./routes/HeroSection/update-hero-section.tsx"),
+		]),
 	]),
 
 	route("*", "./routes/Error/404.tsx"),

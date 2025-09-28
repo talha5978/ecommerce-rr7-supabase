@@ -1,21 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
 	--font-sans:
 		"Geist", "Lato", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
 		"Segoe UI Symbol", "Noto Color Emoji";
-}
-
-html,
-body {
-	/* @apply bg-white dark:bg-gray-950; */
-
-	@media (prefers-color-scheme: dark) {
-		color-scheme: dark;
-	}
 }
 
 :root {
@@ -255,22 +244,6 @@ input::-webkit-inner-spin-button {
 	color: var(--primary-foreground);
 }
 
-.main-coupons-grid {
-	@apply grid grid-cols-12 gap-4;
-}
-
-.main-coupons-grid-item {
-	@apply col-span-12 min-[490px]:col-span-6 min-[800px]:col-span-4 min-[1200px]:col-span-3;
-}
-
-.CustomTagsInputClear .wrapper .refresh-icon {
-	@apply transition duration-300;
-}
-
-.CustomTagsInputClear .wrapper:hover .refresh-icon {
-	@apply transform rotate-45;
-}
-
-.header-account-options {
-	@apply hover:text-primary transition-colors duration-200 hover:underline underline-offset-4;
+.max-container {
+	@apply max-w-[1370px] mx-auto px-4;
 }

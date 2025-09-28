@@ -2,6 +2,7 @@ import { Service } from "@ecom/shared/services/service";
 import { MetaDetailsService } from "@ecom/shared/services/meta-details.service";
 import type {
 	CategoryUpdationPayload,
+	FP_HeaderCategoriesResponse,
 	FullCategoryRow,
 	FullSubCategoryRow,
 	GetAllCategoriesResponse,
@@ -463,7 +464,59 @@ export class CategoryService extends Service {
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
+}
 
+@UseClassMiddleware(loggerMiddleware)
+export class FP_CategoryService extends Service {
 	/** Get all categories and sub categories for front pane */
-	// PENDING SERVICE FUNCTION
+	async getHeaderCategories(): Promise<FP_HeaderCategoriesResponse> {
+		try {
+			const from = 0;
+			const to = 9; // Should not be a static value but it's ok for now
+
+			const { data: categories_resp, error: queryError } = await this.supabase
+				.from(this.CATEGORY_TABLE)
+				.select(
+					`
+					id, category_name, sort_order,
+					${this.SUB_CATEGORY_TABLE}(id, sub_category_name, sort_order, ${this.META_DETAILS_TABLE}(url_key)),
+					${this.META_DETAILS_TABLE}(url_key)
+				`,
+				)
+				.range(from, to)
+				.order("sort_order", { ascending: false });
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+			}
+
+			return {
+				categories:
+					categories_resp
+						?.filter((category) => category.sub_category.length > 0)
+						.map((category) => ({
+							id: category.id,
+							category_name: category.category_name,
+							sort_order: category.sort_order,
+							sub_categories: category.sub_category.map((sub_category) => ({
+								id: sub_category.id,
+								sub_category_name: sub_category.sub_category_name,
+								sort_order: sub_category.sort_order,
+								url_key: sub_category.meta_details.url_key,
+							})),
+							url_key: category.meta_details.url_key,
+						})) ?? null,
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { categories: [], error: err };
+			}
+			return {
+				categories: [],
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
 }

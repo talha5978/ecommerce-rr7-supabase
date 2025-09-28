@@ -53,6 +53,8 @@ export class Service implements ServiceBase {
 	protected readonly PRODUCT_CONDITIONS_TABLE = "product_conditions";
 	protected readonly CUSTOMER_EMAILS_TABLE = "customer_emails";
 
+	protected readonly HERO_SECTIONS_TABLE = "hero_sections";
+
 	constructor(request: Request) {
 		const { supabase, headers } = createSupabaseServerClient(request);
 		this.supabase = supabase;

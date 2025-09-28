@@ -76,3 +76,23 @@ export interface GetSubCategoryResponse {
 }
 
 export type SubCategoryUpdationPayload = Database["public"]["Tables"]["sub_category"]["Update"];
+
+export type FP_HeaderSubCategory = {
+	id: string;
+	sub_category_name: string;
+	sort_order: number;
+	url_key: string | null;
+};
+
+export type FP_HeaderCategory = {
+	id: string;
+	category_name: string;
+	sort_order: number;
+	url_key: string | null;
+	sub_categories: FP_HeaderSubCategory[];
+};
+
+export interface FP_HeaderCategoriesResponse {
+	categories: FP_HeaderCategory[] | null;
+	error: ApiError | null;
+}

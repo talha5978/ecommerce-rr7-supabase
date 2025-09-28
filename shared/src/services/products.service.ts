@@ -1,4 +1,6 @@
 import type {
+	FP_Featured_Product,
+	FP_Featured_Products_Response,
 	FullProduct,
 	GetAllProductsResponse,
 	GetSingleProductResponse,
@@ -458,6 +460,112 @@ export class ProductsService extends Service {
 		if (meta_details) {
 			const metaDetailsService = new MetaDetailsService(this.request);
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
+		}
+	}
+}
+
+@UseClassMiddleware(loggerMiddleware)
+export class FP_ProductsService extends Service {
+	async getFeaturedProducts(pageIndex: number = 0): Promise<FP_Featured_Products_Response> {
+		try {
+			let query = this.supabase
+				.from("product")
+				.select(
+					`
+          id,
+          name,
+          cover_image,
+          product_variant (
+            id,
+            product_id,
+            original_price
+          ),
+          product_attributes (
+            attribute_id
+          )
+        `,
+					{ count: "exact" },
+				)
+				.eq("is_featured", true);
+
+			const smallPageSize = 10;
+			const from = pageIndex * smallPageSize;
+			const to = from + smallPageSize - 1;
+
+			query = query.range(from, to).order("createdAt", { ascending: false });
+
+			const { data, error: fetchError } = await query;
+
+			let error: null | ApiError = null;
+			let products: FP_Featured_Product[] | null = null;
+
+			if (fetchError || data == null) {
+				error = new ApiError(fetchError.message, 500, [fetchError.details]);
+			} else {
+				products = await Promise.all(
+					data.map(async (product) => {
+						// Collect all variant IDs for the product
+						const variantIds = product.product_variant.map((v) => v.id);
+
+						// Fetch all variant attributes
+						const { data: variantAttrData, error: variantAttrError } = await this.supabase
+							.from("variant_attributes")
+							.select("attribute_id")
+							.in("variant_id", variantIds);
+
+						if (variantAttrError || !variantAttrData) {
+							return {
+								id: product.id,
+								name: product.name,
+								cover_image: product.cover_image,
+								available_sizes: [],
+								original_price: product.product_variant[0]?.original_price ?? 0,
+							};
+						}
+
+						const sizeAttributeIds = variantAttrData.map((v) => v.attribute_id);
+						const { data: sizeData, error: sizeError } = await this.supabase
+							.from("attributes")
+							.select("value")
+							.in("id", sizeAttributeIds)
+							.eq("attribute_type", "size");
+
+						if (sizeError || !sizeData) {
+							return {
+								id: product.id,
+								name: product.name,
+								cover_image: product.cover_image,
+								available_sizes: [],
+								original_price: product.product_variant[0]?.original_price ?? 0,
+							};
+						}
+
+						return {
+							id: product.id,
+							name: product.name,
+							cover_image: product.cover_image,
+							available_sizes: sizeData.map((s) => s.value),
+							original_price: product.product_variant[0]?.original_price ?? 0,
+						};
+					}),
+				);
+			}
+
+			return {
+				products,
+				error: error ?? null,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return {
+					products: null,
+					error: err,
+				};
+			}
+			return {
+				products: null,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
 		}
 	}
 }
