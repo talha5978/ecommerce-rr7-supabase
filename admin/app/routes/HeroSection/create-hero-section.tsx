@@ -131,7 +131,7 @@ export default function HeroSectionCreatePage() {
 			/>
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
-					<BackButton href="/categories" />
+					<BackButton href="/hero-sections" />
 					<h1 className="text-2xl font-semibold">Create Hero Section</h1>
 				</div>
 

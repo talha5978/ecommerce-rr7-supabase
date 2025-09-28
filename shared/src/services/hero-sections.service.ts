@@ -181,6 +181,41 @@ export class HeroSectionsService extends Service {
 			await mediaSvc.deleteImage(currentStoredImg);
 		}
 	}
+
+	async deleteHeroSection(heroSectionId: number): Promise<void> {
+		const { data, error } = await this.supabase
+			.from(this.HERO_SECTIONS_TABLE)
+			.select("image")
+			.eq("id", heroSectionId)
+			.single();
+
+		if (error || data == null) {
+			throw new ApiError(error.message, Number(error.code), [error.details]);
+		}
+
+		const currentStoredImg = data.image;
+		const mediaSvc = new MediaService(this.request);
+
+		const tableEntryPromise = this.supabase
+			.from(this.HERO_SECTIONS_TABLE)
+			.delete()
+			.eq("id", heroSectionId)
+			.single();
+
+		const imgDelPromise = mediaSvc.deleteImage(currentStoredImg);
+
+		const [_tableEntry, _imgDel] = await Promise.all([tableEntryPromise, imgDelPromise]);
+
+		if (_tableEntry.error) {
+			throw new ApiError(
+				`Failed to delete hero section: ${_tableEntry.error.message}`,
+				Number(_tableEntry.error.code),
+				[],
+			);
+		}
+
+		// _imgDel auto throws error from deleteImage function
+	}
 }
 
 @UseClassMiddleware(loggerMiddleware)
@@ -191,6 +226,7 @@ export class FP_HeroSectionsService extends Service {
 			const { data, error: queryError } = await this.supabase
 				.from(this.HERO_SECTIONS_TABLE)
 				.select("*")
+				.eq("status", true)
 				.order("sort_order", { ascending: true });
 
 			const error: null | ApiError = queryError

@@ -91,7 +91,7 @@ export default function HeroSectionManagmentPage({
 		formData.append("heroSectionId", heroSectionId.toString());
 		fetcher.submit(formData, {
 			method: "POST",
-			action: `/hero-section/${heroSectionId}/delete`,
+			action: `/hero-sections/${heroSectionId}/delete`,
 		});
 	};
 

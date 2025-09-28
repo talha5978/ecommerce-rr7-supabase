@@ -67,6 +67,7 @@ export default [
 			index("./routes/HeroSection/hero-section.tsx"),
 			route("create", "./routes/HeroSection/create-hero-section.tsx"),
 			route(":hero_section_id/update", "./routes/HeroSection/update-hero-section.tsx"),
+			route(":hero_section_id/delete", "./routes/_actions/delete-hero-section.tsx"),
 		]),
 	]),
 
