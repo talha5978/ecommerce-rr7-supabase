@@ -18,7 +18,7 @@ export function createPermissionMiddleware<T extends ServiceBase = ServiceBase>(
 
 	return createServiceMiddleware<T>(async (ctx, next) => {
 		const svc = ctx.service;
-		console.log(svc);
+		// console.log(svc);
 
 		if (!svc.currentUser) {
 			throw new ApiError("User not found", 401, []);

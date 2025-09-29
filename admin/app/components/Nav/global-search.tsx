@@ -15,7 +15,6 @@ import { Button } from "../ui/button";
 
 const Menu = memo(function Menu({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
 	const { results, search } = useGlobalSearch();
-	console.log("Results", results);
 
 	return (
 		<CommandDialog open={open} onOpenChange={setOpen}>

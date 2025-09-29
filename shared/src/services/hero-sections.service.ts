@@ -71,7 +71,7 @@ export class HeroSectionsService extends Service {
 		let img_public_url = "";
 
 		if (image && image.size > 0) {
-			const mediaSvc = new MediaService(this.request);
+			const mediaSvc = await this.createSubService(MediaService);
 			const { data } = await mediaSvc.uploadImage(image);
 			img_public_url = data?.path ?? "";
 			if (!img_public_url || img_public_url == "") {
@@ -135,7 +135,7 @@ export class HeroSectionsService extends Service {
 		const currentStoredImg = data.image;
 		let newImagePath: string | null = null;
 
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 
 		if (image) {
 			if (typeof image === "string") {
@@ -194,7 +194,7 @@ export class HeroSectionsService extends Service {
 		}
 
 		const currentStoredImg = data.image;
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 
 		const tableEntryPromise = this.supabase
 			.from(this.HERO_SECTIONS_TABLE)

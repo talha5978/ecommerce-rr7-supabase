@@ -257,7 +257,7 @@ export class CategoryService extends Service {
 	async createCategoryWithMeta(input: CategoryActionData): Promise<void> {
 		const { category_name, description, sort_order, meta_details } = input;
 
-		const metaDetailsService = new MetaDetailsService(this.request);
+		const metaDetailsService = await this.createSubService(MetaDetailsService);
 		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
 		const { error: categoryError } = await this.supabase.from(this.CATEGORY_TABLE).insert({
@@ -286,7 +286,7 @@ export class CategoryService extends Service {
 	async createSubCategoryWithMeta(input: SubCategoryActionData): Promise<void> {
 		const { sub_category_name, description, sort_order, meta_details, parent_id } = input;
 
-		const metaDetailsService = new MetaDetailsService(this.request);
+		const metaDetailsService = await this.createSubService(MetaDetailsService);
 		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
 		const { error: subCategoryError } = await this.supabase.from(this.SUB_CATEGORY_TABLE).insert({
@@ -380,7 +380,7 @@ export class CategoryService extends Service {
 		}
 
 		if (meta_details) {
-			const metaDetailsService = new MetaDetailsService(this.request);
+			const metaDetailsService = await this.createSubService(MetaDetailsService);
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
@@ -460,7 +460,7 @@ export class CategoryService extends Service {
 		}
 
 		if (meta_details) {
-			const metaDetailsService = new MetaDetailsService(this.request);
+			const metaDetailsService = await this.createSubService(MetaDetailsService);
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}

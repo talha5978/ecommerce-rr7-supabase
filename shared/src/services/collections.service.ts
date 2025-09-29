@@ -248,7 +248,7 @@ export class CollectionsService extends Service {
 	/** Create collection */
 	async createCollection(input: CollectionActionData): Promise<void> {
 		const { description, image, meta_details, name, product_ids, sort_order, status } = input;
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 		let uploaded_img_url = "";
 
 		try {
@@ -342,7 +342,7 @@ export class CollectionsService extends Service {
 		}
 
 		let newImagePath: string | null = null;
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 
 		try {
 			// Fetch required current collection data

@@ -181,7 +181,7 @@ export class ProductVariantsService extends Service {
 			throw new ApiError("Failed to create product variant", 500, []);
 		}
 
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 
 		let images_arr: string[] = [];
 
@@ -242,7 +242,7 @@ export class ProductVariantsService extends Service {
 			]);
 		}
 
-		const variantAttributesSvc = new VariantsAttributesService(this.request);
+		const variantAttributesSvc = await this.createSubService(VariantsAttributesService);
 
 		const finalAttributes = attributes.map((attribute_id) => {
 			return {
@@ -283,7 +283,7 @@ export class ProductVariantsService extends Service {
 			throw new ApiError("Failed to upload image", 500, []);
 		}
 
-		const variantAttributesSvc = new VariantsAttributesService(this.request);
+		const variantAttributesSvc = await this.createSubService(VariantsAttributesService);
 		let attributes: VariantAttributeInput[] = [];
 
 		const { data: fetchedAttributes, error: attributesError } =
@@ -365,7 +365,7 @@ export class ProductVariantsService extends Service {
 				error = new ApiError(defaultFetchError.message, 500, [defaultFetchError.details]);
 			}
 
-			const productSvc = new ProductsService(this.request);
+			const productSvc = await this.createSubService(ProductsService);
 			const { productName, error: productNameError } = await productSvc.getProductName(product_id);
 
 			if (productNameError || productName == null) {
@@ -478,7 +478,7 @@ export class ProductVariantsService extends Service {
 		} = input;
 		// console.log("Added attributes", added_attributes);
 
-		const variantAttributesSvc = new VariantsAttributesService(this.request);
+		const variantAttributesSvc = await this.createSubService(VariantsAttributesService);
 
 		// Delete removed attributes
 		if (Array.isArray(removed_attributes) && removed_attributes.length > 0) {
@@ -509,7 +509,7 @@ export class ProductVariantsService extends Service {
 		}
 
 		let images_arr: string[] = [];
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 
 		function delUploadedImages() {
 			images_arr.map(async (img) => {

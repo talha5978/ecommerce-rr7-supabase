@@ -238,10 +238,10 @@ export class ProductsService extends Service {
 			optional_attributes,
 		} = input;
 
-		const metaDetailsService = new MetaDetailsService(this.request);
+		const metaDetailsService = await this.createSubService(MetaDetailsService);
 		const metaDetailsId = await metaDetailsService.createMetaDetails(meta_details);
 
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 
 		let cover_public_url = "";
 
@@ -280,7 +280,7 @@ export class ProductsService extends Service {
 		}
 
 		if (optional_attributes && Array.isArray(optional_attributes) && optional_attributes.length > 0) {
-			const productsRattribsSvc = new ProductRAttributesService(this.request);
+			const productsRattribsSvc = await this.createSubService(ProductRAttributesService);
 
 			const finalAttributes = optional_attributes.map((attribute_id) => {
 				return {
@@ -382,7 +382,7 @@ export class ProductsService extends Service {
 			throw new ApiError(`Product not found`, 404, []);
 		}
 
-		const variantAttributesSvc = new ProductRAttributesService(this.request);
+		const variantAttributesSvc = await this.createSubService(ProductRAttributesService);
 
 		// Delete removed attributes
 		if (Array.isArray(removed_attributes) && removed_attributes.length > 0) {
@@ -418,7 +418,7 @@ export class ProductsService extends Service {
 			throw new ApiError(`Product image not found`, 404, []);
 		}
 
-		const mediaSvc = new MediaService(this.request);
+		const mediaSvc = await this.createSubService(MediaService);
 		if (typeof cover_image === "string") {
 			throw new ApiError("Please upload new image instead of image url", 400, []);
 		}
@@ -458,7 +458,7 @@ export class ProductsService extends Service {
 		}
 
 		if (meta_details) {
-			const metaDetailsService = new MetaDetailsService(this.request);
+			const metaDetailsService = await this.createSubService(MetaDetailsService);
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
