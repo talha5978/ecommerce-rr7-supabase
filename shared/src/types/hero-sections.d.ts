@@ -18,7 +18,13 @@ export type GetHeroSectionByIdResponse = {
 
 export type HeroSectionUpdationPayload = Database["public"]["Tables"]["hero_sections"]["Update"];
 
+export type HomeHeroSection = {
+	id: number;
+	image: string;
+	url: string;
+};
+
 export type AllHomeHeroSectionsResponse = {
-	hero_sections: PureThing[] | null;
+	hero_sections: HomeHeroSection[] | null;
 	error: ApiError | null;
 };

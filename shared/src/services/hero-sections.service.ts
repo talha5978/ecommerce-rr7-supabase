@@ -225,7 +225,7 @@ export class FP_HeroSectionsService extends Service {
 		try {
 			const { data, error: queryError } = await this.supabase
 				.from(this.HERO_SECTIONS_TABLE)
-				.select("*")
+				.select("id, image, url")
 				.eq("status", true)
 				.order("sort_order", { ascending: true });
 

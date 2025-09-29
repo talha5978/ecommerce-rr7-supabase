@@ -1,15 +1,9 @@
-import type { PureThing } from "@ecom/shared/types/hero-sections";
+import type { HomeHeroSection } from "@ecom/shared/types/hero-sections";
 import { memo } from "react";
-import {
-	Carousel,
-	CarouselContent,
-	CarouselItem,
-	CarouselNext,
-	CarouselPrevious,
-} from "~/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "~/components/ui/carousel";
 import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
 
-const HeroSectionContainer = memo(function HeroSectionContainerFunc({ data }: { data: PureThing[] }) {
+const HeroSectionContainer = memo(function HeroSectionContainerFunc({ data }: { data: HomeHeroSection[] }) {
 	return (
 		<Carousel className="max-container">
 			<CarouselContent>
@@ -23,8 +17,6 @@ const HeroSectionContainer = memo(function HeroSectionContainerFunc({ data }: { 
 					</CarouselItem>
 				))}
 			</CarouselContent>
-			<CarouselPrevious />
-			<CarouselNext />
 		</Carousel>
 	);
 });

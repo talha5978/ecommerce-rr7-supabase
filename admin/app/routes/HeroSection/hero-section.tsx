@@ -23,7 +23,7 @@ import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { defaults } from "@ecom/shared/constants/constants";
-import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { getQueryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { GetFormattedDate } from "@ecom/shared/lib/utils";
 import { HighLvlHeroSectionsQuery } from "~/queries/hero-sections.q";
 import type { HighLevelHeroSection } from "@ecom/shared/types/hero-sections";
@@ -35,6 +35,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		defaultPageNo: 1,
 		defaultPageSize: defaults.DEFAULT_HERO_SECTIONS_PAGE_SIZE,
 	});
+
+	const queryClient = getQueryClient();
 
 	const data = await queryClient.fetchQuery(
 		HighLvlHeroSectionsQuery({
@@ -50,11 +52,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		query: q,
 		pageIndex,
 		pageSize,
+		queryClient,
 	};
 };
 
 export default function HeroSectionManagmentPage({
-	loaderData: { data, query, pageIndex, pageSize },
+	loaderData: { data, query, pageIndex, pageSize, queryClient },
 }: Route.ComponentProps) {
 	const navigation = useNavigation();
 	const location = useLocation();

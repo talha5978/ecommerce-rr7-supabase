@@ -472,21 +472,22 @@ export class FP_ProductsService extends Service {
 				.from("product")
 				.select(
 					`
-          id,
-          name,
-          cover_image,
-          product_variant (
-            id,
-            product_id,
-            original_price
-          ),
-          product_attributes (
-            attribute_id
-          )
-        `,
+						id,
+						name,
+						cover_image,
+						product_variant (
+							id,
+							product_id,
+							original_price
+						),
+						product_attributes (
+							attribute_id
+						)
+					`,
 					{ count: "exact" },
 				)
-				.eq("is_featured", true);
+				.eq("is_featured", true)
+				.eq("status", true);
 
 			const smallPageSize = 10;
 			const from = pageIndex * smallPageSize;
