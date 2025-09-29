@@ -9,6 +9,10 @@ import { extractAuthId } from "@ecom/shared/lib/auth-utils.server";
 export const verifyUser = createServiceMiddleware<ServiceBase>(async (ctx, next) => {
 	try {
 		const service = ctx.service;
+		if (service.currentUser != null && service.currentUser.id) {
+			return next();
+		}
+
 		const authId = extractAuthId(service.request);
 
 		const { user, error: noUserError } =
@@ -22,13 +26,13 @@ export const verifyUser = createServiceMiddleware<ServiceBase>(async (ctx, next)
 
 		if (user == null && noUserError) {
 			throw noUserError ?? new ApiError("User not found", 401, []);
-		} else {
-			service.currentUser = {
-				id: user?.id ?? "",
-				email: user?.email ?? "",
-				role: user?.role.role_name as UserRole,
-			};
 		}
+
+		service.currentUser = {
+			id: user?.id ?? "",
+			email: user?.email ?? "",
+			role: user?.role.role_name as UserRole,
+		};
 
 		return next();
 	} catch (error) {
