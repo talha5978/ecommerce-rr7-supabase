@@ -13,7 +13,7 @@ export interface HighLevelCollection {
 }
 
 export interface GetHighLevelCollectionsResp {
-	collections: HighLevelCollections[] | null;
+	collections: HighLevelCollection[] | null;
 	total: number;
 	error: ApiError | null;
 }
@@ -79,5 +79,18 @@ export type CollectionNameListRow = { id: string; name: string };
 export type CollectionsNamesListResponse = {
 	collections: CollectionNameListRow[] | null;
 	total: number;
+	error: ApiError | null;
+};
+
+// Front panel collections
+export type FP_HomeCollection = {
+	description: string;
+	id: string;
+	image_url: string;
+	url: string;
+};
+
+export type FP_HomeCollectionsResp = {
+	collections: FP_HomeCollection[] | null;
 	error: ApiError | null;
 };

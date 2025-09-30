@@ -4,6 +4,7 @@ import type {
 	CollectionDataItemsResponse,
 	CollectionDataSubCategory,
 	CollectionsNamesListResponse,
+	FP_HomeCollectionsResp,
 	FullCollection,
 	GetFullCollection,
 	GetHighLevelCollectionsResp,
@@ -475,6 +476,46 @@ export class CollectionsService extends Service {
 			return {
 				collections: null,
 				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+}
+
+@UseClassMiddleware(loggerMiddleware)
+export class FP_CollectionsService extends Service {
+	async getAllHomeCollections(): Promise<FP_HomeCollectionsResp> {
+		try {
+			const { data, error: queryError } = await this.supabase
+				.from(this.COLLECTION_TABLE)
+				.select(`description, id, image_url, ${this.META_DETAILS_TABLE}(url_key)`)
+				.eq("status", true)
+				.order("sort_order", { ascending: true });
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+			}
+
+			return {
+				collections:
+					data?.map((item) => {
+						return {
+							id: item.id,
+							description: item.description,
+							image_url: item.image_url,
+							url: item.meta_details.url_key,
+						};
+					}) ?? [],
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { collections: [], error: err };
+			}
+			return {
+				collections: [],
+
 				error: new ApiError("Unknown error", 500, [err]),
 			};
 		}
