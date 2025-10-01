@@ -23,6 +23,7 @@ import {
 } from "react-router";
 import { toast } from "sonner";
 import BackButton from "~/components/Nav/BackButton";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -181,6 +182,7 @@ export default function CreateCategoryPage() {
 				metaDescription="Create new product's sub category"
 				metaKeywords="Sub Categories, Create, Sub Category"
 			/>
+			<Breadcrumbs params={{ id: categoryId ?? "#" }} />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href={`/categories/${categoryId}/sub-categories`} />

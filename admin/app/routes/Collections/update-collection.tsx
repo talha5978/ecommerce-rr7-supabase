@@ -64,6 +64,7 @@ import type {
 } from "@ecom/shared/types/collections";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 function getSimpleFields() {
 	return ["name", "description", "status", "sort_order"] as const;
@@ -468,6 +469,12 @@ export default function UpdateCollectionPage({
 			<MetaDetails
 				metaTitle="Update Collection | Admin Panel"
 				metaDescription="Update new collection"
+			/>
+			<Breadcrumbs
+				params={{
+					id: paramsCollectionId ?? collection?.id ?? "",
+					name: "Update " + collection!.name + " Collection",
+				}}
 			/>
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">

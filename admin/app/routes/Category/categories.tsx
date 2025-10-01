@@ -28,6 +28,7 @@ import { defaults } from "@ecom/shared/constants/constants";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import type { HighLevelCategory } from "@ecom/shared/types/category";
 import { GetFormattedDate } from "@ecom/shared/lib/utils";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
@@ -208,6 +209,7 @@ export default function CategoriesPage({
 				metaDescription="Manage your categories here."
 				metaKeywords="Categories, Manage"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

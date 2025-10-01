@@ -96,6 +96,7 @@ import {
 	ProductStatusUpdateInputSchema,
 } from "@ecom/shared/schemas/product.schema";
 import type { CategoryListRow } from "@ecom/shared/types/category";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 const defaultPage = (defaults.DEFAULT_PRODUCTS_PAGE - 1).toString();
 const defaultSize = defaults.DEFAULT_PRODUCTS_PAGE_SIZE.toString();
@@ -336,6 +337,7 @@ export default function ProductsMainPage({
 				metaDescription="Manage your products here."
 				metaKeywords="Products"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

@@ -30,6 +30,7 @@ import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-dat
 import { defaults } from "@ecom/shared/constants/constants";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const action = protectAction<ActionReturn>({
 	permissions: Permission.CREATE_CATEGORIES,
@@ -169,6 +170,7 @@ export default function CreateCategoryPage() {
 				metaDescription="Create new product category"
 				metaKeywords="Categories, Create, Category, Product Category"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href="/categories" />

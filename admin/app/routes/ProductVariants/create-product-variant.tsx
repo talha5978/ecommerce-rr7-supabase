@@ -39,6 +39,7 @@ import type {
 import type { VariantConstraintsData } from "@ecom/shared/types/product-variants";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const action = protectAction<ActionReturn>({
 	permissions: Permission.CREATE_PRODUCT_VARIANTS,
@@ -233,6 +234,7 @@ export default function CreateProductVariantPage({
 				metaTitle="Create Product Variant | Admin Panel"
 				metaDescription="Create new product variant"
 			/>
+			<Breadcrumbs params={{ productId }} />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href={`/products/${productId}/variants`} />

@@ -31,6 +31,7 @@ import type { AttributeType, ProductAttribute } from "@ecom/shared/types/attribu
 import { useForm } from "react-hook-form";
 import { Input } from "~/components/ui/input";
 import { useState } from "react";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	const attributeType = params.attributeType as AttributeType;
@@ -150,6 +151,15 @@ export default function ProductAttributeValuesPage({ loaderData: { data }, param
 				metaTitle="Product Attribute | Admin Panel"
 				metaDescription="Manage your product attributes here."
 				metaKeywords="Product Attributes, Attributes"
+			/>
+			<Breadcrumbs
+				params={{
+					attrib_type: params!.attributeType ?? "",
+					name:
+						params.attributeType?.charAt(0).toUpperCase() +
+						String(params.attributeType).slice(1) +
+						" Attribute Values",
+				}}
 			/>
 			<div className="flex flex-1 flex-col gap-6">
 				<div>

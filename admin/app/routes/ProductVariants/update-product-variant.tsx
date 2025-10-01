@@ -41,6 +41,7 @@ import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-dat
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import { SingleProductVariantResponse, VariantConstraintsData } from "@ecom/shared/types/product-variants";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 function getSimpleFields() {
 	const fields = [
@@ -408,6 +409,9 @@ export default function UpdateProductVariantPage({
 			<MetaDetails
 				metaTitle="Update Product Variant | Admin Panel"
 				metaDescription="Update product variant"
+			/>
+			<Breadcrumbs
+				params={{ productId, variantId: variant?.id ?? "", name: "Update " + variant?.sku + " SKU" }}
 			/>
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">

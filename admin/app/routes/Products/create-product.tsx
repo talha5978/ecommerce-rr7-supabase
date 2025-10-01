@@ -45,6 +45,7 @@ import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import type { GetAllCategoriesResponse } from "@ecom/shared/types/category";
 import { ProductsService } from "@ecom/shared/services/products.service";
 import { ApiError } from "@ecom/shared/utils/ApiError";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const action = protectAction<ActionReturn>({
 	permissions: Permission.CREATE_PRODUCTS,
@@ -248,6 +249,7 @@ export default function CreateBasicProductPage({
 	return (
 		<>
 			<MetaDetails metaTitle="Create Product | Admin Panel" metaDescription="Create new product" />
+			<Breadcrumbs />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href="/products" />

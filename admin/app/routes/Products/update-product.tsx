@@ -54,6 +54,7 @@ import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import type { GetSingleProductResponse } from "@ecom/shared/types/products";
 import type { GetAllCategoriesResponse } from "@ecom/shared/types/category";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 function getSimpleFields() {
 	return [
@@ -392,6 +393,12 @@ export default function UpdateProductPage({
 
 	return (
 		<>
+			<Breadcrumbs
+				params={{
+					id: productResp?.product!.id,
+					name: "Update " + productResp?.product!.name + " Product",
+				}}
+			/>
 			<MetaDetails metaTitle="Update Product | Admin Panel" metaDescription="Update product" />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">

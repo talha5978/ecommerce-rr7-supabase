@@ -38,6 +38,7 @@ import { defaults } from "@ecom/shared/constants/constants";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import type { GetSubCategoryResponse } from "@ecom/shared/types/category";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = protectLoader<{ data: GetSubCategoryResponse }>({
 	permissions: Permission.UPDATE_SUB_CATEGORIES,
@@ -240,6 +241,13 @@ export default function UpdateCategoryForm({
 				metaTitle="Update Sub Category | Admin Panel"
 				metaDescription="Update product's sub category"
 				metaKeywords="Update Sub Category, Update"
+			/>
+			<Breadcrumbs
+				params={{
+					subId: sub_category!.id,
+					parentId: sub_category!.parent_id,
+					name: "Update" + " " + sub_category!.sub_category_name,
+				}}
 			/>
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">

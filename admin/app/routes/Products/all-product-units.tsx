@@ -71,6 +71,7 @@ import { defaults, SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/con
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import type { ProductVariantRow } from "@ecom/shared/types/product-variants";
 import { cn, GetFormattedDate } from "@ecom/shared/lib/utils";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
@@ -277,6 +278,7 @@ export default function ProductVariantsPage({
 				metaTitle="All Product Units | Admin Panel"
 				metaDescription="Manage all product units here."
 			/>
+			<Breadcrumbs />
 			<div className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

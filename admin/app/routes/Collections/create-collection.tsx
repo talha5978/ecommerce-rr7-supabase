@@ -54,6 +54,7 @@ import type { CollectionDataItemsResponse, SelectedProduct } from "@ecom/shared/
 import { COLLECTION_IMG_DIMENSIONS, defaults } from "@ecom/shared/constants/constants";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const action = protectAction<ActionReturn>({
 	permissions: Permission.CREATE_COLLECTIONS,
@@ -346,6 +347,7 @@ export default function CreateCollectionPage({ loaderData: { collectionsDataItem
 				metaTitle="Create Collection | Admin Panel"
 				metaDescription="Create new collection"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href="/collections" />

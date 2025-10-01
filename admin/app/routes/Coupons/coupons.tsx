@@ -60,6 +60,7 @@ import type { CouponTypesOption } from "@ecom/shared/types/coupons-comp";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 const SELECTED_COUPON_DETAILS_TAG = "couponId" as const;
 
@@ -280,6 +281,7 @@ const CouponsPage = memo(() => {
 				metaDescription="Manage your store coupons here."
 				metaKeywords="Coupons"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

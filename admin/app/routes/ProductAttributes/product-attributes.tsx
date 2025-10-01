@@ -23,6 +23,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { highLevelProductAttributesQuery } from "~/queries/product-attributes.q";
 import { Route } from "./+types/product-attributes";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const data = await queryClient.fetchQuery(highLevelProductAttributesQuery({ request }));
@@ -113,6 +114,7 @@ export default function ProductsAttributesPage({ loaderData: { data } }: Route.C
 				metaDescription="Manage your product attributes here."
 				metaKeywords="Product Attributes, Attributes"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

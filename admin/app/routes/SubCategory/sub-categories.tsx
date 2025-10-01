@@ -26,6 +26,7 @@ import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { Route } from "./+types/sub-categories";
 import { defaults } from "@ecom/shared/constants/constants";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const categoryId = (params.categoryId as string) || "";
@@ -168,6 +169,7 @@ export default function SubCategoriesPage({
 				metaDescription="Manage your sub categories here."
 				metaKeywords="Sub Categories, Manage"
 			/>
+			<Breadcrumbs params={{ id: categoryId }} />
 			<div className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

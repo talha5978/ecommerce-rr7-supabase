@@ -1,4 +1,4 @@
-import { useActionData, useNavigate, useNavigation, useSubmit } from "react-router";
+import { useActionData, useNavigate, useNavigation, useParams, useSubmit } from "react-router";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import type { Route } from "./+types/update-hero-section";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,7 @@ import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import ImageInput from "~/components/Custom-Inputs/image-input";
 import { HeroSectionsService } from "@ecom/shared/services/hero-sections.service";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 const getFieldsToCheck = () => {
 	return ["url", "description", "sort_order", "status", "image"] as const;
@@ -200,6 +201,9 @@ export default function UpdateHeroSectionForm({
 				metaTitle="Update Hero Sections | Admin Panel"
 				metaDescription="Update product category"
 				metaKeywords="Update Hero Sections, Update"
+			/>
+			<Breadcrumbs
+				params={{ id: String(hero_section?.id) ?? String(useParams().hero_section_id) ?? "" }}
 			/>
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">

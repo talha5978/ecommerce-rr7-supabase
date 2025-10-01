@@ -28,6 +28,7 @@ import { GetFormattedDate } from "@ecom/shared/lib/utils";
 import { HighLvlHeroSectionsQuery } from "~/queries/hero-sections.q";
 import type { HighLevelHeroSection } from "@ecom/shared/types/hero-sections";
 import StatusBadge from "~/components/status-badge";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
@@ -197,6 +198,7 @@ export default function HeroSectionManagmentPage({
 				metaDescription="Manage hero sections of your store here."
 				metaKeywords="Hero Sections, Manage"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

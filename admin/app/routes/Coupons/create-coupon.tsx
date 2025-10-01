@@ -73,6 +73,7 @@ import {
 	CouponInputSchema,
 } from "@ecom/shared/schemas/coupons.schema";
 import { CouponsService } from "@ecom/shared/services/coupons.service";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 // This function is used to reset the search params of products selections component dialogs in coupons when type changes
 export function resetParamsOnTypeChange({
@@ -596,6 +597,7 @@ export default function CreateCouponPage({ params }: Route.ComponentProps) {
 				metaDescription="Create new coupon"
 				metaKeywords="Coupons, Product Coupons, Promotion, Discount"
 			/>
+			<Breadcrumbs params={{ couponType: couponType }} />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href="/coupons" />

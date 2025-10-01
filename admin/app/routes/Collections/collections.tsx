@@ -69,6 +69,7 @@ import {
 	type ProductStatusUpdateFormValues,
 	ProductStatusUpdateInputSchema,
 } from "@ecom/shared/schemas/product.schema";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { q, pageIndex, pageSize } = getPaginationQueryPayload({
@@ -248,6 +249,7 @@ export default function CollectionsPage({
 				metaDescription="Manage your product collections here."
 				metaKeywords="Collections"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

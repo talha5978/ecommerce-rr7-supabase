@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import ImageInput from "~/components/Custom-Inputs/image-input";
 import { HeroSectionsService } from "@ecom/shared/services/hero-sections.service";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
@@ -129,6 +130,7 @@ export default function HeroSectionCreatePage() {
 				metaDescription="Create new product category"
 				metaKeywords="Categories, Create, Hero Section, Product Hero Section"
 			/>
+			<Breadcrumbs />
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
 					<BackButton href="/hero-sections" />

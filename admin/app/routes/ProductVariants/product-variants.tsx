@@ -103,6 +103,7 @@ import {
 	type VariantStatusUpdateFormValues,
 	VariantStatusUpdateInputSchema,
 } from "@ecom/shared/schemas/product-variants.schema";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 const defaultPage = (defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE - 1).toString();
 const defaultSize = defaults.DEFAULT_PRODUCTS_VARIANTS_PAGE_SIZE.toString();
@@ -142,6 +143,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function ProductVariantsPage({
 	loaderData: { data, query, pageIndex, pageSize },
+	params: { productId },
 }: Route.ComponentProps) {
 	if (data.product_variants == null) {
 		throw new Response("Error fetching variants", { status: 404 });
@@ -292,6 +294,7 @@ export default function ProductVariantsPage({
 				metaTitle="Product Variants | Admin Panel"
 				metaDescription="Manage your product variants here."
 			/>
+			<Breadcrumbs params={{ id: productId ?? "" }} />
 			<div className="flex flex-1 flex-col gap-6">
 				<div>
 					<div className="flex justify-between gap-3 flex-wrap">

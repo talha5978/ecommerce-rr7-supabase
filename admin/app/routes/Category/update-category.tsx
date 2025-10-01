@@ -38,6 +38,7 @@ import { defaults } from "@ecom/shared/constants/constants";
 import { protectAction, protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import type { GetCategoryResponse } from "@ecom/shared/types/category";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 export const loader = protectLoader<{ data: GetCategoryResponse }>({
 	permissions: Permission.UPDATE_CATEGORIES,
@@ -235,6 +236,9 @@ export default function UpdateCategoryForm({
 				metaTitle="Update Category | Admin Panel"
 				metaDescription="Update product category"
 				metaKeywords="Update Category, Update"
+			/>
+			<Breadcrumbs
+				params={{ id: category!.id, name: "Update " + category!.category_name + " Category" }}
 			/>
 			<section className="flex flex-col gap-4">
 				<div className="flex gap-4 items-center">
