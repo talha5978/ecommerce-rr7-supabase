@@ -74,7 +74,7 @@ body {
 	--shadow-offset-y: 4px;
 	--letter-spacing: 0em;
 	--spacing: 0.25rem;
-	--header-spacing: 3.6rem;
+	--header-spacing: 4rem;
 	--tracking-normal: 0em;
 	--muted-dark: oklch(0.95 0 0);
 }
@@ -135,7 +135,7 @@ body {
 	--shadow-offset-y: 4px;
 	--letter-spacing: 0em;
 	--spacing: 0.25rem;
-	--header-spacing: 3.6rem;
+	--header-spacing: 4rem;
 	--muted-dark: oklch(0.95 0 0);
 }
 
