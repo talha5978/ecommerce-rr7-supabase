@@ -3,6 +3,10 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@ecom/shared/types/supabase";
 
 function createSupabaseServerClient(request: Request) {
+	if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+		throw new Error("Missing Supabase environment variables");
+	}
+
 	const headers = new Headers();
 
 	/* In production max cookie age is 1 day but in dev. it is 1 year */

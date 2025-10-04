@@ -1,18 +1,22 @@
 import { IconHelp, IconSettings } from "@tabler/icons-react";
 import {
 	Archive,
+	Bell,
 	Box,
 	Boxes,
+	CreditCard,
 	Gift,
 	House,
 	LinkIcon,
 	Megaphone,
 	RectangleHorizontal,
+	ShoppingCart,
 	TableProperties,
 	Tag,
+	Truck,
 	Users,
 } from "lucide-react";
-import type { NavItem, NavSubItem } from "@ecom/shared/types/nav";
+import type { NavItem, NavSubItem, SettingsNavItem } from "@ecom/shared/types/nav";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
 export const mainNavItems: NavItem[] = [
@@ -114,12 +118,40 @@ export const mainNavItems: NavItem[] = [
 export const secondaryNavItems: NavSubItem[] = [
 	{
 		title: "Settings",
-		url: "#",
+		url: "/settings",
 		icon: IconSettings,
 	},
 	{
 		title: "Get Help",
 		url: "#",
 		icon: IconHelp,
+	},
+];
+
+export const settingsNavItems: SettingsNavItem[] = [
+	{
+		label: "Store Details",
+		path: "/settings/store-details",
+		icon: <House />,
+	},
+	{
+		label: "Payments",
+		path: "/settings/abcd",
+		icon: <CreditCard />,
+	},
+	{
+		label: "Checkouts",
+		path: "/settings/gfh",
+		icon: <ShoppingCart />,
+	},
+	{
+		label: "Shipping and Dilivery",
+		path: "/settings/fds",
+		icon: <Truck />,
+	},
+	{
+		label: "Notifications",
+		path: "/settings/afdsgd",
+		icon: <Bell />,
 	},
 ];

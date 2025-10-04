@@ -56,6 +56,8 @@ export class Service implements ServiceBase {
 
 	protected readonly HERO_SECTIONS_TABLE = "hero_sections";
 
+	protected readonly STORE_SETTINGS_TABLE = "store_settings";
+
 	constructor(request: Request, opts?: { supabase?: SupabaseClient<Database>; headers?: Headers }) {
 		if (opts?.supabase && opts?.headers) {
 			this.supabase = opts.supabase;

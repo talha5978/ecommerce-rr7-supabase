@@ -69,6 +69,14 @@ export default [
 			route(":hero_section_id/update", "./routes/HeroSection/update-hero-section.tsx"),
 			route(":hero_section_id/delete", "./routes/_actions/delete-hero-section.tsx"),
 		]),
+
+		route("/settings", "./routes/Settings/SettingsMainPage.tsx", [
+			// index("./routes/Settings/StoreSettings.tsx"),
+			...prefix("store-details", [
+				route("", "./routes/Settings/StoreSettings.tsx"),
+				route(":id/update", "./routes/_actions/update-store-address.tsx"),
+			]),
+		]),
 	]),
 
 	route("*", "./routes/Error/404.tsx"),

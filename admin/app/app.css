@@ -77,6 +77,7 @@ body {
 	--header-spacing: 4rem;
 	--tracking-normal: 0em;
 	--muted-dark: oklch(0.95 0 0);
+	--map-height: 250px;
 }
 
 .dark {
@@ -137,6 +138,7 @@ body {
 	--spacing: 0.25rem;
 	--header-spacing: 4rem;
 	--muted-dark: oklch(0.95 0 0);
+	--map-height: 250px;
 }
 
 @theme inline {
@@ -210,6 +212,7 @@ body {
 	--shadow-opacity: var(--shadow-opacity);
 	--color-shadow-color: var(--shadow-color);
 	--color-muted-dark: var(--muted-dark);
+	--map-height: var(--map-height);
 }
 
 @layer base {

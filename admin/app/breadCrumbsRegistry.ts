@@ -200,6 +200,17 @@ const breadcrumbRegistry: Record<string, BreadcrumbGenerator> = {
 			href: `/hero-sections/${params?.id}/update`,
 		},
 	],
+
+	"/settings": () => [
+		{ label: "Home", href: "/" },
+		{ label: "Settings", href: "/settings" },
+	],
+
+	"/settings/store-details": () => [
+		{ label: "Home", href: "/" },
+		{ label: "Settings", href: "/settings" },
+		{ label: "Store Details", href: "/store-details" },
+	],
 };
 
 export default breadcrumbRegistry;

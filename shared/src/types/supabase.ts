@@ -800,6 +800,27 @@ export type Database = {
 					},
 				];
 			};
+			store_settings: {
+				Row: {
+					created_at: string;
+					id: string;
+					store_address: Json;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					id?: string;
+					store_address?: Json;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					id?: string;
+					store_address?: Json;
+					updated_at?: string;
+				};
+				Relationships: [];
+			};
 			sub_category: {
 				Row: {
 					createdAt: string;

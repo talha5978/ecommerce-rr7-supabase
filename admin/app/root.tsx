@@ -23,6 +23,31 @@ export const links: Route.LinksFunction = () => [
 	},
 ];
 
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+	window.addEventListener("load", async () => {
+		try {
+			const { Workbox } = await import("workbox-window");
+			const wb = new Workbox("/sw.js");
+			await wb.register();
+			console.log("Service worker registered successfully");
+
+			// Keep service worker active
+			wb.addEventListener("activated", () => {
+				console.log("Service worker activated");
+				setInterval(() => {
+					wb.messageSW({ type: "KEEP_ALIVE" });
+					console.log("Sent keep-alive to service worker");
+				}, 20000);
+			});
+			wb.addEventListener("waiting", () => {
+				wb.messageSkipWaiting();
+			});
+		} catch (error) {
+			console.error("Failed to register service worker:", error);
+		}
+	});
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url);
 	const pathname = url.pathname;

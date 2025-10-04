@@ -11,3 +11,10 @@ export interface NavItem {
 	title: string;
 	items: NavSubItem[];
 }
+
+export type SettingsNavItem = {
+	label: string;
+	path: string;
+	icon: JSX.Element;
+	requiredPermission?: Permission;
+};
