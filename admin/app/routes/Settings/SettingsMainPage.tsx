@@ -2,6 +2,7 @@ import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 import { Outlet } from "react-router";
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { NavigationPane } from "~/components/Settings/Navigation";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
 
 export const loader = () => {
 	return null;
@@ -10,6 +11,11 @@ export const loader = () => {
 export default function SettingsMainPage() {
 	return (
 		<>
+			<MetaDetails
+				metaDescription="Manage all the settings according to the store here."
+				metaTitle="Settings"
+				metaKeywords="Settings, Store settings"
+			/>
 			<Breadcrumbs />
 			<PageLayout />
 		</>
