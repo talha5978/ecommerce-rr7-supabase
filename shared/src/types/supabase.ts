@@ -803,19 +803,31 @@ export type Database = {
 			store_settings: {
 				Row: {
 					created_at: string;
+					email_1: string;
+					email_2: string;
 					id: string;
+					phone_1: string;
+					phone_2: string;
 					store_address: Json;
 					updated_at: string;
 				};
 				Insert: {
 					created_at?: string;
+					email_1?: string;
+					email_2?: string;
 					id?: string;
+					phone_1?: string;
+					phone_2?: string;
 					store_address?: Json;
 					updated_at?: string;
 				};
 				Update: {
 					created_at?: string;
+					email_1?: string;
+					email_2?: string;
 					id?: string;
+					phone_1?: string;
+					phone_2?: string;
 					store_address?: Json;
 					updated_at?: string;
 				};

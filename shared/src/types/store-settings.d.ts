@@ -11,3 +11,10 @@ export type getStoreSettingsResp = {
 	store_settings: StoreSettings_Raw | null;
 	error: ApiError | null;
 };
+
+export type UpdateStoreContactInfo = {
+	email_1?: string;
+	email_2?: string;
+	phone_1?: string;
+	phone_2?: string;
+};

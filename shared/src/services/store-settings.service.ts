@@ -4,7 +4,11 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
-import type { getStoreSettingsResp, UpdateStoreAddress } from "@ecom/shared/types/store-settings";
+import type {
+	getStoreSettingsResp,
+	UpdateStoreAddress,
+	UpdateStoreContactInfo,
+} from "@ecom/shared/types/store-settings";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<StoreSettingsService>(verifyUser))
 export class StoreSettingsService extends Service {
@@ -47,6 +51,10 @@ export class StoreSettingsService extends Service {
 							store_address: dbResp.store_address,
 							created_at: dbResp.created_at,
 							updated_at: dbResp.updated_at,
+							email_1: dbResp.email_1,
+							email_2: dbResp.email_2,
+							phone_1: dbResp.phone_1,
+							phone_2: dbResp.phone_2,
 						}
 					: null,
 				error: null,
@@ -62,10 +70,26 @@ export class StoreSettingsService extends Service {
 		}
 	}
 
+	/** Update the store address in the settings menu */
 	async updateAddress({ id, address }: { id: string; address: UpdateStoreAddress }) {
 		const { data, error } = await this.supabase
 			.from("store_settings")
 			.update({ store_address: address })
+			.eq("id", id)
+			.single();
+
+		if (error) {
+			throw error;
+		}
+
+		return data;
+	}
+
+	/** Update the store contact info in the settings menu */
+	async updateContactInfo({ id, contact_info }: { id: string; contact_info: UpdateStoreContactInfo }) {
+		const { data, error } = await this.supabase
+			.from("store_settings")
+			.update({ ...contact_info })
 			.eq("id", id)
 			.single();
 

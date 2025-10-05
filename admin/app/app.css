@@ -283,3 +283,7 @@ input::-webkit-inner-spin-button {
 .CustomTagsInputClear .wrapper:hover .refresh-icon {
 	@apply transform rotate-45;
 }
+
+.settings-nav-width {
+	@apply w-[220px] max-w-[220px];
+}

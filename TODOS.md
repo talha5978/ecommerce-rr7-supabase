@@ -13,6 +13,7 @@
 // Admin -----
 
 // PRIMARY 🔴
+	TODO: Then create functionality to update basic details about the store like its name and niche
 
 
 // Secondary 🟢
