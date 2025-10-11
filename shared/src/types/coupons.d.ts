@@ -85,3 +85,8 @@ export type GetFullCoupon = {
 	coupon: FullCoupon | null;
 	error: ApiError | null;
 };
+
+export type FP_GetAllCouponsDetailsResp = {
+	coupons: FullCoupon[] | null;
+	error: ApiError | null;
+};

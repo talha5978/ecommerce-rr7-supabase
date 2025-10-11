@@ -74,6 +74,7 @@ import {
 } from "@ecom/shared/schemas/coupons.schema";
 import { CouponsService } from "@ecom/shared/services/coupons.service";
 import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
+import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 
 // This function is used to reset the search params of products selections component dialogs in coupons when type changes
 export function resetParamsOnTypeChange({
@@ -185,6 +186,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	// return;
 	try {
 		await couponsSvc.createCoupon({ input: parseResult.data, coupon_type: couponType as CouponType });
+
+		await queryClient.invalidateQueries({ queryKey: ["high_lvl_coupons"] });
 
 		return { success: true };
 	} catch (error: any) {

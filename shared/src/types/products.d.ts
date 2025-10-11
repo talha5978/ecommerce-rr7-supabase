@@ -67,6 +67,7 @@ export type FP_Featured_Product = {
 	cover_image: string;
 	available_sizes: string[];
 	original_price: number;
+	url_key: string;
 };
 
 export type FP_Featured_Products_Response = {

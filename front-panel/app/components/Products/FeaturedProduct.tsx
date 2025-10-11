@@ -1,5 +1,5 @@
 import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
-import { FP_Featured_Product } from "@ecom/shared/types/products";
+import type { FP_Featured_Product } from "@ecom/shared/types/products";
 import React, { memo, useState } from "react";
 import { Link } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
@@ -20,7 +20,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 			onMouseLeave={() => setIsHovered(false)}
 			{...props}
 		>
-			<Link to={`/product/${product.id}`}>
+			<Link to={`/product/${product.id}/${product.url_key}`} prefetch="intent">
 				<div className="relative overflow-hidden">
 					<div className="w-full aspect-w-4 aspect-h-3">
 						<img

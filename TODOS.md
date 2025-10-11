@@ -1,10 +1,13 @@
 // Front Panel -----
 
 // PRIMARY 🔴
+	TODO: Create collections and categories sections on home page
+	TODO: Add responsivness to the headers
+	TODO: Create a page to show the details of product
+	TODO: calculate the discount for each product
+	TODO: then apply the checkout + payments + order managment functionality
 
-// TODO: 
-	Create collections and categories sections on home page
-	Add responsivness to the headers
+	// TODO: Show an error component in case of error instead of showing a whole Error page
 
 
 ############################################################################################
@@ -13,7 +16,6 @@
 // Admin -----
 
 // PRIMARY 🔴
-	TODO: Then create functionality to update basic details about the store like its name and niche
 
 
 // Secondary 🟢

@@ -983,6 +983,10 @@ export type Database = {
 					values_count: number;
 				}[];
 			};
+			get_product_full_details: {
+				Args: { p_product_id: string };
+				Returns: Json;
+			};
 			update_collection: {
 				Args: {
 					p_added_product_ids: string[];

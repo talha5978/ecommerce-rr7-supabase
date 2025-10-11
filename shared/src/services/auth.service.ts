@@ -36,6 +36,7 @@ export class AuthService extends Service {
 				`,
 				)
 				.eq("user_id", authUser.id)
+				.eq("status", true)
 				.single();
 
 			// console.log("Reached at next level 😀😀😀", userDetails ?? "NOT FOUND 🌋");

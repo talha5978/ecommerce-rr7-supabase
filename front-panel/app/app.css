@@ -245,5 +245,9 @@ input::-webkit-inner-spin-button {
 }
 
 .max-container {
-	@apply max-w-[1370px] mx-auto px-4;
+	@apply max-w-[1300px] mx-auto px-4;
+}
+
+.product-details-table-entry {
+	@apply w-1/2 px-3 py-3 border;
 }

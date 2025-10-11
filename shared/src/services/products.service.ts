@@ -26,6 +26,7 @@ import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 import { UseMiddleware } from "@ecom/shared//decorators/useMiddleware";
 import { requireAllPermissions } from "@ecom/shared//middlewares/permissions.middleware";
 import { Permission } from "@ecom/shared//permissions/permissions.enum";
+import type { GetProductFullDetailsResp, ProductFullDetails } from "@ecom/shared/types/product-details";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductsService>(verifyUser))
 export class ProductsService extends Service {
@@ -475,13 +476,16 @@ export class FP_ProductsService extends Service {
 						id,
 						name,
 						cover_image,
-						product_variant (
+						${this.PRODUCT_VARIANT_TABLE} (
 							id,
 							product_id,
 							original_price
 						),
-						product_attributes (
+						${this.PRODUCT_ATTRIBUTES_TABLE} (
 							attribute_id
+						),
+						${this.META_DETAILS_TABLE} (
+							url_key
 						)
 					`,
 					{ count: "exact" },
@@ -521,6 +525,7 @@ export class FP_ProductsService extends Service {
 								cover_image: product.cover_image,
 								available_sizes: [],
 								original_price: product.product_variant[0]?.original_price ?? 0,
+								url_key: product.meta_details?.url_key ?? "",
 							};
 						}
 
@@ -538,6 +543,7 @@ export class FP_ProductsService extends Service {
 								cover_image: product.cover_image,
 								available_sizes: [],
 								original_price: product.product_variant[0]?.original_price ?? 0,
+								url_key: product.meta_details?.url_key ?? "",
 							};
 						}
 
@@ -547,6 +553,7 @@ export class FP_ProductsService extends Service {
 							cover_image: product.cover_image,
 							available_sizes: sizeData.map((s) => s.value),
 							original_price: product.product_variant[0]?.original_price ?? 0,
+							url_key: product.meta_details?.url_key ?? "",
 						};
 					}),
 				);
@@ -568,5 +575,23 @@ export class FP_ProductsService extends Service {
 				error: new ApiError("Unknown error", 500, [err]),
 			};
 		}
+	}
+
+	async getProductDetails(product_id: string): Promise<GetProductFullDetailsResp> {
+		const {
+			data,
+			error: dbError,
+			statusText,
+		} = await this.supabase.rpc("get_product_full_details", {
+			p_product_id: product_id,
+		});
+
+		let error: ApiError | null = null;
+		if (dbError) error = new ApiError(statusText, Number(dbError.code) ?? 500, [dbError.details]);
+
+		return {
+			product: (data ?? null) as ProductFullDetails | null,
+			error,
+		};
 	}
 }
