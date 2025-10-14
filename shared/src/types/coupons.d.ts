@@ -26,10 +26,29 @@ export type HighLevelCoupon = {
 	created_at: string | null;
 };
 
-export type GetHighLevelCouponsResp = {
-	coupons: HighLevelCoupon[] | null;
-	total: number;
-	error: ApiError | null;
+export type FullCouponBuyXGetYEntity = {
+	id: string;
+	name: string;
+	image_url?: string;
+	url_key: string;
+	parent_id?: string; // For sub_category
+	original_price?: number; // For sku
+	images?: string[]; // For sku
+	cover_image?: string; // For product via sku
+};
+
+export type FullCouponBuyXGroup = {
+	min_value_type: BuyMinType;
+	min_value: string;
+	entitiy_type: TypesToSelect;
+	entities: FullCouponBuyXGetYEntity[];
+};
+
+export type FullCouponGetYGroup = {
+	get_quantity: string;
+	discount_percent: string;
+	entitiy_type: TypesToSelect;
+	entities: FullCouponBuyXGetYEntity[];
 };
 
 export type FullCoupon = HighLevelCoupon & {
@@ -43,18 +62,8 @@ export type FullCoupon = HighLevelCoupon & {
 		value_ids: string[] | null;
 	}[];
 	buy_x_get_y_conditions: {
-		buy_group: {
-			min_value_type: BuyMinType;
-			min_value: string;
-			entitiy_type: TypesToSelect;
-			ids: (number | string)[];
-		};
-		get_group: {
-			get_quantity: string;
-			discount_percent: string;
-			entitiy_type: TypesToSelect;
-			ids: (number | string)[];
-		};
+		buy_group: FullCouponBuyXGroup;
+		get_group: FullCouponGetYGroup;
 	} | null;
 	order_conditions: {
 		min_purchase_qty: string | null;
@@ -88,5 +97,11 @@ export type GetFullCoupon = {
 
 export type FP_GetAllCouponsDetailsResp = {
 	coupons: FullCoupon[] | null;
+	error: ApiError | null;
+};
+
+export type GetHighLevelCouponsResp = {
+	coupons: HighLevelCoupon[] | null;
+	total: number;
 	error: ApiError | null;
 };

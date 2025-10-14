@@ -188,6 +188,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		await couponsSvc.createCoupon({ input: parseResult.data, coupon_type: couponType as CouponType });
 
 		await queryClient.invalidateQueries({ queryKey: ["high_lvl_coupons"] });
+		await queryClient.invalidateQueries({ queryKey: ["fp_all_coupons"] });
 
 		return { success: true };
 	} catch (error: any) {
@@ -589,9 +590,9 @@ export default function CreateCouponPage({ params }: Route.ComponentProps) {
 		submit(formData, { method: "POST" });
 	}
 
-	useEffect(() => {
-		console.log("Errors: ", errors);
-	}, [errors]);
+	// useEffect(() => {
+	// 	console.log("Errors: ", errors);
+	// }, [errors]);
 
 	return (
 		<>

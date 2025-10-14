@@ -103,14 +103,6 @@ export function calculateDiscountedPrice(originalPrice: number, coupon: FullCoup
 		case "percentage_order":
 		case "percentage_product":
 			return originalPrice * (1 - (coupon.discount_value ?? 0) / 100);
-		case "buy_x_get_y":
-			// Simplified: for unit price, apply percentage if applicable; adjust logic as needed for BOGO on unit
-			if (coupon.buy_x_get_y_conditions) {
-				const discountPercent =
-					parseFloat(coupon.buy_x_get_y_conditions.get_group.discount_percent) ?? 0;
-				return originalPrice * (1 - discountPercent / 100);
-			}
-			return originalPrice;
 		default:
 			return originalPrice;
 	}
@@ -202,30 +194,13 @@ export function getApplicableCoupons(
 		) {
 			return false;
 		}
-		// For buy_x_get_y, check buy_group and get_group ids
-		if (coupon.discount_type === "buy_x_get_y" && coupon.buy_x_get_y_conditions) {
-			const buyIds = coupon.buy_x_get_y_conditions.buy_group.ids;
-			const getIds = coupon.buy_x_get_y_conditions.get_group.ids;
-			const entityType = coupon.buy_x_get_y_conditions.buy_group.entitiy_type; // Assuming same for buy/get
-			const isInBuy =
-				entityType === "sku"
-					? buyIds.includes(selectedVariant.id)
-					: entityType === "category"
-						? buyIds.includes(data.product.category_id)
-						: entityType === "collection"
-							? data.collections.some((c) => buyIds.includes(c.id))
-							: false;
-			const isInGet =
-				entityType === "sku"
-					? getIds.includes(selectedVariant.id)
-					: entityType === "category"
-						? getIds.includes(data.product.category_id)
-						: entityType === "collection"
-							? data.collections.some((c) => getIds.includes(c.id))
-							: false;
-			if (!isInBuy && !isInGet) return false;
+
+		// REmove the buy x get y coupons from the list
+		if (coupon.buy_x_get_y_conditions != null && coupon.discount_type === "buy_x_get_y") {
+			return false;
 		}
-		// Add more checks (customer_conditions, etc.) as needed
+
+		// Add more checks (customer_conditions, etc.)
 		return true;
 	});
 }

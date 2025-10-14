@@ -19,13 +19,14 @@ import {
 	getProductAttributesToShow,
 	getVariantsColors,
 } from "~/utils/product-details-helpers";
-import type { ProductAttribute } from "@ecom/shared/types/product-details";
+import type { ProductAttribute, ProductFullDetails } from "@ecom/shared/types/product-details";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { StockDisplay } from "~/components/Products/ProductDetailsStockDisplay";
 import type { loader as rootLoader } from "~/root";
 import { Badge } from "~/components/ui/badge";
 import type { FullCoupon } from "@ecom/shared/types/coupons";
 import { motion } from "motion/react";
+import OffersSection from "~/components/Products/ProductDetailsOffersSection";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const product_id = params.productId;
@@ -51,13 +52,15 @@ export default function ProductDetailsPage() {
 	const { data, error } = useLoaderData<typeof loader>();
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
 	const allCoupons: FullCoupon[] =
-		rootLoaderData?.coupons?.filter((c) => c.coupon_type == "automatic") || [];
+		rootLoaderData?.coupons
+			?.filter((c) => c.coupon_type == "automatic")
+			?.filter((c) => c.discount_type == "buy_x_get_y") || [];
 
 	if (error || data?.product == null) {
 		toast.error(error?.message ?? "Something went wrong");
 		return null;
 	}
-	console.log(allCoupons, data);
+	console.log("Coupo", rootLoaderData?.coupons);
 
 	const allColors = useMemo(() => getVariantsColors(data), [data]);
 
@@ -111,22 +114,28 @@ export default function ProductDetailsPage() {
 
 	// Auto-apply first applicable automatic coupon coupon or use selected manual
 	const effectiveCoupon = useMemo(() => {
-		if (selectedCouponCode && selectedCouponCode !== "null") {
+		if (
+			selectedCouponCode &&
+			selectedCouponCode !== NullCouponSelectIdentifier &&
+			selectedCouponCode !== ""
+		) {
 			return allCoupons.find((c) => c.code === selectedCouponCode) ?? null;
 		}
 		return applicableCoupons[0] ?? null; // Auto-apply first automatic
 	}, [selectedCouponCode, applicableCoupons, allCoupons]);
 
-	// Update 1. Reset on size change
+	// Reset on size change
 	useEffect(() => {
 		if (selectedSize) {
-			setValue("coupon", "null");
+			setValue("coupon", NullCouponSelectIdentifier);
 		}
 	}, [selectedSize, setValue]);
 
-	// 2. Auto-apply after reset or initial load
+	// Auto-apply after reset or initial load
 	useEffect(() => {
-		if (applicableCoupons.length > 0 && (!selectedCouponCode || selectedCouponCode === "null")) {
+		if (applicableCoupons.length > 0 && selectedCouponCode === "") {
+			console.log("Running auto");
+
 			setValue("coupon", applicableCoupons[0].code);
 		}
 	}, [applicableCoupons, selectedCouponCode, setValue]);
@@ -147,13 +156,28 @@ export default function ProductDetailsPage() {
 					}}
 				/>
 				<div className="flex md:flex-row flex-col gap-6 w-full">
-					<div className="flex-1">
+					<div className="flex-1 flex gap-10 flex-col">
 						<div className="min-[1000px]:inline hidden">
 							<ProductImageCarousel images={carouselImages} />
 						</div>
 						<div className="inline min-[1000px]:hidden">
 							<ProductImageCarousel images={carouselImages} thumbPosition="bottom" />
 						</div>
+						<OffersSection
+							coupons={allCoupons}
+							product={{
+								id: data.product.id,
+								collections: data.collections.map((c) => {
+									return c.id;
+								}),
+								sub_category: data.product.sub_category,
+								variants: data.variants.map((v) => {
+									return {
+										id: v.id,
+									};
+								}),
+							}}
+						/>
 					</div>
 					<div className="flex-1 flex flex-col gap-3">
 						<div className="flex gap-2 justify-between">

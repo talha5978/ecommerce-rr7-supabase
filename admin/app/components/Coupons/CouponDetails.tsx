@@ -185,7 +185,7 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 									</p>
 									<p>
 										<span className="font-medium">IDs:</span>{" "}
-										{buy_x_get_y_conditions.buy_group.ids.join(", ") || "N/A"}
+										{/* {buy_x_get_y_conditions.buy_group.ids.join(", ") || "N/A"} */}
 									</p>
 								</div>
 								<div>
@@ -204,7 +204,7 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 									</p>
 									<p>
 										<span className="font-medium">IDs:</span>{" "}
-										{buy_x_get_y_conditions.get_group.ids.join(", ") || "N/A"}
+										{/* {buy_x_get_y_conditions.get_group.ids.join(", ") || "N/A"} */}
 									</p>
 								</div>
 							</div>
