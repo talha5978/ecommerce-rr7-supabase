@@ -170,36 +170,6 @@ export function getApplicableCoupons(
 	selectedVariant: ProductVariant,
 ) {
 	return allCoupons.filter((coupon) => {
-		// Check order_conditions (eligibility)
-		if (
-			coupon.order_conditions.conditions?.length &&
-			!matchesConditionGroup(
-				selectedVariant.id,
-				data.product,
-				data.collections,
-				coupon.order_conditions.conditions,
-			)
-		) {
-			return false;
-		}
-		// Check main_simple_conditions (discount_application)
-		if (
-			coupon.main_simple_conditions.length > 0 &&
-			!matchesConditionGroup(
-				selectedVariant.id,
-				data.product,
-				data.collections,
-				coupon.main_simple_conditions,
-			)
-		) {
-			return false;
-		}
-
-		// REmove the buy x get y coupons from the list
-		if (coupon.buy_x_get_y_conditions != null && coupon.discount_type === "buy_x_get_y") {
-			return false;
-		}
-
 		// Add more checks (customer_conditions, etc.)
 		return true;
 	});

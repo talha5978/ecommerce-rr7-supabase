@@ -1,13 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 import type {
 	CollectionDataItemsResponse,
-	CollectionsNamesListResponse,
 	GetFullCollection,
 	GetHighLevelCollectionsResp,
 } from "@ecom/shared/types/collections";
 import { CollectionsService } from "@ecom/shared/services/collections.service";
 import type { CollectionFilers } from "@ecom/shared/schemas/collections-filter.schema";
-import type { Groups } from "@ecom/shared/types/coupons-comp";
 
 interface collectionsQueryArgs {
 	request: Request;
@@ -30,14 +28,6 @@ type collectionsDataItemsArgs = {
 type fullCollectionQueryArgs = {
 	request: Request;
 	collection_id: string;
-};
-
-type collectionsNameQueryArgs = {
-	request: Request;
-	pageIndex?: number;
-	searchQuery?: string;
-	autoRun?: boolean;
-	group: Groups;
 };
 
 export const collectionsQuery = ({ request, q, pageIndex, pageSize, filters }: collectionsQueryArgs) => {
@@ -79,23 +69,5 @@ export const FullCollectionQuery = ({ request, collection_id }: fullCollectionQu
 			const result = await collectionSvc.getFullCollection(collection_id);
 			return result;
 		},
-	});
-};
-
-export const collectionsNameQuery = ({
-	request,
-	pageIndex,
-	searchQuery,
-	autoRun,
-	group,
-}: collectionsNameQueryArgs) => {
-	return queryOptions<CollectionsNamesListResponse>({
-		queryKey: [`${group}_collectionNames`, pageIndex, searchQuery],
-		queryFn: async () => {
-			const collectionSvc = new CollectionsService(request);
-			const result = await collectionSvc.getCollectionsNamesList(pageIndex, searchQuery);
-			return result;
-		},
-		enabled: !!autoRun,
 	});
 };

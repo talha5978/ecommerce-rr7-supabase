@@ -1,11 +1,12 @@
 import { defaults, type FilterOp, REQUIRED_VARIANT_ATTRIBS } from "@ecom/shared/constants/constants";
 import { Service } from "./service";
 import { defaultOp, ProductVariantsFilters } from "@ecom/shared/schemas/product-variants-filter.schema";
-import {
+import type {
 	GetAllProductVariants,
 	ProductVariantUpdationPayload,
 	SingleProductVariantResponse,
 	VariantConstraintsData,
+	VariantsForCouponsResp,
 } from "@ecom/shared/types/product-variants";
 import { applyFilterOps } from "@ecom/shared/utils/applyFilterOps";
 import { ApiError } from "@ecom/shared/utils/ApiError";
@@ -599,5 +600,37 @@ export class ProductVariantsService extends Service {
 		if (error) {
 			throw new ApiError(`Failed to update product variant: ${error.message}`, 500, [error.details]);
 		}
+	}
+
+	/** Get id, value and image of the skus for coupons discount type section */
+	@UseMiddleware(requireAllPermissions([Permission.MANAGE_COUPONS]))
+	async getSkusForCouponDiscountType(): Promise<VariantsForCouponsResp> {
+		const { data, error: dbError } = await this.supabase
+			.from(this.PRODUCT_VARIANT_TABLE)
+			.select(
+				`
+					id, sku, ${this.PRODUCTS_TABLE}(cover_image)
+				`,
+			)
+			.eq("status", true)
+			.order("createdAt", { ascending: false });
+
+		let error: ApiError | null = null;
+
+		if (dbError) {
+			error = new ApiError(dbError.message, Number(dbError.code), [dbError.details]);
+		}
+
+		return {
+			skus:
+				data?.map((item) => {
+					return {
+						id: item.id,
+						value: item.sku,
+						cover_image: item[this.PRODUCTS_TABLE]?.cover_image,
+					};
+				}) ?? [],
+			error: error ?? null,
+		};
 	}
 }

@@ -61,6 +61,7 @@ export default [
 			index("./routes/Coupons/coupons.tsx"),
 			route("coupon/:couponId", "./routes/Coupons/coupon-details.tsx"),
 			route("create/:couponType", "./routes/Coupons/create-coupon.tsx"),
+			route(":couponId/delete", "./routes/_actions/delete-coupon.tsx"),
 		]),
 
 		...prefix("/hero-sections", [

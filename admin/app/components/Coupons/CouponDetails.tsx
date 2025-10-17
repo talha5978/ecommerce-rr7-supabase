@@ -2,7 +2,7 @@ import type { GetFullCoupon } from "@ecom/shared/types/coupons";
 import { memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { cn } from "@ecom/shared/lib/utils";
-import { DollarSignIcon, PercentIcon, ShoppingBagIcon, TagIcon } from "lucide-react";
+import { DollarSignIcon, PercentIcon, TagIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
 import {
@@ -10,9 +10,12 @@ import {
 	getCouponStatus,
 	getFullDateTimeFormat,
 } from "@ecom/shared/constants/couponsConstants";
-import StatusBadge from "../status-badge";
+import StatusBadge from "~/components/status-badge";
 import { Separator } from "~/components/ui/separator";
-import { Breadcrumbs } from "../SEO/BreadCrumbs";
+import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
+import { Label } from "~/components/ui/label";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card";
+import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
 
 interface CouponDetailsCardProps {
 	data: GetFullCoupon;
@@ -21,6 +24,8 @@ interface CouponDetailsCardProps {
 
 export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) => {
 	const coupon = data.coupon;
+	console.log(data);
+
 	if (coupon == null || data.error != null) {
 		return <p>No data</p>;
 	}
@@ -35,9 +40,7 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 		start_timestamp,
 		end_timestamp,
 		created_at,
-		main_simple_conditions,
-		buy_x_get_y_conditions,
-		order_conditions,
+		specific_products,
 		customer_conditions,
 		usage_conditions,
 	} = coupon;
@@ -47,14 +50,14 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 		[start_timestamp, end_timestamp],
 	);
 
-	const getDiscountIcon = () => {
+	const DiscountIcon = () => {
 		switch (discount_type.toLowerCase()) {
-			case "percentage":
+			case "percentage_product":
+			case "percentage_order":
 				return <PercentIcon className="h-4 w-4 text-primary" />;
-			case "fixed":
+			case "fixed_order":
+			case "fixed_product":
 				return <DollarSignIcon className="h-4 w-4 text-primary" />;
-			case "buy_x_get_y":
-				return <ShoppingBagIcon className="h-4 w-4 text-primary" />;
 			default:
 				return <TagIcon className="h-4 w-4 text-primary" />;
 		}
@@ -68,7 +71,10 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 				heading: "Discount Type",
 				value: discount_type_fields.find((field) => field.value === discount_type)?.label || "N/A",
 			},
-			{ heading: "Discount Value", value: discount_value ? `${discount_value}` : "N/A" },
+			{
+				heading: `Discount ${discount_type.includes("percentage") ? "percentage" : "value"}`,
+				value: discount_value ? `${discount_value}` : "N/A",
+			},
 			{ heading: "Starts", value: getFullDateTimeFormat(start_timestamp) },
 			{ heading: "Expires", value: getFullDateTimeFormat(end_timestamp) },
 			{ heading: "Created at", value: created_at ? getFullDateTimeFormat(created_at) : "" },
@@ -98,7 +104,9 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 				<CardHeader className="border-b px-6 py-4">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-3">
-							<div className="p-2 bg-primary/10 rounded-md">{getDiscountIcon()}</div>
+							<div className="p-2 bg-primary/10 rounded-md">
+								<DiscountIcon />
+							</div>
 							<div>
 								<CardTitle className="text-xl font-semibold tracking-tight">{code}</CardTitle>
 								<p className="text-sm">{description}</p>
@@ -137,127 +145,10 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 							))}
 						</div>
 					</div>
-					{/* Main Simple Conditions */}
-					{main_simple_conditions.length > 0 && (
-						<div>
-							<h3 className="text-lg font-semibold mb-2">Target Product Conditions</h3>
-							<div className="space-y-2">
-								{main_simple_conditions.map((condition, index) => (
-									<div key={index} className="p-3 rounded-md text-sm">
-										<p>
-											<span className="font-medium">Type:</span> {condition.type}
-										</p>
-										<p>
-											<span className="font-medium">Operator:</span>{" "}
-											{condition.operator}
-										</p>
-										<p>
-											<span className="font-medium">Value (Decimal):</span>{" "}
-											{condition.value_decimal || "N/A"}
-										</p>
-										<p>
-											<span className="font-medium">Value IDs:</span>{" "}
-											{condition.value_ids?.join(", ") || "N/A"}
-										</p>
-									</div>
-								))}
-							</div>
-						</div>
+					{/* Specific Products */}
+					{specific_products != null && specific_products.length > 0 && (
+						<SpecificProductsSection specific_products={specific_products} />
 					)}
-					{/* Buy X Get Y Conditions */}
-					{buy_x_get_y_conditions && (
-						<div>
-							<h3 className="text-lg font-semibold mb-2">Buy X Get Y Conditions</h3>
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-								<div>
-									<p className="font-semibold">Buy Group</p>
-									<p>
-										<span className="font-medium">Min Value Type:</span>{" "}
-										{buy_x_get_y_conditions.buy_group.min_value_type}
-									</p>
-									<p>
-										<span className="font-medium">Min Value:</span>{" "}
-										{buy_x_get_y_conditions.buy_group.min_value}
-									</p>
-									<p>
-										<span className="font-medium">Entity Type:</span>{" "}
-										{buy_x_get_y_conditions.buy_group.entitiy_type}
-									</p>
-									<p>
-										<span className="font-medium">IDs:</span>{" "}
-										{/* {buy_x_get_y_conditions.buy_group.ids.join(", ") || "N/A"} */}
-									</p>
-								</div>
-								<div>
-									<p className="font-semibold">Get Group</p>
-									<p>
-										<span className="font-medium">Quantity:</span>{" "}
-										{buy_x_get_y_conditions.get_group.get_quantity}
-									</p>
-									<p>
-										<span className="font-medium">Discount %:</span>{" "}
-										{buy_x_get_y_conditions.get_group.discount_percent}
-									</p>
-									<p>
-										<span className="font-medium">Entity Type:</span>{" "}
-										{buy_x_get_y_conditions.get_group.entitiy_type}
-									</p>
-									<p>
-										<span className="font-medium">IDs:</span>{" "}
-										{/* {buy_x_get_y_conditions.get_group.ids.join(", ") || "N/A"} */}
-									</p>
-								</div>
-							</div>
-						</div>
-					)}
-					{/* Order Conditions */}
-					<div>
-						<h3 className="text-lg font-semibold mb-2">Order Conditions</h3>
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-							<div>
-								<p>
-									<span className="font-medium">Min Purchase Qty:</span>{" "}
-									{order_conditions.min_purchase_qty || "N/A"}
-								</p>
-								<p>
-									<span className="font-medium">Min Purchase Amount:</span>{" "}
-									{order_conditions.min_purchase_amount || "N/A"}
-								</p>
-								<p>
-									<span className="font-medium">Max Uses/Order:</span>{" "}
-									{order_conditions.max_uses_per_order || "Unlimited"}
-								</p>
-							</div>
-							{order_conditions.conditions && order_conditions.conditions.length > 0 && (
-								<div>
-									<p className="font-semibold">Conditions</p>
-									{order_conditions.conditions.map((condition, index) => (
-										<div key={index} className="p-2 rounded-md mt-2">
-											<p>
-												<span className="font-medium">Type:</span> {condition.type}
-											</p>
-											<p>
-												<span className="font-medium">Operator:</span>{" "}
-												{condition.operator}
-											</p>
-											<p>
-												<span className="font-medium">Value (Decimal):</span>{" "}
-												{condition.value_decimal || "N/A"}
-											</p>
-											<p>
-												<span className="font-medium">Value IDs:</span>{" "}
-												{condition.value_ids?.join(", ") || "N/A"}
-											</p>
-											<p>
-												<span className="font-medium">Min Quantity:</span>{" "}
-												{condition.min_quantity}
-											</p>
-										</div>
-									))}
-								</div>
-							)}
-						</div>
-					</div>
 					<div className="flex gap-4 md:flex-row flex-col *:w-full">
 						{/* Customer Conditions */}
 						<Card className="flex gap-4 flex-col rounded-2xl border shadow-sm hover:shadow-lg transition-shadow duration-150">
@@ -328,3 +219,51 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 		</>
 	);
 });
+
+const SpecificProductsSection = memo(
+	({
+		specific_products,
+	}: {
+		specific_products: {
+			id: string;
+			sku: string;
+			cover_image?: string;
+		}[];
+	}) => {
+		return (
+			<Card className="flex gap-4 flex-col rounded-2xl border shadow-sm hover:shadow-lg transition-shadow duration-150">
+				<CardHeader>Specific Products</CardHeader>
+				<Separator />
+				<CardContent className="grid gap-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1">
+					{specific_products.map((item) => (
+						<HoverCard key={item.id}>
+							<HoverCardTrigger asChild>
+								<Label
+									key={item.id}
+									htmlFor={item.id}
+									className={cn(
+										"flex items-center justify-center px-4 py-2 bg-accent rounded-md cursor-pointer hover:underline underline-offset-4",
+									)}
+								>
+									<p>{item.sku}</p>
+								</Label>
+							</HoverCardTrigger>
+							<HoverCardContent className="w-fit">
+								<div className="flex gap-2 flex-col items-center justify-center">
+									<img
+										src={SUPABASE_IMAGE_BUCKET_PATH + item.cover_image}
+										alt={item.sku + " cover image"}
+										className="object-cover h-40 rounded-md"
+									/>
+									<h4 className="text-xs font-semibold text-muted-foreground">
+										{item.sku}
+									</h4>
+								</div>
+							</HoverCardContent>
+						</HoverCard>
+					))}
+				</CardContent>
+			</Card>
+		);
+	},
+);

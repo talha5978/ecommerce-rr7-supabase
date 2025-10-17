@@ -111,9 +111,5 @@ export const COUPON_TYPE_ENUM = Constants.public.Enums.coupon_type_enum;
 export const ADDRESS_TYPE_ENUM = Constants.public.Enums.address_type_enum;
 export const DISCOUNT_TYPE_ENUM = Constants.public.Enums.discount_type;
 export const DISCOUNT_CUSTOMER_TYPE_ENUM = Constants.public.Enums.customer_type;
-export const PRODUCT_COND_OPERATOR_ENUM = Constants.public.Enums.condition_operator;
-export const DISCOUNT_COND_ROLE_ENUM = Constants.public.Enums.condition_role;
-export const DISCOUNT_COND_TYPE_ENUM = Constants.public.Enums.condition_type;
-export const BUY_MIN_TYPE_ENUM = Constants.public.Enums.buy_min_type_enum;
 
 export const DEFAULT_DICOUNT_TYPE: DiscountType = "fixed_order";

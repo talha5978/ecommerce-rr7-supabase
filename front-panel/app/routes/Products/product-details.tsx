@@ -19,14 +19,13 @@ import {
 	getProductAttributesToShow,
 	getVariantsColors,
 } from "~/utils/product-details-helpers";
-import type { ProductAttribute, ProductFullDetails } from "@ecom/shared/types/product-details";
+import type { ProductAttribute } from "@ecom/shared/types/product-details";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { StockDisplay } from "~/components/Products/ProductDetailsStockDisplay";
 import type { loader as rootLoader } from "~/root";
 import { Badge } from "~/components/ui/badge";
 import type { FullCoupon } from "@ecom/shared/types/coupons";
 import { motion } from "motion/react";
-import OffersSection from "~/components/Products/ProductDetailsOffersSection";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const product_id = params.productId;
@@ -52,15 +51,14 @@ export default function ProductDetailsPage() {
 	const { data, error } = useLoaderData<typeof loader>();
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
 	const allCoupons: FullCoupon[] =
-		rootLoaderData?.coupons
-			?.filter((c) => c.coupon_type == "automatic")
-			?.filter((c) => c.discount_type == "buy_x_get_y") || [];
+		rootLoaderData?.coupons?.filter((c) => c.coupon_type == "automatic") || [];
 
 	if (error || data?.product == null) {
 		toast.error(error?.message ?? "Something went wrong");
 		return null;
 	}
-	console.log("Coupo", rootLoaderData?.coupons);
+
+	console.log("CoupoNS", rootLoaderData?.coupons);
 
 	const allColors = useMemo(() => getVariantsColors(data), [data]);
 
@@ -135,7 +133,6 @@ export default function ProductDetailsPage() {
 	useEffect(() => {
 		if (applicableCoupons.length > 0 && selectedCouponCode === "") {
 			console.log("Running auto");
-
 			setValue("coupon", applicableCoupons[0].code);
 		}
 	}, [applicableCoupons, selectedCouponCode, setValue]);
@@ -163,21 +160,6 @@ export default function ProductDetailsPage() {
 						<div className="inline min-[1000px]:hidden">
 							<ProductImageCarousel images={carouselImages} thumbPosition="bottom" />
 						</div>
-						<OffersSection
-							coupons={allCoupons}
-							product={{
-								id: data.product.id,
-								collections: data.collections.map((c) => {
-									return c.id;
-								}),
-								sub_category: data.product.sub_category,
-								variants: data.variants.map((v) => {
-									return {
-										id: v.id,
-									};
-								}),
-							}}
-						/>
 					</div>
 					<div className="flex-1 flex flex-col gap-3">
 						<div className="flex gap-2 justify-between">

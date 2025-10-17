@@ -47,3 +47,14 @@ export type VariantConstraintsData = {
 	productName: string | null;
 	error: ApiError | null;
 };
+
+export type CouponMutationVariant = {
+	id: string;
+	value: string;
+	cover_image: string | null;
+};
+
+export type VariantsForCouponsResp = {
+	skus: CouponMutationVariant[];
+	error: ApiError | null;
+};

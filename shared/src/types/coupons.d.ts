@@ -6,15 +6,7 @@ export type CouponType = Database["public"]["Enums"]["coupon_type_enum"];
 
 export type DiscountType = Database["public"]["Enums"]["discount_type"];
 
-export type DiscountCondType = Database["public"]["Enums"]["condition_type"];
-
-export type DiscountCondOperator = Database["public"]["Enums"]["condition_operator"];
-
 export type DiscountCustomerGrps = Database["public"]["Enums"]["customer_type"];
-
-export type BuyMinType = Database["public"]["Enums"]["buy_min_type_enum"];
-
-export type GroupsConditionRole = Database["public"]["Enums"]["condition_role"];
 
 export type HighLevelCoupon = {
 	id: number;
@@ -26,59 +18,17 @@ export type HighLevelCoupon = {
 	created_at: string | null;
 };
 
-export type FullCouponBuyXGetYEntity = {
-	id: string;
-	name: string;
-	image_url?: string;
-	url_key: string;
-	parent_id?: string; // For sub_category
-	original_price?: number; // For sku
-	images?: string[]; // For sku
-	cover_image?: string; // For product via sku
-};
-
-export type FullCouponBuyXGroup = {
-	min_value_type: BuyMinType;
-	min_value: string;
-	entitiy_type: TypesToSelect;
-	entities: FullCouponBuyXGetYEntity[];
-};
-
-export type FullCouponGetYGroup = {
-	get_quantity: string;
-	discount_percent: string;
-	entitiy_type: TypesToSelect;
-	entities: FullCouponBuyXGetYEntity[];
-};
-
 export type FullCoupon = HighLevelCoupon & {
 	description: string | null;
 	discount_type: DiscountType;
 	discount_value: number | null;
-	main_simple_conditions: {
-		type: string;
-		operator: string;
-		value_decimal: string | null;
-		value_ids: string[] | null;
-	}[];
-	buy_x_get_y_conditions: {
-		buy_group: FullCouponBuyXGroup;
-		get_group: FullCouponGetYGroup;
-	} | null;
-	order_conditions: {
-		min_purchase_qty: string | null;
-		min_purchase_amount: string | null;
-		max_uses_per_order: string | null;
-		conditions:
-			| {
-					type: string;
-					operator: string;
-					value_decimal: string | null;
-					value_ids: string[] | null;
-					min_quantity: string;
-			  }[]
-			| null;
-	};
+	specific_products:
+		| {
+				id: string;
+				sku: string;
+				cover_image?: string;
+		  }[]
+		| null;
 	customer_conditions: {
 		customer_group: DiscountCustomerGrps | null;
 		customer_emails: string[];

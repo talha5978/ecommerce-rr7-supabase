@@ -1,9 +1,6 @@
 import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
-import React, { memo, useState } from "react";
+import React, { memo } from "react";
 import { Link } from "react-router";
-import { AnimatePresence, motion } from "motion/react";
-import { Button } from "~/components/ui/button";
-import { Heart } from "lucide-react";
 import type { FP_HomeCollection } from "@ecom/shared/types/collections";
 
 interface HomeCollectionCardProps {
@@ -11,15 +8,8 @@ interface HomeCollectionCardProps {
 }
 
 const HomeCollectionCard: React.FC<HomeCollectionCardProps> = memo(({ collection, ...props }) => {
-	const [isHovered, setIsHovered] = useState(false);
-
 	return (
-		<div
-			className="w-full rounded-md shadow-md overflow-hidden"
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
-			{...props}
-		>
+		<div className="w-full rounded-md shadow-md overflow-hidden" {...props}>
 			<Link to={`/collection/${collection.id}`}>
 				<div className="relative overflow-hidden">
 					<div className="w-full aspect-w-6 aspect-h-3">

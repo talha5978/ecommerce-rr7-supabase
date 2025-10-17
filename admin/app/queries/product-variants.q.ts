@@ -3,6 +3,7 @@ import type {
 	GetAllProductVariants,
 	SingleProductVariantResponse,
 	VariantConstraintsData,
+	VariantsForCouponsResp,
 } from "@ecom/shared/types/product-variants";
 import { ProductVariantsService } from "@ecom/shared/services/product-variants.service";
 import type { ProductVariantsFilters } from "@ecom/shared/schemas/product-variants-filter.schema";
@@ -31,6 +32,10 @@ interface singleVariantQueryArgs {
 interface variantConstraintsQueryArgs {
 	request: Request;
 	product_id: string;
+}
+
+interface getSkusForCouponsArgs {
+	request: Request;
 }
 
 export const productVariantsQuery = ({
@@ -85,6 +90,17 @@ export const variantConstraintsQuery = ({ request, product_id }: variantConstrai
 		queryFn: async () => {
 			const prodVariantsService = new ProductVariantsService(request);
 			const result = await prodVariantsService.getConstaintsForVariantMutations(product_id);
+			return result;
+		},
+	});
+};
+
+export const getSkusForCouponsQuery = ({ request }: getSkusForCouponsArgs) => {
+	return queryOptions<VariantsForCouponsResp>({
+		queryKey: ["skusForCoupons"],
+		queryFn: async () => {
+			const prodVariantsService = new ProductVariantsService(request);
+			const result = await prodVariantsService.getSkusForCouponDiscountType();
 			return result;
 		},
 	});

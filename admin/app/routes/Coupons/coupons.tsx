@@ -6,12 +6,21 @@ import {
 	useReactTable,
 	type ColumnDef,
 } from "@tanstack/react-table";
-import { ChevronRight, LayoutGrid, MoreHorizontal, PlusCircle, Search, TableOfContents } from "lucide-react";
+import {
+	ChevronRight,
+	LayoutGrid,
+	Loader2,
+	MoreHorizontal,
+	PlusCircle,
+	Search,
+	TableOfContents,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
 	Form,
 	Link,
+	useFetcher,
 	useLoaderData,
 	useLocation,
 	useNavigation,
@@ -152,6 +161,29 @@ const CouponsPage = memo(() => {
 		}
 	}, [data.error]);
 
+	const fetcher = useFetcher();
+
+	// Handle fetcher state for toasts and query invalidation
+	useEffect(() => {
+		if (fetcher.data) {
+			if (fetcher.data.success) {
+				toast.success(`Coupon deleted successfully`);
+			} else if (fetcher.data.error) {
+				toast.error(fetcher.data.error);
+			}
+		}
+		console.log(fetcher.data);
+	}, [fetcher.data, queryClient]);
+
+	const handleDeleteClick = (couponId: number) => {
+		const formData = new FormData();
+		formData.append("couponId", couponId.toString());
+		fetcher.submit(formData, {
+			method: "POST",
+			action: `/coupons/${couponId}/delete`,
+		});
+	};
+
 	const columns: ColumnDef<HighLevelCoupon>[] = [
 		{
 			id: "select",
@@ -244,6 +276,16 @@ const CouponsPage = memo(() => {
 							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 								<DropdownMenuItem>Update</DropdownMenuItem>
 							</Link>
+							<DropdownMenuItem
+								disabled={fetcher.state === "submitting"}
+								variant="destructive"
+								onClick={() => handleDeleteClick(rowData.id)}
+							>
+								{fetcher.state === "submitting" ? (
+									<Loader2 className="animate-spin" color="white" />
+								) : null}
+								Delete
+							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				);

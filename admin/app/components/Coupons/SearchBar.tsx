@@ -2,14 +2,21 @@ import { memo, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { Controller, useForm } from "react-hook-form";
-import { CondTypeLabels, getNameSearchTag, getPageSearchTag } from "@ecom/shared/constants/couponsConstants";
+// import { CondTypeLabels, getNameSearchTag, getPageSearchTag } from "@ecom/shared/constants/couponsConstants";
 import { Search, X } from "lucide-react";
 import { Input } from "~/components/ui/input";
-import { BuyXGetYGroupOpts, SearchBarProps } from "@ecom/shared/types/coupons-comp";
+import { SearchBarProps } from "@ecom/shared/types/coupons-comp";
 
-export const SearchBar = memo(({ selectedType, group }: SearchBarProps) => {
-	const nameSearchTag = getNameSearchTag(selectedType, group as BuyXGetYGroupOpts);
-	if (!nameSearchTag) return null;
+const getNameSearchTag = (selectedType: SearchBarProps["selectedType"]) => {
+	return selectedType + "_name";
+};
+
+const getPageSearchTag = (selectedType: SearchBarProps["selectedType"]) => {
+	return selectedType + "_page";
+};
+
+export const SearchBar = memo(({ selectedType }: SearchBarProps) => {
+	const nameSearchTag = getNameSearchTag(selectedType);
 
 	const [searchParams] = useSearchParams();
 	const suppressNavigation = useSuppressTopLoadingBar();
@@ -29,7 +36,7 @@ export const SearchBar = memo(({ selectedType, group }: SearchBarProps) => {
 		suppressNavigation(() => {
 			searchParams.delete(nameSearchTag as string);
 			// Also delete the search page param to force a page reset to first page..
-			searchParams.delete(getPageSearchTag(selectedType, group as BuyXGetYGroupOpts) as string);
+			searchParams.delete(getPageSearchTag(selectedType));
 		}).setSearchParams(searchParams);
 		setValue("query", "");
 	}, [searchParams, setValue]);
@@ -43,7 +50,7 @@ export const SearchBar = memo(({ selectedType, group }: SearchBarProps) => {
 				searchParams.delete(nameSearchTag);
 			}
 			// Also delete the search page param to force a page reset to first page..
-			searchParams.delete(getPageSearchTag(selectedType, group as BuyXGetYGroupOpts) as string);
+			searchParams.delete(getPageSearchTag(selectedType));
 		}).setSearchParams(searchParams);
 	};
 
@@ -65,7 +72,7 @@ export const SearchBar = memo(({ selectedType, group }: SearchBarProps) => {
 							width={18}
 						/>
 						<Input
-							placeholder={`Search ${CondTypeLabels[selectedType].plural.toLowerCase()}...`}
+							placeholder={`Search skus...`}
 							name={nameSearchTag}
 							className="w-full px-8"
 							id="search"

@@ -6,31 +6,6 @@ export type Database = {
 	__InternalSupabase: {
 		PostgrestVersion: "12.2.3 (519615d)";
 	};
-	graphql_public: {
-		Tables: {
-			[_ in never]: never;
-		};
-		Views: {
-			[_ in never]: never;
-		};
-		Functions: {
-			graphql: {
-				Args: {
-					extensions?: Json;
-					operationName?: string;
-					query?: string;
-					variables?: Json;
-				};
-				Returns: Json;
-			};
-		};
-		Enums: {
-			[_ in never]: never;
-		};
-		CompositeTypes: {
-			[_ in never]: never;
-		};
-	};
 	public: {
 		Tables: {
 			addresses: {
@@ -158,61 +133,6 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			buy_x_get_y_details: {
-				Row: {
-					buy_group_id: number | null;
-					buy_min_type: Database["public"]["Enums"]["buy_min_type_enum"];
-					buy_min_value: number | null;
-					coupon_id: number;
-					get_discount_percent: number | null;
-					get_group_id: number | null;
-					get_quantity: number;
-					id: number;
-				};
-				Insert: {
-					buy_group_id?: number | null;
-					buy_min_type?: Database["public"]["Enums"]["buy_min_type_enum"];
-					buy_min_value?: number | null;
-					coupon_id: number;
-					get_discount_percent?: number | null;
-					get_group_id?: number | null;
-					get_quantity: number;
-					id?: never;
-				};
-				Update: {
-					buy_group_id?: number | null;
-					buy_min_type?: Database["public"]["Enums"]["buy_min_type_enum"];
-					buy_min_value?: number | null;
-					coupon_id?: number;
-					get_discount_percent?: number | null;
-					get_group_id?: number | null;
-					get_quantity?: number;
-					id?: never;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "buy_x_get_y_details_buy_group_id_fkey";
-						columns: ["buy_group_id"];
-						isOneToOne: false;
-						referencedRelation: "condition_groups";
-						referencedColumns: ["group_id"];
-					},
-					{
-						foreignKeyName: "buy_x_get_y_details_coupon_id_fkey";
-						columns: ["coupon_id"];
-						isOneToOne: false;
-						referencedRelation: "coupons";
-						referencedColumns: ["coupon_id"];
-					},
-					{
-						foreignKeyName: "buy_x_get_y_details_get_group_id_fkey";
-						columns: ["get_group_id"];
-						isOneToOne: false;
-						referencedRelation: "condition_groups";
-						referencedColumns: ["group_id"];
-					},
-				];
-			};
 			category: {
 				Row: {
 					category_name: string;
@@ -319,140 +239,6 @@ export type Database = {
 					},
 				];
 			};
-			condition_group_collections: {
-				Row: {
-					collection_id: string;
-					condition_group_id: number;
-					created_at: string;
-					id: number;
-				};
-				Insert: {
-					collection_id: string;
-					condition_group_id: number;
-					created_at?: string;
-					id?: number;
-				};
-				Update: {
-					collection_id?: string;
-					condition_group_id?: number;
-					created_at?: string;
-					id?: number;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "condition_group_collections_collection_id_fkey";
-						columns: ["collection_id"];
-						isOneToOne: false;
-						referencedRelation: "collections";
-						referencedColumns: ["id"];
-					},
-					{
-						foreignKeyName: "condition_group_collections_condition_group_id_fkey";
-						columns: ["condition_group_id"];
-						isOneToOne: false;
-						referencedRelation: "condition_groups";
-						referencedColumns: ["group_id"];
-					},
-				];
-			};
-			condition_group_skus: {
-				Row: {
-					condition_group_id: number;
-					created_at: string;
-					id: number;
-					sku_id: string;
-				};
-				Insert: {
-					condition_group_id: number;
-					created_at?: string;
-					id?: number;
-					sku_id: string;
-				};
-				Update: {
-					condition_group_id?: number;
-					created_at?: string;
-					id?: number;
-					sku_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "condition_group_skus_condition_group_id_fkey";
-						columns: ["condition_group_id"];
-						isOneToOne: false;
-						referencedRelation: "condition_groups";
-						referencedColumns: ["group_id"];
-					},
-					{
-						foreignKeyName: "condition_group_skus_sku_id_fkey";
-						columns: ["sku_id"];
-						isOneToOne: false;
-						referencedRelation: "product_variant";
-						referencedColumns: ["id"];
-					},
-				];
-			};
-			condition_group_sub_categories: {
-				Row: {
-					condition_group_id: number;
-					created_at: string;
-					id: number;
-					sub_category_id: string;
-				};
-				Insert: {
-					condition_group_id: number;
-					created_at?: string;
-					id?: number;
-					sub_category_id: string;
-				};
-				Update: {
-					condition_group_id?: number;
-					created_at?: string;
-					id?: number;
-					sub_category_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "condition_group_sub_categories_condition_group_id_fkey";
-						columns: ["condition_group_id"];
-						isOneToOne: false;
-						referencedRelation: "condition_groups";
-						referencedColumns: ["group_id"];
-					},
-					{
-						foreignKeyName: "condition_group_sub_categories_sub_category_id_fkey";
-						columns: ["sub_category_id"];
-						isOneToOne: false;
-						referencedRelation: "sub_category";
-						referencedColumns: ["id"];
-					},
-				];
-			};
-			condition_groups: {
-				Row: {
-					coupon_id: number;
-					group_id: number;
-					role: Database["public"]["Enums"]["condition_role"];
-				};
-				Insert: {
-					coupon_id: number;
-					group_id?: number;
-					role: Database["public"]["Enums"]["condition_role"];
-				};
-				Update: {
-					coupon_id?: number;
-					group_id?: number;
-					role?: Database["public"]["Enums"]["condition_role"];
-				};
-				Relationships: [
-					{
-						foreignKeyName: "condition_groups_coupon_id_fkey";
-						columns: ["coupon_id"];
-						isOneToOne: false;
-						referencedRelation: "coupons";
-						referencedColumns: ["coupon_id"];
-					},
-				];
-			};
 			coupons: {
 				Row: {
 					code: string;
@@ -464,9 +250,6 @@ export type Database = {
 					discount_value: number | null;
 					end_timestamp: string;
 					max_total_uses: number | null;
-					max_uses_per_order: number | null;
-					min_purchase_amount: number | null;
-					min_purchase_qty: number | null;
 					one_use_per_customer: boolean | null;
 					start_timestamp: string;
 					status: boolean;
@@ -481,9 +264,6 @@ export type Database = {
 					discount_value?: number | null;
 					end_timestamp: string;
 					max_total_uses?: number | null;
-					max_uses_per_order?: number | null;
-					min_purchase_amount?: number | null;
-					min_purchase_qty?: number | null;
 					one_use_per_customer?: boolean | null;
 					start_timestamp: string;
 					status?: boolean;
@@ -498,9 +278,6 @@ export type Database = {
 					discount_value?: number | null;
 					end_timestamp?: string;
 					max_total_uses?: number | null;
-					max_uses_per_order?: number | null;
-					min_purchase_amount?: number | null;
-					min_purchase_qty?: number | null;
 					one_use_per_customer?: boolean | null;
 					start_timestamp?: string;
 					status?: boolean;
@@ -709,44 +486,6 @@ export type Database = {
 					},
 				];
 			};
-			product_conditions: {
-				Row: {
-					condition_id: number;
-					group_id: number;
-					min_quantity: number | null;
-					operator: Database["public"]["Enums"]["condition_operator"];
-					type: Database["public"]["Enums"]["condition_type"];
-					value_decimal: number | null;
-					value_ids: string[] | null;
-				};
-				Insert: {
-					condition_id?: number;
-					group_id: number;
-					min_quantity?: number | null;
-					operator: Database["public"]["Enums"]["condition_operator"];
-					type: Database["public"]["Enums"]["condition_type"];
-					value_decimal?: number | null;
-					value_ids?: string[] | null;
-				};
-				Update: {
-					condition_id?: number;
-					group_id?: number;
-					min_quantity?: number | null;
-					operator?: Database["public"]["Enums"]["condition_operator"];
-					type?: Database["public"]["Enums"]["condition_type"];
-					value_decimal?: number | null;
-					value_ids?: string[] | null;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "product_conditions_group_id_fkey";
-						columns: ["group_id"];
-						isOneToOne: false;
-						referencedRelation: "condition_groups";
-						referencedColumns: ["group_id"];
-					},
-				];
-			};
 			product_variant: {
 				Row: {
 					createdAt: string | null;
@@ -796,6 +535,42 @@ export type Database = {
 						columns: ["product_id"];
 						isOneToOne: false;
 						referencedRelation: "product";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			specific_coupon_products: {
+				Row: {
+					coupon_id: number;
+					created_at: string;
+					id: number;
+					variant_id: string;
+				};
+				Insert: {
+					coupon_id: number;
+					created_at?: string;
+					id?: number;
+					variant_id: string;
+				};
+				Update: {
+					coupon_id?: number;
+					created_at?: string;
+					id?: number;
+					variant_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "specific_coupon_products_coupon_id_fkey";
+						columns: ["coupon_id"];
+						isOneToOne: false;
+						referencedRelation: "coupons";
+						referencedColumns: ["coupon_id"];
+					},
+					{
+						foreignKeyName: "specific_coupon_products_variant_id_fkey";
+						columns: ["variant_id"];
+						isOneToOne: false;
+						referencedRelation: "product_variant";
 						referencedColumns: ["id"];
 					},
 				];
@@ -1009,26 +784,9 @@ export type Database = {
 		Enums: {
 			address_type_enum: "shipping" | "billing" | "both";
 			attribute_type_enum: "color" | "size" | "material" | "style" | "brand";
-			buy_min_type_enum: "quantity" | "amount";
-			condition_operator:
-				| "in"
-				| "not_in"
-				| "equal"
-				| "not_equal"
-				| "greater"
-				| "greater_or_equal"
-				| "smaller"
-				| "smaller_or_equal";
-			condition_role: "eligibility" | "discount_application" | "buy_x" | "get_y";
-			condition_type: "category" | "collection" | "price" | "sku";
 			coupon_type_enum: "manual" | "automatic";
 			customer_type: "admins" | "employee" | "all" | "consumer";
-			discount_type:
-				| "fixed_order"
-				| "percentage_order"
-				| "fixed_product"
-				| "percentage_product"
-				| "buy_x_get_y";
+			discount_type: "fixed_order" | "percentage_order" | "fixed_product" | "percentage_product";
 		};
 		CompositeTypes: {
 			[_ in never]: never;
@@ -1152,35 +910,13 @@ export type CompositeTypes<
 		: never;
 
 export const Constants = {
-	graphql_public: {
-		Enums: {},
-	},
 	public: {
 		Enums: {
 			address_type_enum: ["shipping", "billing", "both"],
 			attribute_type_enum: ["color", "size", "material", "style", "brand"],
-			buy_min_type_enum: ["quantity", "amount"],
-			condition_operator: [
-				"in",
-				"not_in",
-				"equal",
-				"not_equal",
-				"greater",
-				"greater_or_equal",
-				"smaller",
-				"smaller_or_equal",
-			],
-			condition_role: ["eligibility", "discount_application", "buy_x", "get_y"],
-			condition_type: ["category", "collection", "price", "sku"],
 			coupon_type_enum: ["manual", "automatic"],
 			customer_type: ["admins", "employee", "all", "consumer"],
-			discount_type: [
-				"fixed_order",
-				"percentage_order",
-				"fixed_product",
-				"percentage_product",
-				"buy_x_get_y",
-			],
+			discount_type: ["fixed_order", "percentage_order", "fixed_product", "percentage_product"],
 		},
 	},
 } as const;

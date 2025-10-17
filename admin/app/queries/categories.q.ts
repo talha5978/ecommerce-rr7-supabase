@@ -7,7 +7,6 @@ import type {
 	GetSubCategoryResponse,
 } from "@ecom/shared/types/category";
 import { CategoryService } from "@ecom/shared/services/category.service";
-import type { Groups } from "@ecom/shared/types/coupons-comp";
 
 interface highLevelCategoriesQueryArgs {
 	request: Request;
@@ -37,7 +36,6 @@ interface singleSubCategoryQueryArgs {
 interface categoriesQueryArgs {
 	request: Request;
 	autoRun?: boolean;
-	group?: Groups;
 	pageIndex?: number;
 	searchQuery?: string;
 }
@@ -62,12 +60,11 @@ export const highLevelCategoriesQuery = ({
 export const categoriesQuery = ({
 	request,
 	autoRun = false,
-	group,
 	pageIndex,
 	searchQuery,
 }: categoriesQueryArgs) => {
 	return queryOptions<GetAllCategoriesResponse>({
-		queryKey: [group ? "categories" : `${group}_categories`, pageIndex, searchQuery],
+		queryKey: ["categories", pageIndex, searchQuery],
 		queryFn: async () => {
 			const categoryService = new CategoryService(request);
 			const result = await categoryService.getAllCategories({

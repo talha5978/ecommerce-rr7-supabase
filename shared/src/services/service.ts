@@ -44,12 +44,8 @@ export class Service implements ServiceBase {
 	protected readonly PRODUCTS_TABLE = "product";
 	protected readonly PRODUCT_VARIANT_TABLE = "product_variant";
 
-	protected readonly BUY_X_GET_Y_TABLE = "buy_x_get_y_details";
-	protected readonly CONDITION_GROUPS_TABLE = "condition_groups";
-	protected readonly CONDITION_GROUP_COLLECTIONS_TABLE = "condition_group_collections";
-	protected readonly CONDITION_GROUP_SKUS_TABLE = "condition_group_skus";
-	protected readonly CONDITION_GROUP_SUB_CATEGORIES_TABLE = "condition_group_sub_categories";
 	protected readonly COUPONS_TABLE = "coupons";
+	protected readonly SPECIFIC_COUPON_PRODUCTS_TABLE = "specific_coupon_products";
 	protected readonly CUSTOMER_CONDITIONS_TABLE = "customer_conditions";
 	protected readonly PRODUCT_CONDITIONS_TABLE = "product_conditions";
 	protected readonly CUSTOMER_EMAILS_TABLE = "customer_emails";

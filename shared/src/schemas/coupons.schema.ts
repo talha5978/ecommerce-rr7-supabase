@@ -1,62 +1,12 @@
 import { z } from "zod";
 import {
 	DEFAULT_DICOUNT_TYPE,
-	PRODUCT_COND_OPERATOR_ENUM,
-	DISCOUNT_COND_TYPE_ENUM,
 	DISCOUNT_TYPE_ENUM,
 	DISCOUNT_CUSTOMER_TYPE_ENUM,
-	BUY_MIN_TYPE_ENUM,
 } from "@ecom/shared/constants/constants";
-import type { DiscountCondOperator, DiscountCondType } from "@ecom/shared/types/coupons";
 
 // Capital letters, small letters, 0 to 9 and [-]
 const CodeRegx: RegExp = /^[a-zA-Z0-9-]+$/;
-
-const ConditionSchema = z
-	.object({
-		type: z.string().refine((val) => DISCOUNT_COND_TYPE_ENUM.includes(val as DiscountCondType), {
-			message: "Invalid value.",
-		}),
-		operator: z
-			.string()
-			.refine((val) => PRODUCT_COND_OPERATOR_ENUM.includes(val as DiscountCondOperator), {
-				message: "Invalid value.",
-			}),
-		value_text: z.array(z.string()).optional().nullable(),
-		value_decimal: z.string().optional().nullable(),
-		min_quantity: z.string().optional().nullable(),
-	})
-	.refine((data) => data.value_decimal != null || data.value_text != null, {
-		message: "Value is required.",
-		path: ["value_decimal", "value_text"],
-	});
-
-const BuyXGetYGroupSchema = z.object({
-	type: z.string({ required_error: "Type is required." }).min(1, "Type is required."),
-	selected_ids: z.array(z.string()),
-});
-
-const BuyXGetYSchema = z.object({
-	buy_min_type: z.enum(BUY_MIN_TYPE_ENUM),
-	buy_min_value: z
-		.string({ required_error: "Minimum value is required." })
-		.min(1, "Minimum value is required.")
-		.default("1"),
-	get_quantity: z
-		.string({ required_error: "Quantity is required." })
-		.min(1, "Quantity is required.")
-		.default("2"),
-	get_discount_percent: z
-		.string({ required_error: "Discount value is required." })
-		.min(1, "Discount value is required.")
-		.default("100")
-		.refine((value) => Number(value) >= 0 && Number(value) <= 100, {
-			message: "Discount percentage must be between 0 and 100.",
-			path: ["get_discount_percent"],
-		}),
-	buy_group: BuyXGetYGroupSchema,
-	get_group: BuyXGetYGroupSchema,
-});
 
 // For creation
 export const CouponInputSchema = z
@@ -76,15 +26,9 @@ export const CouponInputSchema = z
 		one_use_per_customer: z.enum(["true", "false"]).optional().default("true"),
 		want_max_total_uses: z.enum(["yes", "no"]).optional().default("no"),
 		max_total_uses: z.string().optional(),
-		want_max_uses_per_order: z.enum(["yes", "no"]).optional().default("no"),
-		max_uses_per_order: z.string().optional(),
-		min_purchase_amount: z.string().optional(),
-		min_purchase_qty: z.string().optional(),
 		start_timestamp: z.date(),
 		end_timestamp: z.date(),
-		fixed_products: z.array(ConditionSchema).optional().default([]),
-		buy_x_get_y: BuyXGetYSchema,
-		conditions: z.array(ConditionSchema).optional().default([]),
+		fixed_products: z.array(z.string()).optional().default([]),
 		customer_groups: z.enum(DISCOUNT_CUSTOMER_TYPE_ENUM).nullable(),
 		customer_emails: z
 			.array(z.string().email({ message: "Invalid email address provided." }))
@@ -111,90 +55,9 @@ export const CouponInputSchema = z
 	)
 	.refine(
 		(data) => {
-			if (data.discount_type !== "buy_x_get_y") {
-				return data.discount_value === "" || data.discount_value == null ? false : true;
-			}
-			return true;
+			return data.discount_value === "" || data.discount_value == null ? false : true;
 		},
 		{ message: "Discount value is required.", path: ["discount_value"] },
-	)
-	.refine(
-		(data) => {
-			if (data.fixed_products.length > 0) {
-				for (const condition of data.fixed_products) {
-					if (condition.type === "price" && condition.value_decimal === "") {
-						return false;
-					}
-					if (condition.type !== "price" && condition.value_text?.length === 0) {
-						return false;
-					}
-				}
-			}
-			return true;
-		},
-		{
-			message: "Please fill out all fields in the above condition(s).",
-			path: ["fixed_products"],
-		},
-	)
-	.refine(
-		(data) => {
-			if (data.discount_type === "buy_x_get_y") {
-				return data.buy_x_get_y.buy_group.selected_ids.length > 0 ? true : false;
-			}
-			return true;
-		},
-		{ message: "Target products are required.", path: ["buy_x_get_y.buy_group.selected_ids"] },
-	)
-	.refine(
-		(data) => {
-			if (data.discount_type === "buy_x_get_y") {
-				return data.buy_x_get_y.get_group.selected_ids.length > 0 ? true : false;
-			}
-			return true;
-		},
-		{ message: "Target products are required.", path: ["buy_x_get_y.get_group.selected_ids"] },
-	)
-	.refine(
-		(data) => {
-			if (data.conditions.length > 0) {
-				return data.conditions.every((condition, _) => {
-					if (
-						condition.operator == null ||
-						condition.operator == "" ||
-						condition.min_quantity == null ||
-						condition.min_quantity === ""
-					) {
-						return false;
-					}
-					if (condition.type === "price") {
-						if (condition.value_decimal === "" || condition.value_decimal == null) {
-							return false;
-						}
-					} else {
-						if (condition.value_text == null || condition.value_text.length === 0) {
-							return false;
-						}
-					}
-					return true;
-				});
-			}
-			return true;
-		},
-		{
-			message: "Please fill out all fields in the above order condition(s).",
-			path: ["conditions"],
-		},
-	)
-	.refine(
-		(data) =>
-			data.want_max_uses_per_order === "yes"
-				? data.max_uses_per_order != null && data.max_uses_per_order != ""
-				: true,
-		{
-			message: "Max uses per order is required.",
-			path: ["max_uses_per_order"],
-		},
 	)
 	.refine(
 		(data) =>
@@ -230,41 +93,7 @@ export const CouponActionDataSchema = z
 		discount_value: z.string().nullable(),
 		start_timestamp: z.string(),
 		end_timestamp: z.string(),
-		specific_target_products: z.array(ConditionSchema).nullable(),
-		buy_x_get_y_fields: z
-			.object({
-				buy_group: z.object({
-					buy_min_type: z.enum(BUY_MIN_TYPE_ENUM),
-					buy_min_value: z.string(),
-					condition_type: z.string(),
-					selected_ids: z.array(z.string()),
-				}),
-				get_group: z.object({
-					quantity: z.string(),
-					discount_percent: z.string(),
-					condition_type: z.string(),
-					selected_ids: z.array(z.string()),
-				}),
-			})
-			.optional()
-			.nullable(),
-		order_conditions: z.object({
-			min_purchase_qty: z.string().nullable(),
-			min_purchase_amount: z.string().nullable(),
-			conditions: z
-				.array(
-					z.object({
-						type: z.string(),
-						operator: z.string(),
-						value_text: z.array(z.string()).nullable(),
-						value_decimal: z.string().nullable(),
-						min_quantity: z.string(),
-					}),
-				)
-				.optional()
-				.nullable(),
-			max_uses_per_order: z.string().nullable(),
-		}),
+		specific_target_products: z.array(z.string()).nullable(),
 		customer_conditions: z.object({
 			customer_groups: z.enum(DISCOUNT_CUSTOMER_TYPE_ENUM).nullable(),
 			customer_emails: z.array(z.string().email()).nullable(),
@@ -284,25 +113,6 @@ export const CouponActionDataSchema = z
 			return true;
 		},
 		{ message: "Target products are required.", path: ["s?.specific_target_products"] },
-	)
-	.refine(
-		(data) => {
-			if (Array.isArray(data?.specific_target_products) && data?.specific_target_products.length > 0) {
-				for (const condition of data?.specific_target_products) {
-					if (condition.type === "price" && condition.value_decimal === "") {
-						return false;
-					}
-					if (condition.type !== "price" && condition.value_text?.length === 0) {
-						return false;
-					}
-				}
-			}
-			return true;
-		},
-		{
-			message: "Please fill out all fields in the above condition(s).",
-			path: ["fixed_products"],
-		},
 	);
 
 export type CouponActionData = z.infer<typeof CouponActionDataSchema>;
