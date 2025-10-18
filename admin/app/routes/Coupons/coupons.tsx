@@ -57,7 +57,11 @@ import {
 import { Input } from "~/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { highLevelCouponsQuery } from "~/queries/coupons.q";
-import { CouponTypeOptions, getFullDateTimeFormat } from "@ecom/shared/constants/couponsConstants";
+import {
+	CouponTypeOptions,
+	getCouponStatus,
+	getFullDateTimeFormat,
+} from "@ecom/shared/constants/couponsConstants";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
 import { Route } from "./+types/coupons";
@@ -232,10 +236,38 @@ const CouponsPage = memo(() => {
 			id: "Status",
 			accessorKey: "status",
 			cell: (info) => {
+				const calculatedStatus = useMemo(
+					() => getCouponStatus(info.row.original.start_timestamp, info.row.original.end_timestamp),
+					[info.row.original.start_timestamp, info.row.original.end_timestamp],
+				);
+
 				return (
-					<StatusBadge variant={info.row.original.status ? "success" : "destructive"} icon="dot">
-						{info.row.original.status ? "Active" : "Inactive"}
-					</StatusBadge>
+					<div className="flex gap-2">
+						<StatusBadge
+							variant={
+								calculatedStatus === "Live"
+									? "success"
+									: calculatedStatus === "Expired"
+										? "destructive"
+										: "warning"
+							}
+							icon={
+								calculatedStatus === "Live"
+									? "tick"
+									: calculatedStatus === "Expired"
+										? "cross"
+										: "dot"
+							}
+						>
+							{calculatedStatus}
+						</StatusBadge>
+						<StatusBadge
+							variant={info.row.original.status ? "success" : "destructive"}
+							icon="dot"
+						>
+							{info.row.original.status ? "Active" : "Inactive"}
+						</StatusBadge>
+					</div>
 				);
 			},
 			header: () => "Status",

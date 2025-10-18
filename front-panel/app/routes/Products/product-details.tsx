@@ -13,6 +13,7 @@ import QuantityInputBasic from "~/components/Custom-Inputs/quantity-input-basic"
 import { ColorInput, SizeInput } from "~/components/Products/ProductDetailsInputs";
 import {
 	calculateDiscountedPrice,
+	filterCoupons,
 	getApplicableCoupons,
 	getAvailableSizes,
 	getCarouselImages,
@@ -22,7 +23,7 @@ import {
 import type { ProductAttribute } from "@ecom/shared/types/product-details";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { StockDisplay } from "~/components/Products/ProductDetailsStockDisplay";
-import type { loader as rootLoader } from "~/root";
+import { loader as rootLoader } from "~/root";
 import { Badge } from "~/components/ui/badge";
 import type { FullCoupon } from "@ecom/shared/types/coupons";
 import { motion } from "motion/react";
@@ -45,20 +46,17 @@ type FormValues = {
 	coupon: string;
 };
 
-const NullCouponSelectIdentifier = "null";
-
 export default function ProductDetailsPage() {
 	const { data, error } = useLoaderData<typeof loader>();
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
-	const allCoupons: FullCoupon[] =
-		rootLoaderData?.coupons?.filter((c) => c.coupon_type == "automatic") || [];
+	const allCoupons: FullCoupon[] = filterCoupons(rootLoaderData?.coupons ?? []);
 
 	if (error || data?.product == null) {
 		toast.error(error?.message ?? "Something went wrong");
 		return null;
 	}
 
-	console.log("CoupoNS", rootLoaderData?.coupons);
+	console.log("Coupons", rootLoaderData?.coupons);
 
 	const allColors = useMemo(() => getVariantsColors(data), [data]);
 
@@ -74,7 +72,6 @@ export default function ProductDetailsPage() {
 			coupon: "",
 		},
 	});
-
 	const { control, setValue } = form;
 
 	const selectedColor = useWatch({ control, name: "color" });
@@ -110,32 +107,24 @@ export default function ProductDetailsPage() {
 		return getApplicableCoupons(allCoupons, data, selectedVariant);
 	}, [allCoupons, selectedVariant, data]);
 
-	// Auto-apply first applicable automatic coupon coupon or use selected manual
+	// Auto-apply first applicable coupon or use selected manual coupon
 	const effectiveCoupon = useMemo(() => {
-		if (
-			selectedCouponCode &&
-			selectedCouponCode !== NullCouponSelectIdentifier &&
-			selectedCouponCode !== ""
-		) {
+		if (selectedCouponCode) {
 			return allCoupons.find((c) => c.code === selectedCouponCode) ?? null;
 		}
-		return applicableCoupons[0] ?? null; // Auto-apply first automatic
-	}, [selectedCouponCode, applicableCoupons, allCoupons]);
+		const autoAppliedCoupon = applicableCoupons[0] ?? null;
+		if (autoAppliedCoupon) {
+			setValue("coupon", autoAppliedCoupon.code, { shouldValidate: true });
+		}
+		return autoAppliedCoupon;
+	}, [allCoupons, applicableCoupons, selectedCouponCode, setValue]);
 
-	// Reset on size change
+	// Reset coupon on size change
 	useEffect(() => {
 		if (selectedSize) {
-			setValue("coupon", NullCouponSelectIdentifier);
+			setValue("coupon", "", { shouldValidate: true });
 		}
 	}, [selectedSize, setValue]);
-
-	// Auto-apply after reset or initial load
-	useEffect(() => {
-		if (applicableCoupons.length > 0 && selectedCouponCode === "") {
-			console.log("Running auto");
-			setValue("coupon", applicableCoupons[0].code);
-		}
-	}, [applicableCoupons, selectedCouponCode, setValue]);
 
 	const finalPrice = useMemo(
 		() => calculateDiscountedPrice(selectedVariant?.original_price ?? 0, effectiveCoupon),
@@ -232,15 +221,11 @@ export default function ProductDetailsPage() {
 								<div className="flex flex-col gap-2">
 									<Label>
 										<p>Available Coupons</p>
-										{selectedCouponCode &&
-											selectedCouponCode != NullCouponSelectIdentifier && (
-												<motion.span
-													initial={{ opacity: 0 }}
-													animate={{ opacity: 1 }}
-												>
-													<CircleCheck className="text-success h-4 w-4" />
-												</motion.span>
-											)}
+										{selectedCouponCode && (
+											<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+												<CircleCheck className="text-success h-4 w-4" />
+											</motion.span>
+										)}
 									</Label>
 									<Controller
 										name="coupon"
@@ -251,12 +236,6 @@ export default function ProductDetailsPage() {
 													<SelectValue placeholder="Select a coupon" />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem
-														value={NullCouponSelectIdentifier}
-														className="cursor-pointer text-muted-foreground"
-													>
-														No coupon
-													</SelectItem>
 													{applicableCoupons.map((coupon) => (
 														<SelectItem
 															key={coupon.id}

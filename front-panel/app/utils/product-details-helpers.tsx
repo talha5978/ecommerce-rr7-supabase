@@ -11,6 +11,16 @@ type Attribute = {
 	value: string;
 };
 
+/** Only return the automatic coupons with the specific products discounts */
+export function filterCoupons(allCoupons: FullCoupon[]): FullCoupon[] {
+	return (
+		allCoupons
+			.filter((c) => c.coupon_type == "automatic")
+			.filter((c) => c.discount_type === "fixed_product" || c.discount_type === "percentage_product")
+			.filter((c) => c.specific_products != null && c.specific_products?.length > 0) || []
+	);
+}
+
 export function getCarouselImages(
 	data: ProductFullDetails | null,
 	selectedVariant: ProductFullDetails["variants"][0] | undefined,
@@ -108,69 +118,16 @@ export function calculateDiscountedPrice(originalPrice: number, coupon: FullCoup
 	}
 }
 
-export function matchesConditionGroup(
-	variantId: string,
-	product: any,
-	collections: any[],
-	groupConditions: {
-		type: string;
-		operator: string;
-		value_decimal: string | null;
-		value_ids: string[] | null;
-	}[],
-): boolean {
-	// Assuming AND logic within group conditions
-	return groupConditions.every((cond) => {
-		switch (cond.type) {
-			case "sku":
-				return matchesOperator(variantId, cond.operator, cond.value_ids ?? []);
-			case "category":
-				return matchesOperator(product.category_id, cond.operator, cond.value_ids ?? []);
-			case "collection":
-				const productCollectionIds = collections.map((c) => c.id);
-				return (
-					cond.value_ids?.some((id) => matchesOperator(id, cond.operator, productCollectionIds)) ??
-					false
-				);
-			case "price":
-				// Price not applicable for variant matching here; handle separately if needed
-				return false;
-			default:
-				return false;
-		}
-	});
-}
-
-export function matchesOperator(value: any, operator: string, compare: string[]): boolean {
-	switch (operator) {
-		case "in":
-			return Array.isArray(compare) ? compare.includes(value) : false;
-		case "not_in":
-			return Array.isArray(compare) ? !compare.includes(value) : true;
-		case "equal":
-			return value === compare[0]; // For single value
-		case "not_equal":
-			return value !== compare[0];
-		case "greater":
-			return value > parseFloat(compare[0]);
-		case "greater_or_equal":
-			return value >= parseFloat(compare[0]);
-		case "smaller":
-			return value < parseFloat(compare[0]);
-		case "smaller_or_equal":
-			return value <= parseFloat(compare[0]);
-		default:
-			return false;
-	}
-}
-
 export function getApplicableCoupons(
 	allCoupons: FullCoupon[],
 	data: ProductFullDetails,
 	selectedVariant: ProductVariant,
 ) {
 	return allCoupons.filter((coupon) => {
-		// Add more checks (customer_conditions, etc.)
+		if (coupon.specific_products && coupon.specific_products.length > 0) {
+			return coupon.specific_products.some((product) => product.sku === selectedVariant.sku);
+		}
+
 		return true;
 	});
 }

@@ -16,6 +16,7 @@ import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 import { Label } from "~/components/ui/label";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card";
 import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
 
 interface CouponDetailsCardProps {
 	data: GetFullCoupon;
@@ -94,6 +95,11 @@ export const CouponDetails = memo(({ data, className }: CouponDetailsCardProps) 
 
 	return (
 		<>
+			<MetaDetails
+				metaTitle={`${code} Coupon Details | Admin Panel`}
+				metaDescription={`${description!} See all the related details for the coupon.`}
+				metaKeywords="Coupons, Coupon, Coupon details"
+			/>
 			<Breadcrumbs params={{ couponCode: code, couponType: coupon_type }} />
 			<Card
 				className={cn(

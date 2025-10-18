@@ -61,6 +61,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	// return { user, error, headers };
 	const header_categories_resp = await queryClient.fetchQuery(get_FP_headerCategories({ request }));
 	const coupons = await queryClient.fetchQuery(get_FP_allCoupons({ request }));
+	console.log("Coupons in the root", coupons);
 
 	return {
 		user: null,
