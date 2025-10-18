@@ -57,5 +57,8 @@ export default defineConfig(({ mode }) => {
 			minify: "esbuild",
 			chunkSizeWarningLimit: 1000,
 		},
+		server: {
+			port: 5174,
+		},
 	};
 });

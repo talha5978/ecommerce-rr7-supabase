@@ -18,7 +18,7 @@ import { useEffect } from "react";
 import { Form as RouterForm } from "react-router";
 import { AuthService } from "@ecom/shared/services/auth.service";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
-import { type LoginFormData, loginSchema } from "@ecom/shared/schemas/login.schema";
+import { type onlyEmailLoginFormData, onlyEmailLoginSchema } from "@ecom/shared/schemas/login.schema";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import type { ActionResponse } from "@ecom/shared/types/action-data";
@@ -29,7 +29,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		const formData = await request.formData();
 		const email = (formData.get("email") as string)?.trim();
 
-		const parseResult = loginSchema.safeParse({ email });
+		const parseResult = onlyEmailLoginSchema.safeParse({ email });
 		if (!parseResult.success) {
 			const firstError = Object.values(parseResult.error.flatten().fieldErrors).flat()[0]!;
 			return { error: firstError };
@@ -80,8 +80,8 @@ function Login() {
 
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
-	const form = useForm<LoginFormData>({
-		resolver: zodResolver(loginSchema),
+	const form = useForm<onlyEmailLoginFormData>({
+		resolver: zodResolver(onlyEmailLoginSchema),
 		mode: "onChange",
 	});
 

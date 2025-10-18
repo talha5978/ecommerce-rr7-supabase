@@ -14,6 +14,7 @@ export const currentUserQuery = ({ request, authId }: currentUserQueryArgs) => {
 		queryKey: ["current_user", authId ?? "NONE"],
 		queryFn: async () => {
 			const authSvc = new AuthService(request);
+			await authSvc.getSession();
 			const result = await authSvc.getCurrentUser();
 			return result;
 		},

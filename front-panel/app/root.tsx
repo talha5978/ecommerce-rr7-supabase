@@ -1,18 +1,16 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import { Links, Meta, Outlet, redirect, Scripts, ScrollRestoration } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { Toaster } from "~/components/ui/sonner";
 import ErrorPage from "~/components/Error/ErrorPage";
-//import { dehydrate, HydrationBoundary, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-//import { createQueryClient } from "@ecom/shared/lib/query-client/queryClient";
-//import { currentUserQuery } from "@ecom/shared/queries/auth.q";
 import { TopLoadingBar } from "~/components/Loaders/TopLoadingBar";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
-// import { currentUserQuery } from "@ecom/shared/queries/auth.q";
 import { get_FP_headerCategories } from "~/queries/categories.q";
 import { get_FP_allCoupons } from "~/queries/coupons.q";
-//import type { GetCurrentUser } from "@ecom/shared/types/auth";
+import { GetCurrentUser } from "@ecom/shared/types/auth";
+import { currentFullUserQuery } from "~/queries/auth.q";
+import { m } from "motion/react";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -28,44 +26,50 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
-	// const url = new URL(request.url);
-	// const pathname = url.pathname;
-	// // console.log("⚡ Root loader ran for", pathname);
-
-	// if (pathname.startsWith("/login")) {
-	// 	// console.log("➡️ Public route, skipping user fetch");
-	// 	const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
-	// 	const { authId } = genAuthSecurity(request);
-
-	// 	if (authId) {
-	// 		const resp: any = await queryClient.fetchQuery(currentUserQuery({ request, authId }));
-	// 		if (resp?.user) return redirect("/");
-	// 	}
-
-	// 	return { user: null, error: null };
-	// }
-
-	// const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
-	// const { authId, headers } = genAuthSecurity(request);
-
-	// const resp: GetCurrentUser = await queryClient.fetchQuery(currentUserQuery({ request, authId }));
-
-	// const user = resp?.user ?? null;
-	// const error = resp?.error ?? null;
-
-	// if (!user || error) {
-	// 	console.warn("❌ No user, redirecting to /login");
-	// }
-
-	// console.log("✅ User found:", user?.email);
-	// return { user, error, headers };
 	const header_categories_resp = await queryClient.fetchQuery(get_FP_headerCategories({ request }));
 	const coupons = await queryClient.fetchQuery(get_FP_allCoupons({ request }));
-	console.log("Coupons in the root", coupons);
+
+	const url = new URL(request.url);
+	const pathname = url.pathname;
+
+	if (pathname.startsWith("/login")) {
+		const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
+		const { authId } = genAuthSecurity(request);
+
+		if (authId) {
+			const resp: GetCurrentUser = await queryClient.fetchQuery(
+				currentFullUserQuery({ request, authId }),
+			);
+			if (resp?.user) return redirect("/");
+		}
+
+		return {
+			headers: null,
+			user: null,
+			current_user_error: null,
+			header_categories: header_categories_resp.categories ?? [],
+			coupons: coupons.coupons ?? [],
+		};
+	}
+
+	const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
+	const { authId, headers } = genAuthSecurity(request);
+
+	const resp: GetCurrentUser = await queryClient.fetchQuery(currentFullUserQuery({ request, authId }));
+
+	const user = resp?.user ?? null;
+	const current_user_error = resp?.error ?? null;
+
+	if (!user || current_user_error) {
+		console.warn("❌ No user found");
+	}
+
+	user && console.log(user?.email, " logged in");
 
 	return {
-		user: null,
-		error: null,
+		headers,
+		user: user,
+		current_user_error,
 		header_categories: header_categories_resp.categories ?? [],
 		coupons: coupons.coupons ?? [],
 	};

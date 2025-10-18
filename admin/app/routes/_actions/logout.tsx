@@ -22,8 +22,8 @@ export async function action({ request }: ActionFunctionArgs) {
 		throw new Response(error.message || "Failed to logout", { status: 400, headers });
 	}
 
-	await queryClient.invalidateQueries({ queryKey: ["current_user"] });
-	queryClient.clear();
+	await queryClient.invalidateQueries({ queryKey: ["current_user", authId] });
+	// queryClient.clear();
 
 	return redirect("/login", { headers });
 }
