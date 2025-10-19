@@ -72,7 +72,7 @@ export default [
 		]),
 
 		route("/settings", "./routes/Settings/SettingsMainPage.tsx", [
-			// index("./routes/Settings/StoreSettings.tsx"),
+			index("./routes/Settings/index.tsx"),
 			...prefix("store-details", [
 				route("", "./routes/Settings/StoreSettings.tsx"),
 				route(":id/address/update", "./routes/_actions/update-store-address.tsx"),
