@@ -42,6 +42,8 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
 		Permission.DELETE_COLLECTIONS,
 
 		Permission.MANAGE_COUPONS,
+
+		Permission.MANAGE_SETTINGS,
 	],
 	[UserRole.EMPLOYEE]: [
 		Permission.ADD_USERS,

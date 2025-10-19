@@ -11,3 +11,9 @@ export function getAccessibleNavItems(navItems: NavItem[], policy: PolicyManager
 		}))
 		.filter((section: NavItem) => section.items.length > 0);
 }
+
+export function getAccessibleSecondaryNavItems(navItems: NavSubItem[], policy: PolicyManager): NavSubItem[] {
+	return navItems.filter((item: NavSubItem) =>
+		item.requiredPermission ? policy.hasPermission(item.requiredPermission) : true,
+	);
+}

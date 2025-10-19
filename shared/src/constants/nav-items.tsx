@@ -120,6 +120,7 @@ export const secondaryNavItems: NavSubItem[] = [
 		title: "Settings",
 		url: "/settings",
 		icon: IconSettings,
+		requiredPermission: Permission.MANAGE_SETTINGS,
 	},
 	{
 		title: "Get Help",

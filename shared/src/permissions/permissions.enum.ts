@@ -48,5 +48,7 @@ export enum Permission {
 
 	MANAGE_COUPONS = "manage_coupons",
 
+	MANAGE_SETTINGS = "manage_settings",
+
 	// Non-Service related permissions
 }

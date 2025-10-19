@@ -3,10 +3,14 @@ import { Outlet } from "react-router";
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { NavigationPane } from "~/components/Settings/Navigation";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
+import { Permission } from "@ecom/shared/permissions/permissions.enum";
+import { protectLoader } from "~/utils/routeGuards";
 
-export const loader = () => {
+export const loader = protectLoader({
+	permissions: Permission.MANAGE_SETTINGS,
+})(async () => {
 	return null;
-};
+});
 
 export default function SettingsMainPage() {
 	return (
