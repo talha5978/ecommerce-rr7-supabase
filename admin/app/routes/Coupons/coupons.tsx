@@ -423,7 +423,7 @@ const CouponsGrid = memo(() => {
 		>
 			{data?.coupons?.map((coupon) => (
 				<li key={coupon.id} className="main-coupons-grid-item">
-					<CouponCard coupon={coupon} />
+					<CouponCard coupon={coupon} className="h-full" />
 				</li>
 			))}
 			<li key={"create-new-coupon"} className="main-coupons-grid-item">

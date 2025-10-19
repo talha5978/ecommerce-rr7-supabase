@@ -144,7 +144,7 @@ export const CouponCard = memo(({ coupon, className = "", ...props }: Props) => 
 					</div>
 				</div>
 			</CardHeader>
-			<CardContent className="px-5 flex flex-col gap-6">
+			<CardContent className="px-5 flex flex-col gap-6 justify-between h-full">
 				<div className="grid grid-cols-2 gap-4 text-sm">
 					{BodyItems.map((item, index) => (
 						<BodyItem key={index} {...item} />
@@ -152,7 +152,7 @@ export const CouponCard = memo(({ coupon, className = "", ...props }: Props) => 
 				</div>
 
 				{/* Small footer / Some actions.. */}
-				<div className="flex xl:items-center xl:gap-1 gap-2 xl:flex-row flex-col justify-between">
+				<div className="flex items-center flex-wrap gap-2 flex-row  justify-between">
 					<div className="text-xs text-muted-foreground">Quick actions</div>
 					<div className="flex items-center gap-2 *:cursor-pointer">
 						<SeeDetailsButton couponId={id} />
