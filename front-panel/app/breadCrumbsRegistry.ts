@@ -13,6 +13,15 @@ const breadcrumbRegistry: Record<string, BreadcrumbGenerator> = {
 			href: `/product/${params?.id}/${params?.metaUrl}`,
 		},
 	],
+	"/cart": () => [
+		{ label: "Home", href: "/" },
+		{ label: "Cart", href: "/cart" },
+	],
+	"/cart/checkout": () => [
+		{ label: "Home", href: "/" },
+		{ label: "Cart", href: "/cart" },
+		{ label: "Checkout", href: "/cart/checkout" },
+	],
 };
 
 export default breadcrumbRegistry;

@@ -48,6 +48,16 @@ export interface GetAllCategoriesResponse {
 	error: ApiError | null;
 }
 
+export interface GetCategoriesForTaxesResp {
+	categories:
+		| {
+				id: string;
+				category_name: string;
+		  }[]
+		| null;
+	error: ApiError | null;
+}
+
 export type HighLevelSubCategory = {
 	id: string;
 	sub_category_name: string;

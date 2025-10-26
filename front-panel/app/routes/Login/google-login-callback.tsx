@@ -1,7 +1,6 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { AuthService } from "@ecom/shared/services/auth.service";
-import { currentFullUserQuery } from "~/queries/auth.q";
 import { genAuthSecurity } from "@ecom/shared/lib/auth-utils.server";
 import { Loader2 } from "lucide-react";
 
@@ -14,11 +13,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return redirect(`/login?error=${encodeURIComponent("Failed to exchange OAuth code")}`);
 	}
 
-	const {
-		data,
-		error: exchangeError,
-		headers: exchangeHeaders,
-	} = await authSvc.exchangeCodeForSession({ code });
+	const { error: exchangeError, headers: exchangeHeaders } = await authSvc.exchangeCodeForSession({ code });
 
 	if (exchangeError) {
 		console.error("OAuth code exchange error:", exchangeError);

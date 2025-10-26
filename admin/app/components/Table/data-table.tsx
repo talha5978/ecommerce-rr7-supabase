@@ -109,7 +109,6 @@ export const DataTable = ({
 				<TableBody
 					className={`**:data-[slot=table-cell]:first:w-8 **:data-[slot=table-cell]:last:sticky **:data-[slot=table-cell]:last:right-0 **:data-[slot=table-cell]:last:z-10 ${cellClassName}`}
 				>
-					{/* <AnimatePresence> */}
 					{table.getRowModel().rows?.length > 0 ? (
 						table.getRowModel().rows.map((row) => (
 							<motion.tr
@@ -139,17 +138,13 @@ export const DataTable = ({
 							</TableCell>
 						</TableRow>
 					)}
-					{/* </AnimatePresence> */}
 				</TableBody>
 			</TableComponent>
 			<div className="mt-4">
-				{total && (
-					<div className="px-4">
-						<p>
-							({total}) record{total ? (total === 1 ? "" : "s") : "s"} found
-						</p>
-					</div>
-				)}
+				<div className="px-4">
+					<p>{ShowTotalMessage(total)}</p>
+				</div>
+
 				{onPageSizeChange && onPageChange && pageSize ? (
 					<div className="mt-4 flex w-full items-center gap-8 justify-between px-4">
 						<div className="hidden items-center gap-2 sm:flex">
@@ -222,6 +217,16 @@ export const DataTable = ({
 		</section>
 	);
 };
+
+function ShowTotalMessage(total: number | undefined) {
+	switch (total) {
+		case 0:
+		case undefined:
+			return "No records found";
+		default:
+			return `(${total}) record${total === 1 ? "" : "s"} found`;
+	}
+}
 
 export const DataTableSkeleton = memo(function DataTableSkeleton({
 	noOfSkeletons = 8,

@@ -128,6 +128,7 @@ export const action = protectAction<ActionReturn>({
 		await queryClient.invalidateQueries({ queryKey: ["productVariant", variantId] });
 		await queryClient.invalidateQueries({ queryKey: ["productVariants", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", productId] });
+		await queryClient.invalidateQueries({ queryKey: ["allProductUnits"] });
 
 		if (formData.has("status")) {
 			await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });

@@ -55,6 +55,7 @@ export class StoreSettingsService extends Service {
 							email_2: dbResp.email_2,
 							phone_1: dbResp.phone_1,
 							phone_2: dbResp.phone_2,
+							shipping_rate: dbResp.shipping_rate,
 						}
 					: null,
 				error: null,
@@ -98,5 +99,67 @@ export class StoreSettingsService extends Service {
 		}
 
 		return data;
+	}
+}
+
+@UseClassMiddleware(loggerMiddleware)
+export class FP_StoreSettingsService extends Service {
+	/** Fetch the store settings */
+	async getStoreSettings(): Promise<getStoreSettingsResp> {
+		try {
+			// Fetch the first row from store_settings
+			let { data: dbResp, error: fetchError } = await this.supabase
+				.from(this.STORE_SETTINGS_TABLE)
+				.select("*")
+				.single(); // Enforce single row
+
+			// If no row exists, insert a default one
+			if (fetchError?.code === "PGRST116" || !dbResp) {
+				// PGRST116: No rows found
+				const defaultAddress = { formattedAddress: "", lat: 29.394644, lng: 71.6638747 };
+				const { data: insertData, error: insertError } = await this.supabase
+					.from(this.STORE_SETTINGS_TABLE)
+					.insert({ store_address: defaultAddress })
+					.select("*")
+					.single();
+
+				if (insertError) {
+					throw new ApiError(insertError.message, Number(insertError.code) || 500, [
+						insertError.details,
+					]);
+				}
+
+				dbResp = insertData;
+			}
+
+			if (fetchError && fetchError.code !== "PGRST116") {
+				throw new ApiError(fetchError.message, Number(fetchError.code) || 500, [fetchError.details]);
+			}
+
+			return {
+				store_settings: dbResp
+					? {
+							id: dbResp.id,
+							store_address: dbResp.store_address,
+							created_at: dbResp.created_at,
+							updated_at: dbResp.updated_at,
+							email_1: dbResp.email_1,
+							email_2: dbResp.email_2,
+							phone_1: dbResp.phone_1,
+							phone_2: dbResp.phone_2,
+							shipping_rate: dbResp.shipping_rate,
+						}
+					: null,
+				error: null,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { store_settings: null, error: err };
+			}
+			return {
+				store_settings: null,
+				error: new ApiError("Unknown error", 500, [err.message]),
+			};
+		}
 	}
 }

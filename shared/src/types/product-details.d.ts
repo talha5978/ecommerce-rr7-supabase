@@ -9,7 +9,9 @@ export interface ProductAttribute {
 	attribute_type: AttributeType;
 }
 
-export interface VariantAttribute extends ProductAttribute {}
+export interface VariantAttribute extends ProductAttribute {
+	isDefault: boolean;
+}
 
 export interface ProductVariant {
 	id: string;

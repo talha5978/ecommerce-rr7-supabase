@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import type {
 	GetAllCategoriesResponse,
+	GetCategoriesForTaxesResp,
 	GetCategoryResponse,
 	GetHighLevelCategoriesResponse,
 	GetHighLevelSubCategoriesResponse,
@@ -51,6 +52,17 @@ export const highLevelCategoriesQuery = ({
 		queryFn: async () => {
 			const categoryService = new CategoryService(request);
 			const result = await categoryService.gethighLevelCategories(q, pageIndex, pageSize);
+			return result;
+		},
+	});
+};
+
+export const categoriesForTaxesQuery = ({ request }: { request: Request }) => {
+	return queryOptions<GetCategoriesForTaxesResp>({
+		queryKey: ["categories_for_taxes"],
+		queryFn: async () => {
+			const categoryService = new CategoryService(request);
+			const result = await categoryService.getCategoriesForTaxRates();
 			return result;
 		},
 	});

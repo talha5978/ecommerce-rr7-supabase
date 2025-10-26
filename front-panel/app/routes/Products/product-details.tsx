@@ -1,6 +1,6 @@
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { CircleCheck, Copy, Heart } from "lucide-react";
-import { type LoaderFunctionArgs, useLoaderData, useRouteLoaderData } from "react-router";
+import { type LoaderFunctionArgs, useLoaderData, useNavigate, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
 import ProductImageCarousel from "~/components/Products/ProductImagesCarousel";
 import { Breadcrumbs } from "~/components/SEO/Breadcrumbs";
@@ -23,10 +23,12 @@ import {
 import type { ProductAttribute } from "@ecom/shared/types/product-details";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { StockDisplay } from "~/components/Products/ProductDetailsStockDisplay";
-import { loader as rootLoader } from "~/root";
+import { type loader as rootLoader } from "~/root";
 import { Badge } from "~/components/ui/badge";
 import type { FullCoupon } from "@ecom/shared/types/coupons";
 import { motion } from "motion/react";
+import { addToCart } from "~/utils/manageCart";
+import type { CartItem } from "~/types/cart";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const product_id = params.productId;
@@ -50,13 +52,14 @@ export default function ProductDetailsPage() {
 	const { data, error } = useLoaderData<typeof loader>();
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
 	const allCoupons: FullCoupon[] = filterCoupons(rootLoaderData?.coupons ?? []);
+	const current_user = rootLoaderData?.user;
 
 	if (error || data?.product == null) {
 		toast.error(error?.message ?? "Something went wrong");
 		return null;
 	}
 
-	console.log("Coupons", rootLoaderData?.coupons);
+	// console.log("Coupons", rootLoaderData?.coupons);
 
 	const allColors = useMemo(() => getVariantsColors(data), [data]);
 
@@ -72,7 +75,7 @@ export default function ProductDetailsPage() {
 			coupon: "",
 		},
 	});
-	const { control, setValue } = form;
+	const { control, setValue, getValues } = form;
 
 	const selectedColor = useWatch({ control, name: "color" });
 	const selectedSize = useWatch({ control, name: "size" });
@@ -104,7 +107,7 @@ export default function ProductDetailsPage() {
 	// Filter applicable coupons based on selected variant (SKU)
 	const applicableCoupons = useMemo(() => {
 		if (!selectedVariant) return [];
-		return getApplicableCoupons(allCoupons, data, selectedVariant);
+		return getApplicableCoupons(allCoupons, selectedVariant, current_user);
 	}, [allCoupons, selectedVariant, data]);
 
 	// Auto-apply first applicable coupon or use selected manual coupon
@@ -130,6 +133,42 @@ export default function ProductDetailsPage() {
 		() => calculateDiscountedPrice(selectedVariant?.original_price ?? 0, effectiveCoupon),
 		[selectedVariant?.original_price, effectiveCoupon],
 	);
+
+	const navigate = useNavigate();
+
+	function handleAddtoCartClick() {
+		if (selectedVariant && data?.product != null) {
+			const payload: Omit<CartItem, "quantity" | "id"> & { quantity?: number } = {
+				variant_id: selectedVariant.id,
+				stock: selectedVariant.stock,
+				quantity: getValues("quantity"),
+				apply_shipping: data?.product.free_shipping ?? true,
+				category_id: data?.product.category_id ?? "",
+				color: selectedVariant.attributes.find((a) => a.attribute_type === "color")?.name ?? "",
+				image_url: selectedVariant.images[0],
+				product_name: data?.product.name ?? "",
+				sku: selectedVariant.sku ?? "",
+				product_id: data?.product.id ?? "",
+				size: selectedSize,
+				original_price: selectedVariant.original_price,
+				applied_coupon_code: effectiveCoupon?.code ?? "",
+			};
+
+			try {
+				addToCart(payload);
+				toast.success(`Added to cart successfully`, {
+					action: {
+						label: "View Cart",
+						onClick: () => {
+							navigate("/cart");
+						},
+					},
+				});
+			} catch (error) {
+				toast.error("Something went wrong");
+			}
+		}
+	}
 
 	return (
 		<>
@@ -176,12 +215,12 @@ export default function ProductDetailsPage() {
 						<p className="text-muted-foreground">{data?.product.description}</p>
 						<div className="flex items-center gap-2">
 							<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-								<span className="text-2xl font-bold">${finalPrice.toFixed(2)}</span>
+								<span className="text-2xl font-bold">PKR {finalPrice.toFixed(2)}</span>
 							</motion.span>
 							{effectiveCoupon && finalPrice < (selectedVariant?.original_price ?? 0) && (
 								<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 									<del className="text-destructive">
-										${(selectedVariant?.original_price ?? 0).toFixed(2)}
+										PKR {(selectedVariant?.original_price ?? 0).toFixed(2)}
 									</del>
 								</motion.span>
 							)}
@@ -273,6 +312,8 @@ export default function ProductDetailsPage() {
 									className="w-full flex-1 grow"
 									variant={"outline"}
 									disabled={isOutOfStock}
+									type="button"
+									onClick={handleAddtoCartClick}
 								>
 									Add to cart
 								</Button>

@@ -86,7 +86,10 @@ export function genAuthSecurity(request: Request): {
 	if (!authId) {
 		const cookieHeader = request.headers.get("Cookie") ?? "";
 		const cookies = parseCookies(cookieHeader);
-		let anon = cookies["anon_session"];
+		// console.log(cookies);
+
+		// let anon = cookies["anon_session"];
+		let anon = cookies[`sb-${process.env.VITE_PROJECT_ID}-auth-token.1`];
 
 		if (!anon) {
 			anon = uuidv4();

@@ -13,8 +13,10 @@ export const currentUserQuery = ({ request, authId }: currentUserQueryArgs) => {
 	return queryOptions<GetCurrentUser>({
 		queryKey: ["current_user", authId ?? "NONE"],
 		queryFn: async () => {
+			console.log("Fetching current user with auth id", authId);
+
 			const authSvc = new AuthService(request);
-			await authSvc.getSession();
+			// await authSvc.getSession();
 			const result = await authSvc.getCurrentUser();
 			return result;
 		},

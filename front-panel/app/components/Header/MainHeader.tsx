@@ -3,8 +3,11 @@ import { Input } from "~/components/ui/input";
 import { Heart, Search, ShoppingBag } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "~/components/ui/tooltip";
 import AccountSection from "~/components/Header/AccountSection";
+import { getNumberOfCartItems } from "~/utils/manageCart";
 
 export default function MainHeader() {
+	const itemCount = getNumberOfCartItems();
+
 	return (
 		<div className="container mx-auto px-4 pt-5 pb-4 flex items-center justify-between">
 			{/* Logo */}
@@ -51,9 +54,16 @@ export default function MainHeader() {
 				{/* Cart */}
 				<Tooltip>
 					<TooltipTrigger>
-						<div>
-							<ShoppingBag className="w-5 h-5 hover:text-success transition-colors duration-200 ease-in-out" />
-						</div>
+						<Link to={"/cart"}>
+							<div className="relative">
+								<ShoppingBag className="w-5 h-5 hover:text-success transition-colors duration-200 ease-in-out" />
+								{itemCount > 0 && (
+									<span className="absolute -top-1.5 -right-2 bg-success text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+										{itemCount}
+									</span>
+								)}
+							</div>
+						</Link>
 					</TooltipTrigger>
 					<TooltipContent side="bottom">
 						<p>Cart</p>

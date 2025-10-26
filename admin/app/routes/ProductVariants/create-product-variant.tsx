@@ -88,6 +88,7 @@ export const action = protectAction<ActionReturn>({
 		await queryClient.invalidateQueries({ queryKey: ["fullProduct", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["variantConstraints", productId] });
 		await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });
+		await queryClient.invalidateQueries({ queryKey: ["allProductUnits"] });
 
 		return { success: true };
 	} catch (error: any) {

@@ -18,6 +18,8 @@ class DefaultValues {
 
 	readonly DEFAULT_HERO_SECTIONS_PAGE_SIZE = 10;
 
+	readonly DEFAULT_TAXES_PAGE_SIZE = 10;
+
 	readonly META_KEYWORDS_VALUE = 25;
 
 	readonly defaultProductSortByFilter = "createdAt";
@@ -113,3 +115,5 @@ export const DISCOUNT_TYPE_ENUM = Constants.public.Enums.discount_type;
 export const DISCOUNT_CUSTOMER_TYPE_ENUM = Constants.public.Enums.customer_type;
 
 export const DEFAULT_DICOUNT_TYPE: DiscountType = "fixed_order";
+
+export const CART_STORAGE_KEY = "clothing-store-cart";

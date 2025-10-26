@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
 			reactRouter(),
 			tsconfigPaths({
 				projects: [
-					path.resolve(__dirname, "tsconfig.json"), // admin tsconfig
+					path.resolve(__dirname, "tsconfig.json"), // front-panel tsconfig
 					path.resolve(__dirname, "../shared/tsconfig.json"), // shared tsconfig
 				],
 			}),

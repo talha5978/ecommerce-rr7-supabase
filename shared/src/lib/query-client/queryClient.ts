@@ -1,13 +1,12 @@
 import { QueryClient } from "@tanstack/react-query";
 
-// createQueryClient function to create new instance for sensitive queries like user query that should not be shared among users
-export function createQueryClient() {
+function createQueryClient() {
 	return new QueryClient({
 		defaultOptions: {
 			queries: {
 				staleTime: 25 * 60 * 1000,
 				gcTime: 30 * 60 * 1000,
-				refetchOnWindowFocus: false,
+				refetchOnWindowFocus: "always",
 				refetchOnMount: false,
 				retry: false,
 			},
@@ -15,5 +14,5 @@ export function createQueryClient() {
 	});
 }
 
-// queryClient global instance that is shared between all the users
+/** @description Global instance shared between all the users of both apps. */
 export const queryClient = createQueryClient();

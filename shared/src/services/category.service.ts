@@ -6,6 +6,7 @@ import type {
 	FullCategoryRow,
 	FullSubCategoryRow,
 	GetAllCategoriesResponse,
+	GetCategoriesForTaxesResp,
 	GetCategoryResponse,
 	GetHighLevelCategoriesResponse,
 	GetHighLevelSubCategoriesResponse,
@@ -242,6 +243,47 @@ export class CategoryService extends Service {
 				subCategories: [],
 				total: 0,
 				error: new ApiError(err.message || "Unknown error", 500, [err]),
+			};
+		}
+	}
+
+	/** Fetch categories for tax rates creation */
+	async getCategoriesForTaxRates(): Promise<GetCategoriesForTaxesResp> {
+		try {
+			const { data: categoriesList, error: queryError } = await this.supabase
+				.from(this.CATEGORY_TABLE)
+				.select(
+					`
+					id, category_name
+				`,
+					{ count: "exact" },
+				)
+				.order("createdAt", { ascending: false });
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+			}
+
+			return {
+				categories:
+					categoriesList?.map((category) => {
+						return {
+							id: category.id,
+							category_name: category.category_name,
+						};
+					}) ?? [],
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { categories: [], error: err };
+			}
+			console.log(err);
+
+			return {
+				categories: [],
+				error: new ApiError("Unknown error", 500, [err]),
 			};
 		}
 	}

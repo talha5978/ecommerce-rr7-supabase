@@ -8,9 +8,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { get_FP_headerCategories } from "~/queries/categories.q";
 import { get_FP_allCoupons } from "~/queries/coupons.q";
-import { GetCurrentUser } from "@ecom/shared/types/auth";
+import { GetFullCurrentUser } from "@ecom/shared/types/auth";
 import { currentFullUserQuery } from "~/queries/auth.q";
-import { m } from "motion/react";
+import { StoreSettingsQUery } from "~/queries/store-settings.q";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,9 +25,35 @@ export const links: Route.LinksFunction = () => [
 	},
 ];
 
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+	window.addEventListener("load", async () => {
+		try {
+			const { Workbox } = await import("workbox-window");
+			const wb = new Workbox("/sw.js");
+			await wb.register();
+			console.log("Service worker registered successfully");
+
+			// Keep service worker active
+			wb.addEventListener("activated", () => {
+				console.log("Service worker activated");
+				setInterval(() => {
+					wb.messageSW({ type: "KEEP_ALIVE" });
+					console.log("Sent keep-alive to service worker");
+				}, 20000);
+			});
+			wb.addEventListener("waiting", () => {
+				wb.messageSkipWaiting();
+			});
+		} catch (error) {
+			console.error("Failed to register service worker:", error);
+		}
+	});
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
 	const header_categories_resp = await queryClient.fetchQuery(get_FP_headerCategories({ request }));
 	const coupons = await queryClient.fetchQuery(get_FP_allCoupons({ request }));
+	const store_details = await queryClient.fetchQuery(StoreSettingsQUery({ request }));
 
 	const url = new URL(request.url);
 	const pathname = url.pathname;
@@ -37,7 +63,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		const { authId } = genAuthSecurity(request);
 
 		if (authId) {
-			const resp: GetCurrentUser = await queryClient.fetchQuery(
+			const resp: GetFullCurrentUser = await queryClient.fetchQuery(
 				currentFullUserQuery({ request, authId }),
 			);
 			if (resp?.user) return redirect("/");
@@ -49,13 +75,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 			current_user_error: null,
 			header_categories: header_categories_resp.categories ?? [],
 			coupons: coupons.coupons ?? [],
+			store_details,
 		};
 	}
 
 	const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
 	const { authId, headers } = genAuthSecurity(request);
 
-	const resp: GetCurrentUser = await queryClient.fetchQuery(currentFullUserQuery({ request, authId }));
+	const resp: GetFullCurrentUser = await queryClient.fetchQuery(currentFullUserQuery({ request, authId }));
 
 	const user = resp?.user ?? null;
 	const current_user_error = resp?.error ?? null;
@@ -65,6 +92,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	}
 
 	user && console.log(user?.email, " logged in");
+	// console.log(coupons.coupons);
 
 	return {
 		headers,
@@ -72,6 +100,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		current_user_error,
 		header_categories: header_categories_resp.categories ?? [],
 		coupons: coupons.coupons ?? [],
+		store_details,
 	};
 }
 

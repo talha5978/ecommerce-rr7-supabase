@@ -1,6 +1,6 @@
 {
 	"name": "ecommerce-rr7-supabase-monorepo",
-	"description": "Ecommerce website admin and front panel built with react router framework mode and supabase",
+	"description": "Ecommerce website monorepo [admin-panel, front-panel] built with react router framework mode and supabase",
 	"author": {
 		"name": "Muhammad Talha",
 		"email": "muhammadtalha13457@gmail.com"
@@ -37,5 +37,8 @@
 		"husky": "^9.1.7",
 		"lint-staged": "^16.2.3",
 		"prettier": "^3.6.2"
+	},
+	"dependencies": {
+		"@tanstack/react-query": "^5.90.5"
 	}
 }

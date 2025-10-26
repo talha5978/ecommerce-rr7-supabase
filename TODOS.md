@@ -1,6 +1,9 @@
 // Front Panel -----
 
 // PRIMARY 🔴
+	TODO: Shipping rate setting in admin panel
+	TODO: SHOW OTHER REMANING FIELDS IN THE PRODUCT DETAILS PAGE LIKE CATEGORY/SUB CATEGORY CARDS AND OTHER DATA
+	TODO: SHOW BADGES LIKE X% OFF AND OTHERS IN THE CART AND PRODUCT CARDS AND PRODUCT DETAILS PAGE
 	TODO: APPLY THE PAGINATION IN THE SKUS FIELDS IN THE COUPONS CREATION PAGE
 	TODO: calculate the discount for each product in the front panel
 	TODO: then apply the checkout + payments + order managment functionality

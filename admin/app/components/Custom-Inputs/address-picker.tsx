@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { Map } from "leaflet";
 import { Input } from "~/components/ui/input";
 import { Skeleton } from "~/components/ui/skeleton";
-import { addressSearchQuery, reverseGeocodeQuery } from "~/queries/address.q";
+import { addressSearchQuery, reverseGeocodeQuery } from "@ecom/shared/queries/address.q";
 import { MapPin } from "lucide-react";
 import type { StoreAddress } from "@ecom/shared/types/store-settings";
 

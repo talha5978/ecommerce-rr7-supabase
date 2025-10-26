@@ -1,0 +1,749 @@
+import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { lazy, Suspense, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { LoaderFunctionArgs, useLoaderData, useRouteLoaderData } from "react-router";
+import { Breadcrumbs } from "~/components/SEO/Breadcrumbs";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Skeleton } from "~/components/ui/skeleton";
+import { calculateCartSummary, type CartSummary, getCart } from "~/utils/manageCart";
+import { type loader as rootLoader } from "~/root";
+import { Separator } from "~/components/ui/separator";
+import { Button } from "~/components/ui/button";
+import { ArrowRight, ChevronUp } from "lucide-react";
+import { FullCoupon } from "@ecom/shared/types/coupons";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
+import { type CheckoutFormData, CheckoutSchema } from "~/schema/checkout.schema";
+import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { TaxesQuery } from "~/queries/taxes.q";
+import { Badge } from "~/components/ui/badge";
+import { toast } from "sonner";
+
+const AddressPicker = lazy(() => import("~/components/Custom-Inputs/address-picker"));
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const taxes = await queryClient.fetchQuery(TaxesQuery({ request }));
+	return taxes;
+};
+
+function findAppliedDiscount(coupons: FullCoupon[], code: string, variant_id: string) {
+	const c = coupons.find((c) => c.code === code && c.specific_products != null);
+	if (!c) {
+		return {
+			isPercent: true,
+			discount_value: 0,
+		};
+	}
+
+	if (c.code === code && c.specific_products != null) {
+		const f = c.specific_products.find((item) => item.id === variant_id);
+		if (f) {
+			return {
+				isPercent:
+					c.discount_type === "percentage_order" || c.discount_type === "percentage_product"
+						? true
+						: false,
+				discount_value: c.discount_value,
+			};
+		} else {
+			return {
+				isPercent: true,
+				discount_value: 0,
+			};
+		}
+	} else {
+		return {
+			isPercent: true,
+			discount_value: 0,
+		};
+	}
+}
+
+export default function CheckoutSummaryPage() {
+	const { taxes } = useLoaderData<typeof loader>();
+	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
+	const coupons = rootLoaderData?.coupons ?? [];
+	const shipping_rate = rootLoaderData?.store_details.store_settings?.shipping_rate ?? 0;
+
+	const [cartSummary, setCartSummary] = useState<CartSummary>(
+		calculateCartSummary({
+			coupons,
+			shippingRate: shipping_rate,
+			taxRates: taxes ?? [],
+		}),
+	);
+
+	const { discount, shipping, subtotal, tax, total, discountBreakdown, taxBreakdown } = cartSummary;
+
+	const form = useForm<CheckoutFormData>({
+		resolver: zodResolver(CheckoutSchema as any),
+		mode: "onSubmit",
+		defaultValues: {
+			shipping_address: {
+				first_name: "",
+				last_name: "",
+				email: "",
+				phone: "",
+				province: "",
+				city: "",
+				postal_code: undefined,
+				address: {
+					formattedAddress: "",
+					lat: 29.394644,
+					lng: 71.6638747,
+				},
+			},
+			isBillingSameAsShipping: "y",
+			billing_address: undefined,
+			manual_coupon: "",
+		},
+	});
+
+	const { handleSubmit, control, getValues, setValue } = form;
+
+	const cartItems = getCart();
+	// const { discount, shipping, subtotal, tax, total, discountBreakdown, taxBreakdown } =
+	// 	calculateCartSummary({
+	// 		coupons,
+	// 		shippingRate: shipping_rate,
+	// 		taxRates: taxes ?? [],
+	// 	});
+	// console.log(taxBreakdown, taxes);
+
+	const isBillingSameAsShipping = useWatch({ control, name: "isBillingSameAsShipping" });
+
+	const onFormSubmit = (data: CheckoutFormData) => {
+		console.log(data);
+	};
+	// console.log(coupons);
+
+	const handleManualCouponsApply = () => {
+		const user_input = getValues("manual_coupon");
+		if (!user_input) {
+			toast.warning("Please enter a coupon code");
+			return;
+		}
+
+		const manual_coupons = coupons.filter((c) => c.coupon_type === "manual");
+		const coupon = manual_coupons.find((c) => c.code === user_input);
+
+		if (!coupon) {
+			toast.error("Invalid coupon code");
+			return;
+		}
+
+		// TODO: Create logic for manual coupon application here
+
+		// Show success and clear input
+		toast.success("Coupon applied successfully");
+		setValue("manual_coupon", "");
+	};
+	// console.log(cartItems);
+
+	return (
+		<>
+			<section className="max-container px-8 mx-auto mb-12">
+				<Breadcrumbs />
+				<h1 className="text-2xl font-semibold mb-4">Checkout</h1>
+				<form
+					action=""
+					className="flex gap-4 lg:flex-row flex-col"
+					onSubmit={handleSubmit(onFormSubmit)}
+				>
+					<Form {...form}>
+						<div className="lg:w-2/3 flex flex-col gap-4">
+							<Card className="flex flex-col gap-2">
+								<CardContent className="flex flex-col gap-6">
+									<h2 className="text-lg font-semibold">Shipping Address</h2>
+									<div className="space-y-4">
+										<div className="flex gap-4 md:flex-row flex-col [&>*]:flex-1">
+											<FormField
+												control={control}
+												name="shipping_address.first_name"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>First Name</FormLabel>
+														<FormControl>
+															<Input placeholder="e.g. John" {...field} />
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={control}
+												name="shipping_address.last_name"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Last Name</FormLabel>
+														<FormControl>
+															<Input placeholder="e.g. Doe" {...field} />
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</div>
+										<div className="flex gap-4 md:flex-row flex-col [&>*]:flex-1">
+											<FormField
+												control={control}
+												name="shipping_address.email"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Email</FormLabel>
+														<FormControl>
+															<Input
+																placeholder="e.g. hondoe@gmail.com"
+																type="email"
+																{...field}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={control}
+												name="shipping_address.phone"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Phone No.</FormLabel>
+														<FormControl>
+															<Input
+																placeholder="e.g. 031460774"
+																type="tel"
+																{...field}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</div>
+										<div className="flex gap-4 md:flex-row flex-col [&>*]:flex-1">
+											<FormField
+												control={control}
+												name="shipping_address.province"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Province</FormLabel>
+														<FormControl>
+															<div className="*:w-full">
+																<Select
+																	{...field}
+																	value={field.value}
+																	onValueChange={field.onChange}
+																>
+																	<SelectTrigger
+																		className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden cursor-pointer"
+																		size="sm"
+																		aria-label="Select a value"
+																	>
+																		<SelectValue placeholder="Select province" />
+																	</SelectTrigger>
+																	<SelectContent>
+																		{[
+																			"punjab",
+																			"balochistan",
+																			"sindh",
+																			"KPK",
+																		].map((item) => (
+																			<SelectItem
+																				key={item}
+																				value={item}
+																				className="cursor-pointer"
+																			>
+																				{item
+																					.charAt(0)
+																					.toUpperCase() +
+																					item.slice(1)}
+																			</SelectItem>
+																		))}
+																	</SelectContent>
+																</Select>
+															</div>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={control}
+												name="shipping_address.city"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>City</FormLabel>
+														<FormControl>
+															<Input
+																placeholder="e.g. Lahore"
+																type="text"
+																{...field}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</div>
+										<div className="flex flex-col gap-2">
+											<Label>Address</Label>
+											<Suspense
+												fallback={
+													<Skeleton className="w-full h-[var(--map-height)]" />
+												}
+											>
+												<Controller
+													name="shipping_address.address"
+													control={control}
+													render={({ field }) => (
+														<Suspense
+															fallback={
+																<Skeleton className="w-full h-[var(--map-height)]" />
+															}
+														>
+															<AddressPicker
+																value={field.value}
+																onChange={field.onChange}
+															/>
+														</Suspense>
+													)}
+												/>
+											</Suspense>
+										</div>
+										<div className="my-6">
+											<Controller
+												name="isBillingSameAsShipping"
+												control={control}
+												render={({ field }) => (
+													<Label className="flex items-center px-2 py-1 cursor-pointer">
+														<Checkbox
+															checked={field.value == "y"}
+															onCheckedChange={() =>
+																field.onChange(field.value == "y" ? "n" : "y")
+															}
+															className="mr-2 cursor-pointer"
+														/>
+														Use same address for billing?
+													</Label>
+												)}
+											/>
+										</div>
+									</div>
+								</CardContent>
+
+								{isBillingSameAsShipping == "n" && (
+									<CardContent className="flex flex-col gap-6">
+										<h2 className="text-lg font-semibold">Billing Address</h2>
+										<div className="space-y-4">
+											<Form {...form}>
+												<div className="flex gap-4 md:flex-row flex-col [&>*]:flex-1">
+													<FormField
+														control={control}
+														name="billing_address.first_name"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>First Name</FormLabel>
+																<FormControl>
+																	<Input
+																		placeholder="e.g. John"
+																		{...field}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<FormField
+														control={control}
+														name="billing_address.last_name"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Last Name</FormLabel>
+																<FormControl>
+																	<Input
+																		placeholder="e.g. Doe"
+																		{...field}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+												</div>
+												<div className="flex gap-4 md:flex-row flex-col [&>*]:flex-1">
+													<FormField
+														control={control}
+														name="billing_address.email"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Email</FormLabel>
+																<FormControl>
+																	<Input
+																		placeholder="e.g. hondoe@gmail.com"
+																		type="email"
+																		{...field}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<FormField
+														control={control}
+														name="billing_address.phone"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Phone No.</FormLabel>
+																<FormControl>
+																	<Input
+																		placeholder="e.g. 031460774"
+																		type="tel"
+																		{...field}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+												</div>
+												<div className="flex gap-4 md:flex-row flex-col [&>*]:flex-1">
+													<FormField
+														control={control}
+														name="billing_address.province"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Province</FormLabel>
+																<FormControl>
+																	<div className="*:w-full">
+																		<Select
+																			{...field}
+																			value={field.value}
+																			onValueChange={field.onChange}
+																		>
+																			<SelectTrigger
+																				className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden cursor-pointer"
+																				size="sm"
+																				aria-label="Select a value"
+																			>
+																				<SelectValue placeholder="Select province" />
+																			</SelectTrigger>
+																			<SelectContent>
+																				{[
+																					"punjab",
+																					"balochistan",
+																					"sindh",
+																					"KPK",
+																				].map((item) => (
+																					<SelectItem
+																						key={item}
+																						value={item}
+																						className="cursor-pointer"
+																					>
+																						{item
+																							.charAt(0)
+																							.toUpperCase() +
+																							item.slice(1)}
+																					</SelectItem>
+																				))}
+																			</SelectContent>
+																		</Select>
+																	</div>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<FormField
+														control={control}
+														name="billing_address.city"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>City</FormLabel>
+																<FormControl>
+																	<Input
+																		placeholder="e.g. Lahore"
+																		type="text"
+																		{...field}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+												</div>
+												<div className="flex flex-col gap-2">
+													<Label>Address</Label>
+													<Suspense
+														fallback={
+															<Skeleton className="w-full h-[var(--map-height)]" />
+														}
+													>
+														<Controller
+															name="billing_address.address"
+															control={control}
+															render={({ field }) => (
+																<Suspense
+																	fallback={
+																		<Skeleton className="w-full h-[var(--map-height)]" />
+																	}
+																>
+																	<AddressPicker
+																		value={field.value}
+																		onChange={field.onChange}
+																	/>
+																</Suspense>
+															)}
+														/>
+													</Suspense>
+												</div>
+											</Form>
+										</div>
+									</CardContent>
+								)}
+							</Card>
+						</div>
+						<div className="lg:w-1/3">
+							<Card>
+								<CardHeader>
+									<h2 className="text-xl font-semibold">Summary</h2>
+								</CardHeader>
+								<CardContent className="flex lg:flex-col md:flex-row flex-col [&>*]:flex-1 gap-6">
+									<div id="cart-items" className="flex flex-col gap-4">
+										{cartItems.map((item) => {
+											return (
+												<div className="flex items-center" key={item.id}>
+													<div className="relative">
+														<img
+															src={
+																SUPABASE_IMAGE_BUCKET_PATH +
+																"/" +
+																item.image_url
+															}
+															alt={item.product_name}
+															className="w-20 h-24 object-cover rounded-lg mr-4"
+															loading="lazy"
+														/>
+														{item.applied_coupon_code && (
+															<div className="absolute top-0 right-3.5 p-1 bg-success/80 text-white text-xs rounded">
+																-
+																{
+																	findAppliedDiscount(
+																		coupons,
+																		item.applied_coupon_code,
+																		item.variant_id,
+																	).discount_value
+																}
+																{findAppliedDiscount(
+																	coupons,
+																	item.applied_coupon_code,
+																	item.variant_id,
+																).isPercent
+																	? "%"
+																	: " PKR"}
+															</div>
+														)}
+													</div>
+													<div className="flex-1 min-w-0">
+														<h3 className="font-semibold text-lg truncate">
+															{item.product_name}
+														</h3>
+														<div className="flex gap-2 items-center">
+															<h4 className="text-sm">{item.sku}</h4>
+															<Badge
+																className="text-xs whitespace-nowrap select-none"
+																variant={"outline"}
+															>
+																x {item.quantity}
+															</Badge>
+														</div>
+														<p className="text-xs text-muted-foreground mb-1">
+															{item.size && `Size: ${item.size} | `}
+															{item.color && `Color: ${item.color}`}
+														</p>
+														{item.applied_coupon_code ? (
+															<div className="flex gap-2 items-center">
+																{findAppliedDiscount(
+																	coupons,
+																	item.applied_coupon_code,
+																	item.variant_id,
+																).isPercent ? (
+																	<p>
+																		PKR{" "}
+																		{item.original_price -
+																			item.original_price *
+																				(findAppliedDiscount(
+																					coupons,
+																					item.applied_coupon_code,
+																					item.variant_id,
+																				).discount_value /
+																					100)}
+																	</p>
+																) : (
+																	<p>
+																		PKR{" "}
+																		{item.original_price -
+																			findAppliedDiscount(
+																				coupons,
+																				item.applied_coupon_code,
+																				item.variant_id,
+																			).discount_value}
+																	</p>
+																)}
+																<del className="text-sm text-destructive">
+																	PKR {item.original_price}
+																</del>
+															</div>
+														) : (
+															<p>PKR {item.original_price}</p>
+														)}
+													</div>
+												</div>
+											);
+										})}
+									</div>
+									<div className="flex flex-col gap-6">
+										<div
+											id="real-summary"
+											className="[&>div>h3]:font-semibold [&>div]:flex [&>div]:gap-2 [&>div]:flex-row [&>div]:justify-between flex flex-col gap-1"
+										>
+											<div id="sub-total">
+												<h3>Sub Total</h3>
+												<p>PKR {subtotal}</p>
+											</div>
+											<div id="shipping-charges">
+												<h3>Shipping Charges</h3>
+												<p>PKR {shipping}</p>
+											</div>
+											<div className=" mt-2 mb-1">
+												<FormField
+													control={control}
+													name="manual_coupon"
+													render={({ field }) => (
+														<FormItem className="w-full">
+															<FormControl>
+																<Input
+																	placeholder="Enter coupon"
+																	type="text"
+																	className="w-full"
+																	{...field}
+																	value={field.value ?? ""}
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<Button type="button" onClick={handleManualCouponsApply}>
+													Apply
+												</Button>
+											</div>
+											<div id="coupons-discount" className="mt-2">
+												<div className="flex flex-col w-full gap-1.5">
+													<Separator />
+													<Accordion
+														transition={{ duration: 0.2, ease: "easeInOut" }}
+														className="flex w-full flex-col divide-y divide-secondary"
+													>
+														<AccordionItem value={"coupons"}>
+															<AccordionTrigger className="w-full text-left">
+																<div className="flex justify-between">
+																	<h3 className="font-semibold">
+																		Discount
+																	</h3>
+																	<div className="flex gap-2 items-center">
+																		<p>PKR {discount}</p>
+																		<ChevronUp className="h-4 w-4 transition-transform duration-200 group-data-expanded:-rotate-180" />
+																	</div>
+																</div>
+															</AccordionTrigger>
+															<AccordionContent>
+																<div className="my-1 flex flex-col gap-1">
+																	{Object.keys(discountBreakdown).map(
+																		(key) => {
+																			return (
+																				<div
+																					key={key}
+																					className="flex justify-between [&>p]:text-sm"
+																				>
+																					<p>{key}</p>
+																					<p>
+																						{
+																							discountBreakdown[
+																								key
+																							]
+																						}
+																					</p>
+																				</div>
+																			);
+																		},
+																	)}
+																</div>
+															</AccordionContent>
+														</AccordionItem>
+													</Accordion>
+												</div>
+											</div>
+											<Separator />
+											<div id="cart-taxes" className="mt-1">
+												<div className="flex flex-col w-full gap-1.5">
+													<Accordion
+														transition={{ duration: 0.2, ease: "easeInOut" }}
+														className="flex w-full flex-col divide-y divide-secondary"
+													>
+														<AccordionItem value={"coupons"}>
+															<AccordionTrigger className="w-full text-left">
+																<div className="flex justify-between">
+																	<h3 className="font-semibold">Taxes</h3>
+																	<div className="flex gap-2 items-center">
+																		<p>PKR {tax}</p>
+																		<ChevronUp className="h-4 w-4 transition-transform duration-200 group-data-expanded:-rotate-180" />
+																	</div>
+																</div>
+															</AccordionTrigger>
+															<AccordionContent>
+																<div className="my-1 flex flex-col gap-1">
+																	{Object.keys(taxBreakdown).map((key) => {
+																		return (
+																			<div
+																				key={key}
+																				className="flex justify-between gap-2 [&>p]:text-sm"
+																			>
+																				<p>{key}</p>
+																				<p>{taxBreakdown[key]}</p>
+																			</div>
+																		);
+																	})}
+																</div>
+															</AccordionContent>
+														</AccordionItem>
+													</Accordion>
+													<Separator />
+												</div>
+											</div>
+											<div id="grand-total" className="mt-2">
+												<h3>Grand Total</h3>
+												<p className="font-semibold">PKR {total}</p>
+											</div>
+										</div>
+										<Button
+											className="w-full hover:gap-3 transition-all duration-150"
+											size="lg"
+										>
+											Confirm Checkout
+											<ArrowRight className="w-4 h-4" />
+										</Button>
+									</div>
+								</CardContent>
+							</Card>
+						</div>
+					</Form>
+				</form>
+			</section>
+		</>
+	);
+}

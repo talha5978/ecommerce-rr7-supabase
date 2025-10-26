@@ -15,7 +15,7 @@ const statusBadgeVariants = cva(
 				default:
 					"bg-muted-foreground/10 dark:bg-muted-foreground/20 text-muted-foreground shadow-none",
 				success: "bg-success/50 dark:bg-success/60 text-white shadow-none",
-				destructive: "bg-destructive/50 dark:bg-destructive/40 text-white shadow-none",
+				destructive: "bg-destructive dark:bg-destructive/85 text-white shadow-none",
 				warning: "bg-warning/70 dark:bg-warning/60 text-white shadow-none",
 			},
 			// empty class names for future modification

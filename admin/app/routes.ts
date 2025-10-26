@@ -71,12 +71,21 @@ export default [
 			route(":hero_section_id/delete", "./routes/_actions/delete-hero-section.tsx"),
 		]),
 
-		route("/settings", "./routes/Settings/SettingsMainPage.tsx", [
+		route("/settings", "./routes/Settings/settings-main-page.tsx", [
 			index("./routes/Settings/index.tsx"),
 			...prefix("store-details", [
-				route("", "./routes/Settings/StoreSettings.tsx"),
+				route("", "./routes/Settings/store-settings.tsx"),
 				route(":id/address/update", "./routes/_actions/update-store-address.tsx"),
 				route(":id/contact/update", "./routes/_actions/update-store-contact-info.tsx"),
+			]),
+			...prefix("taxes", [
+				route("", "./routes/Settings/tax-settings.tsx", [
+					route("create", "./routes/Settings/create-tax.tsx"),
+					route(":id/delete", "./routes/_actions/delete-tax.tsx"),
+					route(":id/update", "./routes/_actions/update-tax-status.tsx"),
+					route("tax-types/create", "./routes/Settings/create-tax-type.tsx"),
+					route("tax-types/:id/delete", "./routes/_actions/delete-tax-type.tsx"),
+				]),
 			]),
 		]),
 	]),

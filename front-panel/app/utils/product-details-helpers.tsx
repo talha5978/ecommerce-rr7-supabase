@@ -4,11 +4,13 @@ import type {
 	ProductFullDetails,
 	ProductVariant,
 } from "@ecom/shared/types/product-details";
+import type { FullUser } from "@ecom/shared/types/user";
 
 type Attribute = {
 	id: string;
 	name: string;
 	value: string;
+	isDefault: boolean;
 };
 
 /** Only return the automatic coupons with the specific products discounts */
@@ -48,7 +50,7 @@ export function getCarouselImages(
 export function getVariantsColors(data: ProductFullDetails | null) {
 	if (data == null) return [];
 
-	const colors: Attribute[] = [];
+	const colors: Omit<Attribute, "isDefault">[] = [];
 
 	for (let i = 0; i < data.variants.length; i++) {
 		const variant = data.variants[i];
@@ -81,11 +83,12 @@ export function getAvailableSizes(data: ProductFullDetails | null, selectedColor
 				id: sizeAttr.id,
 				name: sizeAttr.name,
 				value: sizeAttr.value,
+				isDefault: variant.is_default ?? false,
 			});
 		}
 	});
 
-	return Array.from(sizesMap.values());
+	return Array.from(sizesMap.values()).sort((a, _) => (a.isDefault ? -1 : 1));
 }
 
 export function getProductAttributesToShow(attributes: ProductAttribute[]) {
@@ -118,14 +121,48 @@ export function calculateDiscountedPrice(originalPrice: number, coupon: FullCoup
 	}
 }
 
+// WHY THE CHANGES ARE NOT HAPPENING BETWEEN THE BOTH PANELS
+// Apply ordering, taxes, payments and checkout
+
 export function getApplicableCoupons(
 	allCoupons: FullCoupon[],
-	data: ProductFullDetails,
+	// data: ProductFullDetails,
 	selectedVariant: ProductVariant,
+	user: FullUser | null,
 ) {
 	return allCoupons.filter((coupon) => {
 		if (coupon.specific_products && coupon.specific_products.length > 0) {
 			return coupon.specific_products.some((product) => product.sku === selectedVariant.sku);
+		}
+
+		if (user != null) {
+			if (coupon.customer_conditions.customer_emails.length > 0) {
+				return coupon.customer_conditions.customer_emails.some((email) => email === user.email);
+			}
+
+			if (coupon.customer_conditions.customer_group != null) {
+				switch (coupon.customer_conditions.customer_group) {
+					case "admins":
+						return user.role.role_name === "admin";
+					case "employee":
+						return user.role.role_name === "employee";
+					case "consumer":
+						return user.role.role_name === "consumer";
+					case "all":
+						return true;
+				}
+			}
+		} else {
+			if (coupon.customer_conditions.customer_group != null) {
+				switch (coupon.customer_conditions.customer_group) {
+					case "admins":
+					case "employee":
+					case "consumer":
+						return false;
+					case "all":
+						return true;
+				}
+			}
 		}
 
 		return true;

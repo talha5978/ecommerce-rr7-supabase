@@ -1,4 +1,4 @@
-import { Database } from "./supabase";
+import type { Database } from "@ecom/shared/types/supabase";
 
 export type AdminUser = {
 	id: string;

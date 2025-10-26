@@ -458,7 +458,10 @@ export default function CreateCouponPage({ params }: Route.ComponentProps) {
 												<FormControl>
 													<div className="relative">
 														<Input
+															min={0}
+															minLength={0}
 															type="number"
+															step={0.01}
 															placeholder="e.g. 10"
 															className="pr-9"
 															{...field}

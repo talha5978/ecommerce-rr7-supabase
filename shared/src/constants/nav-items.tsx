@@ -1,4 +1,4 @@
-import { IconHelp, IconSettings } from "@tabler/icons-react";
+import { IconHelp, IconSettings, IconTax } from "@tabler/icons-react";
 import {
 	Archive,
 	Bell,
@@ -10,7 +10,6 @@ import {
 	LinkIcon,
 	Megaphone,
 	RectangleHorizontal,
-	ShoppingCart,
 	TableProperties,
 	Tag,
 	Truck,
@@ -141,13 +140,13 @@ export const settingsNavItems: SettingsNavItem[] = [
 		icon: <CreditCard />,
 	},
 	{
-		label: "Checkouts",
-		path: "/settings/gfh",
-		icon: <ShoppingCart />,
+		label: "Taxes",
+		path: "/settings/taxes",
+		icon: <IconTax />,
 	},
 	{
 		label: "Shipping and Dilivery",
-		path: "/settings/fds",
+		path: "/settings/shipping-and-dilivery",
 		icon: <Truck />,
 	},
 	{

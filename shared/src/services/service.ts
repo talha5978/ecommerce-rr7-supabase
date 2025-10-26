@@ -55,6 +55,16 @@ export class Service implements ServiceBase {
 
 	protected readonly STORE_SETTINGS_TABLE = "store_settings";
 
+	protected readonly TAX_RATES_TABLE = "tax_rates";
+	protected readonly TAX_APPLICATION_CATEGORIES_TABLE = "tax_applications_categories";
+	protected readonly TAX_TYPES_TABLE = "tax_types";
+
+	protected readonly ORDER_TABLE = "orders";
+	protected readonly ORDER_ITEMS_TABLE = "order_items";
+	protected readonly ORDER_TAX_RATES_TABLE = "order_tax_rates";
+
+	protected readonly PAYMENTS_TABLE = "payments";
+
 	constructor(request: Request, opts?: { supabase?: SupabaseClient<Database>; headers?: Headers }) {
 		if (opts?.supabase && opts?.headers) {
 			this.supabase = opts.supabase;

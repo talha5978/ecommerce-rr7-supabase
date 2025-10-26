@@ -63,9 +63,10 @@
 	--shadow-offset-y: 4px;
 	--letter-spacing: 0em;
 	--spacing: 0.25rem;
-	--header-spacing: 3.6rem;
+	/* --header-spacing: 3.6rem; */
 	--tracking-normal: 0em;
 	--muted-dark: oklch(0.95 0 0);
+	--map-height: 250px;
 }
 
 .dark {
@@ -126,6 +127,7 @@
 	--spacing: 0.25rem;
 	--header-spacing: 3.6rem;
 	--muted-dark: oklch(0.95 0 0);
+	--map-height: 250px;
 }
 
 @theme inline {

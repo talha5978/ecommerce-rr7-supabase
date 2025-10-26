@@ -10,6 +10,7 @@ interface QuantityInputBasicProps {
 	max?: number | null;
 	step?: number;
 	disabled?: boolean;
+	inputFieldDisabled?: boolean;
 	onChange: (quantity: number) => void;
 	className?: string;
 }
@@ -17,6 +18,7 @@ interface QuantityInputBasicProps {
 const QuantityInput = ({
 	className,
 	disabled = false,
+	inputFieldDisabled = false,
 	max = null,
 	min = 1,
 	onChange,
@@ -98,7 +100,7 @@ const QuantityInput = ({
 				className="w-12 border-y px-2 py-1 text-center font-mono outline-none"
 				min={min}
 				max={max !== null ? max : undefined}
-				disabled={disabled}
+				disabled={disabled || inputFieldDisabled}
 				aria-label="Quantity"
 				minLength={minLength}
 				maxLength={maxLength != null ? maxLength : undefined}

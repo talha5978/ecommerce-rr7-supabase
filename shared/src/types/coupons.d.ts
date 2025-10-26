@@ -21,7 +21,7 @@ export type HighLevelCoupon = {
 export type FullCoupon = HighLevelCoupon & {
 	description: string | null;
 	discount_type: DiscountType;
-	discount_value: number | null;
+	discount_value: number;
 	specific_products:
 		| {
 				id: string;

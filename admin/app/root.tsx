@@ -9,6 +9,7 @@ import { ThemeProvider } from "~/components/Theme/theme-provder";
 import { currentUserQuery } from "@ecom/shared/queries/auth.q";
 import { TopLoadingBar } from "~/components/Loaders/TopLoadingBar";
 import type { GetCurrentUser } from "@ecom/shared/types/auth";
+import { extractAuthId } from "@ecom/shared/lib/auth-utils.server";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -67,8 +68,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 	}
 
 	const { genAuthSecurity } = await import("@ecom/shared/lib/auth-utils.server");
-	const { authId, headers } = genAuthSecurity(request);
-
+	// const { authId, headers } = genAuthSecurity(request);
+	const authId = extractAuthId(request);
+	const headers = genAuthSecurity(request).headers;
 	const resp: GetCurrentUser = await queryClient.fetchQuery(currentUserQuery({ request, authId }));
 
 	const user = resp?.user ?? null;

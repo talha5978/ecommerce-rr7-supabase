@@ -332,32 +332,4 @@ export class AuthService extends Service {
 			};
 		}
 	}
-
-	async loginWithFacebook(): Promise<Login> {
-		try {
-			const PROVIDER: Provider = "facebook";
-
-			const { error: fetchError } = await this.supabase.auth.signInWithOAuth({
-				provider: PROVIDER,
-				options: {
-					redirectTo: window.location.origin,
-				},
-			});
-
-			let error: null | ApiError = null;
-			if (fetchError) {
-				error = new ApiError(fetchError.message, Number(fetchError.code) || 500, []);
-			}
-
-			return { error, headers: this.headers };
-		} catch (err: any) {
-			if (err instanceof ApiError) {
-				return { error: err, headers: this.headers };
-			}
-			return {
-				error: new ApiError("Unknown error", 500, [err]),
-				headers: this.headers,
-			};
-		}
-	}
 }

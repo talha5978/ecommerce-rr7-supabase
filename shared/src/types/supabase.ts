@@ -6,55 +6,80 @@ export type Database = {
 	__InternalSupabase: {
 		PostgrestVersion: "12.2.3 (519615d)";
 	};
+	graphql_public: {
+		Tables: {
+			[_ in never]: never;
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			graphql: {
+				Args: {
+					extensions?: Json;
+					operationName?: string;
+					query?: string;
+					variables?: Json;
+				};
+				Returns: Json;
+			};
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
 	public: {
 		Tables: {
 			addresses: {
 				Row: {
-					address_1: string;
-					address_2: string | null;
-					address_name: string | null;
+					address_name: string;
 					address_type: Database["public"]["Enums"]["address_type_enum"] | null;
 					city: string;
-					country: string;
 					createdAt: string | null;
+					email: string;
+					first_name: string;
 					id: string;
-					is_default: boolean | null;
+					last_name: string;
 					latitude: number | null;
 					longitude: number | null;
+					phone: string;
 					postal_code: string | null;
-					state: string | null;
+					province: string | null;
 					user_id: string;
 				};
 				Insert: {
-					address_1: string;
-					address_2?: string | null;
-					address_name?: string | null;
+					address_name: string;
 					address_type?: Database["public"]["Enums"]["address_type_enum"] | null;
 					city: string;
-					country: string;
 					createdAt?: string | null;
+					email: string;
+					first_name: string;
 					id?: string;
-					is_default?: boolean | null;
+					last_name: string;
 					latitude?: number | null;
 					longitude?: number | null;
+					phone: string;
 					postal_code?: string | null;
-					state?: string | null;
+					province?: string | null;
 					user_id: string;
 				};
 				Update: {
-					address_1?: string;
-					address_2?: string | null;
-					address_name?: string | null;
+					address_name?: string;
 					address_type?: Database["public"]["Enums"]["address_type_enum"] | null;
 					city?: string;
-					country?: string;
 					createdAt?: string | null;
+					email?: string;
+					first_name?: string;
 					id?: string;
-					is_default?: boolean | null;
+					last_name?: string;
 					latitude?: number | null;
 					longitude?: number | null;
+					phone?: string;
 					postal_code?: string | null;
-					state?: string | null;
+					province?: string | null;
 					user_id?: string;
 				};
 				Relationships: [
@@ -396,6 +421,223 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			order_items: {
+				Row: {
+					color: string;
+					created_at: string;
+					id: string;
+					order_id: string;
+					price: number;
+					quantity: number;
+					size: string;
+					sku: string;
+					variant_id: string;
+				};
+				Insert: {
+					color: string;
+					created_at?: string;
+					id?: string;
+					order_id: string;
+					price: number;
+					quantity: number;
+					size: string;
+					sku: string;
+					variant_id: string;
+				};
+				Update: {
+					color?: string;
+					created_at?: string;
+					id?: string;
+					order_id?: string;
+					price?: number;
+					quantity?: number;
+					size?: string;
+					sku?: string;
+					variant_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "order_items_order_id_fkey";
+						columns: ["order_id"];
+						isOneToOne: false;
+						referencedRelation: "orders";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "order_items_variant_id_fkey";
+						columns: ["variant_id"];
+						isOneToOne: false;
+						referencedRelation: "product_variant";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			order_tax_rates: {
+				Row: {
+					created_at: string;
+					id: number;
+					order_id: string;
+					rate: number;
+					tax_amount: number;
+					tax_rate_id: number;
+				};
+				Insert: {
+					created_at?: string;
+					id?: number;
+					order_id: string;
+					rate: number;
+					tax_amount: number;
+					tax_rate_id: number;
+				};
+				Update: {
+					created_at?: string;
+					id?: number;
+					order_id?: string;
+					rate?: number;
+					tax_amount?: number;
+					tax_rate_id?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "order_tax_rates_order_id_fkey";
+						columns: ["order_id"];
+						isOneToOne: false;
+						referencedRelation: "orders";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "order_tax_rates_tax_rate_id_fkey";
+						columns: ["tax_rate_id"];
+						isOneToOne: false;
+						referencedRelation: "tax_rates";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			orders: {
+				Row: {
+					billing_address_id: string;
+					created_at: string;
+					discount: number;
+					id: string;
+					order_note: string | null;
+					shipping: number;
+					shipping_address_id: string;
+					status: Database["public"]["Enums"]["order_status"];
+					sub_total: number;
+					tax_amount: number;
+					total: number;
+					user_id: string;
+				};
+				Insert: {
+					billing_address_id: string;
+					created_at?: string;
+					discount: number;
+					id?: string;
+					order_note?: string | null;
+					shipping: number;
+					shipping_address_id: string;
+					status: Database["public"]["Enums"]["order_status"];
+					sub_total: number;
+					tax_amount: number;
+					total: number;
+					user_id: string;
+				};
+				Update: {
+					billing_address_id?: string;
+					created_at?: string;
+					discount?: number;
+					id?: string;
+					order_note?: string | null;
+					shipping?: number;
+					shipping_address_id?: string;
+					status?: Database["public"]["Enums"]["order_status"];
+					sub_total?: number;
+					tax_amount?: number;
+					total?: number;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "orders_billing_address_id_fkey";
+						columns: ["billing_address_id"];
+						isOneToOne: false;
+						referencedRelation: "addresses";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "orders_shipping_address_id_fkey";
+						columns: ["shipping_address_id"];
+						isOneToOne: false;
+						referencedRelation: "addresses";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "orders_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "admin_users";
+						referencedColumns: ["user_id"];
+					},
+					{
+						foreignKeyName: "orders_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "app_users";
+						referencedColumns: ["user_id"];
+					},
+				];
+			};
+			payments: {
+				Row: {
+					amount: number;
+					created_at: string;
+					currency: string;
+					gateway_response: Json | null;
+					id: string;
+					method: Database["public"]["Enums"]["payment_methods"];
+					order_id: string;
+					refund_proof: string | null;
+					refunded_amount: number | null;
+					status: Database["public"]["Enums"]["payment_status"];
+					transaction_id: string | null;
+				};
+				Insert: {
+					amount: number;
+					created_at?: string;
+					currency: string;
+					gateway_response?: Json | null;
+					id?: string;
+					method: Database["public"]["Enums"]["payment_methods"];
+					order_id: string;
+					refund_proof?: string | null;
+					refunded_amount?: number | null;
+					status: Database["public"]["Enums"]["payment_status"];
+					transaction_id?: string | null;
+				};
+				Update: {
+					amount?: number;
+					created_at?: string;
+					currency?: string;
+					gateway_response?: Json | null;
+					id?: string;
+					method?: Database["public"]["Enums"]["payment_methods"];
+					order_id?: string;
+					refund_proof?: string | null;
+					refunded_amount?: number | null;
+					status?: Database["public"]["Enums"]["payment_status"];
+					transaction_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "payments_order_id_fkey";
+						columns: ["order_id"];
+						isOneToOne: false;
+						referencedRelation: "orders";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			product: {
 				Row: {
 					cover_image: string;
@@ -583,6 +825,7 @@ export type Database = {
 					id: string;
 					phone_1: string;
 					phone_2: string;
+					shipping_rate: number;
 					store_address: Json;
 					updated_at: string;
 				};
@@ -593,6 +836,7 @@ export type Database = {
 					id?: string;
 					phone_1?: string;
 					phone_2?: string;
+					shipping_rate?: number;
 					store_address?: Json;
 					updated_at?: string;
 				};
@@ -603,6 +847,7 @@ export type Database = {
 					id?: string;
 					phone_1?: string;
 					phone_2?: string;
+					shipping_rate?: number;
 					store_address?: Json;
 					updated_at?: string;
 				};
@@ -652,6 +897,92 @@ export type Database = {
 						referencedColumns: ["id"];
 					},
 				];
+			};
+			tax_applications_categories: {
+				Row: {
+					category_id: string;
+					id: number;
+					tax_rate_id: number;
+				};
+				Insert: {
+					category_id: string;
+					id?: number;
+					tax_rate_id: number;
+				};
+				Update: {
+					category_id?: string;
+					id?: number;
+					tax_rate_id?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "tax_applications_categories_category_id_fkey";
+						columns: ["category_id"];
+						isOneToOne: false;
+						referencedRelation: "category";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "tax_applications_categories_tax_rate_id_fkey";
+						columns: ["tax_rate_id"];
+						isOneToOne: false;
+						referencedRelation: "tax_rates";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			tax_rates: {
+				Row: {
+					created_at: string;
+					id: number;
+					name: string;
+					rate: number;
+					status: boolean;
+					type: number;
+				};
+				Insert: {
+					created_at?: string;
+					id?: number;
+					name: string;
+					rate: number;
+					status: boolean;
+					type: number;
+				};
+				Update: {
+					created_at?: string;
+					id?: number;
+					name?: string;
+					rate?: number;
+					status?: boolean;
+					type?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "tax_rates_type_fkey";
+						columns: ["type"];
+						isOneToOne: false;
+						referencedRelation: "tax_types";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			tax_types: {
+				Row: {
+					created_at: string;
+					id: number;
+					name: string;
+				};
+				Insert: {
+					created_at?: string;
+					id?: number;
+					name: string;
+				};
+				Update: {
+					created_at?: string;
+					id?: number;
+					name?: string;
+				};
+				Relationships: [];
 			};
 			user_roles: {
 				Row: {
@@ -752,7 +1083,7 @@ export type Database = {
 				}[];
 			};
 			get_product_attribute_types: {
-				Args: Record<PropertyKey, never>;
+				Args: never;
 				Returns: {
 					attribute_type: Database["public"]["Enums"]["attribute_type_enum"];
 					values_count: number;
@@ -787,6 +1118,9 @@ export type Database = {
 			coupon_type_enum: "manual" | "automatic";
 			customer_type: "admins" | "employee" | "all" | "consumer";
 			discount_type: "fixed_order" | "percentage_order" | "fixed_product" | "percentage_product";
+			order_status: "pending" | "paid" | "shipped" | "failed";
+			payment_methods: "cod" | "online";
+			payment_status: "pending" | "completed" | "failed" | "refunded" | "partially_refunded";
 		};
 		CompositeTypes: {
 			[_ in never]: never;
@@ -910,6 +1244,9 @@ export type CompositeTypes<
 		: never;
 
 export const Constants = {
+	graphql_public: {
+		Enums: {},
+	},
 	public: {
 		Enums: {
 			address_type_enum: ["shipping", "billing", "both"],
@@ -917,6 +1254,9 @@ export const Constants = {
 			coupon_type_enum: ["manual", "automatic"],
 			customer_type: ["admins", "employee", "all", "consumer"],
 			discount_type: ["fixed_order", "percentage_order", "fixed_product", "percentage_product"],
+			order_status: ["pending", "paid", "shipped", "failed"],
+			payment_methods: ["cod", "online"],
+			payment_status: ["pending", "completed", "failed", "refunded", "partially_refunded"],
 		},
 	},
 } as const;
