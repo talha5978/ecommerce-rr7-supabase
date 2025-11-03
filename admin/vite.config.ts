@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
 			},
 		},
 		optimizeDeps: {
-			exclude: ["crypto"],
+			exclude: ["crypto", "@tanstack/react-query"],
 			// Pre-bundling to optimize dev performance
 			include: [
 				"@tabler/icons-react",
