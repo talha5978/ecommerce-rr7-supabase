@@ -514,6 +514,48 @@ export class CouponsService extends Service {
 			};
 		}
 	}
+
+	/** Update a coupon */
+	@UseMiddleware(
+		asServiceMiddleware<CouponsService>(verifyUser),
+		requireAllPermissions([Permission.MANAGE_COUPONS]),
+	)
+	async updateCouponTimeSlots({
+		input,
+		coupon_id,
+	}: {
+		input: {
+			start_timestamp: string | null;
+			end_timestamp: string | null;
+		};
+		coupon_id: number;
+	}): Promise<void | null> {
+		const payload = {
+			...(input.start_timestamp != null &&
+				input.start_timestamp !== "" && { start_timestamp: input.start_timestamp }),
+			...(input.end_timestamp != null &&
+				input.end_timestamp !== "" && { end_timestamp: input.end_timestamp }),
+		};
+
+		if (Object.keys(payload).length === 0) {
+			throw new ApiError("Invalid Input", 400, []);
+		}
+
+		try {
+			const { error: couponError } = await this.supabase
+				.from(this.COUPONS_TABLE)
+				.update(payload)
+				.eq("coupon_id", coupon_id);
+
+			if (couponError) {
+				throw new ApiError(`${couponError?.message || "No data returned"}`, 500, []);
+			}
+
+			return null;
+		} catch (err) {
+			throw err;
+		}
+	}
 }
 
 @UseClassMiddleware(loggerMiddleware)

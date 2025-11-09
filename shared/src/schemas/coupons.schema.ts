@@ -116,3 +116,19 @@ export const CouponActionDataSchema = z
 	);
 
 export type CouponActionData = z.infer<typeof CouponActionDataSchema>;
+
+export const TimeSlotUpdateSchema = z
+	.object({
+		start_timestamp: z.date({ required_error: "Start date and time is required." }),
+		end_timestamp: z.date({ required_error: "End date and time is required." }),
+	})
+	.refine((data) => data.end_timestamp > data.start_timestamp, {
+		message: "Start date and time must be before end date and time.",
+		path: ["start_timestamp"],
+	})
+	.refine((data) => data.end_timestamp > data.start_timestamp, {
+		message: "End date and time must be after start date and time.",
+		path: ["end_timestamp"],
+	});
+
+export type TimeSlotUpdateInput = z.infer<typeof TimeSlotUpdateSchema>;

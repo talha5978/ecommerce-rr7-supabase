@@ -74,6 +74,18 @@ import { useSuppressTopLoadingBar } from "~/hooks/use-supress-loading-bar";
 import { protectLoader } from "~/utils/routeGuards";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
+import { type TimeSlotUpdateInput, TimeSlotUpdateSchema } from "@ecom/shared/schemas/coupons.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import {
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+	Form as ShadcnForm,
+} from "~/components/ui/form";
+import DateTimePicker from "~/components/Custom-Inputs/date-time-picker";
 
 const SELECTED_COUPON_DETAILS_TAG = "couponId" as const;
 
@@ -158,6 +170,21 @@ const CouponsPage = memo(() => {
 	};
 	// console.log(data);
 	const [columnVisibility, setColumnVisibility] = useState({});
+	const [timeSlotsDialogData, setUpdateTimeSlotsDialog] = useState<{
+		isOpen: boolean;
+		coupon_id: number | null;
+		timestamps: {
+			start: string;
+			end: string;
+		};
+	}>({
+		isOpen: false,
+		coupon_id: null,
+		timestamps: {
+			start: "",
+			end: "",
+		},
+	});
 
 	useEffect(() => {
 		if (data.error != null && data.error.message) {
@@ -178,6 +205,25 @@ const CouponsPage = memo(() => {
 		}
 		console.log(fetcher.data);
 	}, [fetcher.data, queryClient]);
+
+	const handleUpdateTimeSlotsClick = ({
+		coupon_id,
+		start_timestamp,
+		end_timestamp,
+	}: {
+		coupon_id: number;
+		start_timestamp: string;
+		end_timestamp: string;
+	}) => {
+		setUpdateTimeSlotsDialog({
+			coupon_id: coupon_id,
+			isOpen: true,
+			timestamps: {
+				end: end_timestamp,
+				start: start_timestamp,
+			},
+		});
+	};
 
 	const handleDeleteClick = (couponId: number) => {
 		const formData = new FormData();
@@ -305,6 +351,17 @@ const CouponsPage = memo(() => {
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<SeeDetailsButton rowId={rowData.id} />
+							<DropdownMenuItem
+								onClick={() =>
+									handleUpdateTimeSlotsClick({
+										coupon_id: rowData.id,
+										start_timestamp: rowData.start_timestamp,
+										end_timestamp: rowData.end_timestamp,
+									})
+								}
+							>
+								Update Time Slots
+							</DropdownMenuItem>
 							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 								<DropdownMenuItem>Update</DropdownMenuItem>
 							</Link>
@@ -376,6 +433,21 @@ const CouponsPage = memo(() => {
 					<CouponsArea table={table} />
 				</div>
 			</section>
+			{timeSlotsDialogData.isOpen && timeSlotsDialogData.coupon_id && (
+				<UpdateCouponTimeSlotsDialog
+					coupon_id={timeSlotsDialogData.coupon_id}
+					open={timeSlotsDialogData.isOpen}
+					onClose={() =>
+						setUpdateTimeSlotsDialog({
+							coupon_id: null,
+							isOpen: false,
+							timestamps: { start: "", end: "" },
+						})
+					}
+					initialStartTimestamp={timeSlotsDialogData.timestamps.start}
+					initialEndTimestamp={timeSlotsDialogData.timestamps.end}
+				/>
+			)}
 		</>
 	);
 });
@@ -564,5 +636,156 @@ const PageOptions = memo(() => {
 				<ViewModeChangeButtons />
 			</div>
 		</>
+	);
+});
+
+const UpdateCouponTimeSlotsDialog = memo(function UpdateCouponTimeSlots({
+	coupon_id,
+	open,
+	onClose,
+	initialStartTimestamp,
+	initialEndTimestamp,
+}: {
+	coupon_id: number;
+	open: boolean;
+	onClose: () => void;
+	initialStartTimestamp: string;
+	initialEndTimestamp: string;
+}) {
+	const defaultValues = {
+		start_timestamp: new Date(initialStartTimestamp),
+		end_timestamp: new Date(initialEndTimestamp),
+	};
+
+	const form = useForm<TimeSlotUpdateInput>({
+		resolver: zodResolver(TimeSlotUpdateSchema),
+		defaultValues,
+	});
+
+	const {
+		reset,
+		handleSubmit,
+		control,
+		formState: { errors },
+	} = form;
+
+	const [isSubmitting, setSubmitting] = useState<boolean>(false);
+
+	const fetcher = useFetcher();
+
+	// Handle fetcher state for toasts and state updates
+	useEffect(() => {
+		if (fetcher.data) {
+			if (fetcher.data.success) {
+				toast.success("Timeslots updated successfully");
+				onClose();
+			} else if (fetcher.data.error) {
+				toast.error(fetcher.data.error);
+			} else {
+				toast.error("Something went wrong");
+			}
+		}
+	}, [fetcher.data, reset]);
+
+	const handleConfirm = (data: TimeSlotUpdateInput) => {
+		setSubmitting(true);
+		const payload = new FormData();
+
+		const isEndChanged = data.end_timestamp.getTime() !== defaultValues.end_timestamp.getTime();
+		const isStartChanged = data.start_timestamp.getTime() !== defaultValues.start_timestamp.getTime();
+
+		if (!isStartChanged && !isEndChanged) {
+			toast.warning("Time slots not changed!");
+			return;
+		}
+
+		toast.info("Updating time slots...");
+
+		if (isStartChanged) {
+			payload.append("start_timestamp", data.start_timestamp.toISOString());
+		}
+
+		if (isEndChanged) {
+			payload.append("end_timestamp", data.end_timestamp.toISOString());
+		}
+
+		payload.append("coupon_id", coupon_id.toString());
+
+		fetcher.submit(payload, {
+			method: "PATCH",
+			action: `/coupons/${coupon_id}/update/time-slots`,
+		});
+
+		setSubmitting(false);
+	};
+
+	return (
+		<Dialog onOpenChange={onClose} open={open}>
+			<DialogContent
+				className="sm:max-w-[500px]"
+				showCloseButton={false}
+				onInteractOutside={(e) => e.preventDefault()}
+			>
+				<form onSubmit={handleSubmit(handleConfirm)} className="space-y-4">
+					<ShadcnForm {...form}>
+						<DialogHeader className="mb-2">
+							<DialogTitle>Update Time Slots</DialogTitle>
+						</DialogHeader>
+						<FormField
+							control={control}
+							name="start_timestamp"
+							render={({ field }) => (
+								<FormItem className="mt-3">
+									<FormLabel>Start Date & Time</FormLabel>
+									<FormControl>
+										<DateTimePicker
+											value={field.value ?? null}
+											onDateTimeChange={field.onChange}
+											disabled={isSubmitting}
+										/>
+									</FormControl>
+									{errors?.start_timestamp && (
+										<FormMessage>{errors.start_timestamp.message}</FormMessage>
+									)}
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={control}
+							name="end_timestamp"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>End Date & Time</FormLabel>
+									<FormControl>
+										<DateTimePicker
+											value={field.value ?? null}
+											onDateTimeChange={field.onChange}
+											disabled={isSubmitting}
+										/>
+									</FormControl>
+									{errors?.start_timestamp && (
+										<FormMessage>{errors.start_timestamp.message}</FormMessage>
+									)}
+								</FormItem>
+							)}
+						/>
+						<div className="space-x-1 mt-2 flex sm:flex-row flex-col-reverse gap-2 sm:justify-end	">
+							<Button
+								variant="outline"
+								disabled={isSubmitting}
+								className="w-full"
+								onClick={onClose}
+							>
+								Cancel
+							</Button>
+							<Button type="submit" disabled={isSubmitting} className="w-full">
+								{isSubmitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+								Confirm
+							</Button>
+						</div>
+					</ShadcnForm>
+				</form>
+			</DialogContent>
+		</Dialog>
 	);
 });
