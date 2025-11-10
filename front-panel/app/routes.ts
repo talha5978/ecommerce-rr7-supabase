@@ -12,8 +12,13 @@ export default [
 
 		...prefix("/cart", [
 			route("", "./routes/Cart/cart.tsx"),
-			route("checkout", "./routes/Checkout/CheckoutSummary.tsx"),
+			...prefix("/checkout", [
+				index("./routes/Checkout/CheckoutSummary.tsx"),
+				route("payment", "./routes/Checkout/Payment.tsx"),
+			]),
 		]),
+
+		route("/favourites", "./routes/Favourites/favourites.tsx"),
 	]),
 	route("*", "./routes/Error/404.tsx"),
 ] satisfies RouteConfig;

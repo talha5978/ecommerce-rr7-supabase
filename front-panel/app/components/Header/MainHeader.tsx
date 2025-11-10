@@ -4,9 +4,11 @@ import { Heart, Search, ShoppingBag } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "~/components/ui/tooltip";
 import AccountSection from "~/components/Header/AccountSection";
 import { getNumberOfCartItems } from "~/utils/manageCart";
+import { getNumberOfFavourites } from "~/utils/manageFavourites";
 
 export default function MainHeader() {
-	const itemCount = getNumberOfCartItems();
+	const cart_count = getNumberOfCartItems();
+	const favourite_count = getNumberOfFavourites();
 
 	return (
 		<div className="container mx-auto px-4 pt-5 pb-4 flex items-center justify-between">
@@ -42,9 +44,16 @@ export default function MainHeader() {
 				{/* Wishlist */}
 				<Tooltip>
 					<TooltipTrigger>
-						<div>
-							<Heart className="w-5 h-5 hover:text-destructive transition-colors duration-200 ease-in-out" />
-						</div>
+						<Link to={"/favourites"}>
+							<div className="relative">
+								<Heart className="w-5 h-5 hover:text-destructive transition-colors duration-200 ease-in-out" />
+								{favourite_count > 0 && (
+									<span className="absolute -top-1.5 -right-2 bg-destructive text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+										{favourite_count}
+									</span>
+								)}
+							</div>
+						</Link>
 					</TooltipTrigger>
 					<TooltipContent side="bottom">
 						<p>Wishlist</p>
@@ -57,9 +66,9 @@ export default function MainHeader() {
 						<Link to={"/cart"}>
 							<div className="relative">
 								<ShoppingBag className="w-5 h-5 hover:text-success transition-colors duration-200 ease-in-out" />
-								{itemCount > 0 && (
+								{cart_count > 0 && (
 									<span className="absolute -top-1.5 -right-2 bg-success text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-										{itemCount}
+										{cart_count}
 									</span>
 								)}
 							</div>

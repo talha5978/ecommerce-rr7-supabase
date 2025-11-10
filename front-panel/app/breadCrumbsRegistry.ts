@@ -22,6 +22,10 @@ const breadcrumbRegistry: Record<string, BreadcrumbGenerator> = {
 		{ label: "Cart", href: "/cart" },
 		{ label: "Checkout", href: "/cart/checkout" },
 	],
+	"/favourites": () => [
+		{ label: "Home", href: "/" },
+		{ label: "Favourites", href: "/favourites" },
+	],
 };
 
 export default breadcrumbRegistry;

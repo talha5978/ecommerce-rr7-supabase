@@ -84,6 +84,8 @@ export const CheckoutSchema = z
 			})
 			.optional(),
 		manual_coupon: z.string().optional(),
+		order_note: z.string().optional(),
+		payment_method: z.enum(["cod", "online"]),
 	})
 	.refine(
 		(data) =>

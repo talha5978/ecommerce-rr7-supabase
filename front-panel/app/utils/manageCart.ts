@@ -65,7 +65,7 @@ export function addToCart(item: Omit<CartItem, "quantity" | "id"> & { quantity?:
  */
 export function removeFromCart(itemId: string): CartItem[] {
 	const currentCart = getCart();
-	const newCart = currentCart.filter((item) => item.id !== itemId); // ✅ FIXED
+	const newCart = currentCart.filter((item) => item.id !== itemId);
 	saveCart(newCart);
 	return newCart;
 }
@@ -79,9 +79,7 @@ export function updateQuantity(itemId: string, quantity: number): CartItem[] {
 	}
 
 	const currentCart = getCart();
-	const newCart = currentCart.map(
-		(item) => (item.id === itemId ? { ...item, quantity } : item), // ✅ FIXED
-	);
+	const newCart = currentCart.map((item) => (item.id === itemId ? { ...item, quantity } : item));
 
 	saveCart(newCart);
 	return newCart;
@@ -90,8 +88,13 @@ export function updateQuantity(itemId: string, quantity: number): CartItem[] {
 /**
  * Clear entire cart
  */
-export function clearCart(): void {
-	localStorage.removeItem(CART_STORAGE_KEY);
+export function clearCart(): boolean {
+	try {
+		localStorage.removeItem(CART_STORAGE_KEY);
+		return true;
+	} catch (error) {
+		return false;
+	}
 }
 
 /**
@@ -111,15 +114,28 @@ export interface CartSummary {
 	taxBreakdown: Record<string, string>;
 }
 
-/** Real Function to calculate things */
+/**
+ * Save cart to localStorage
+ */
+function saveCart(items: CartItem[]) {
+	try {
+		localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+	} catch (error) {
+		console.error("Error saving cart to localStorage:", error);
+	}
+}
+
+/** Function to calculate cart summary */
 export function calculateCartSummary({
 	coupons,
 	shippingRate,
 	taxRates,
+	manualCoupon,
 }: {
 	coupons: FullCoupon[];
 	shippingRate: number;
 	taxRates: TaxRate_FP[];
+	manualCoupon: FullCoupon | null;
 }): CartSummary {
 	const cartItems = getCart();
 
@@ -153,11 +169,38 @@ export function calculateCartSummary({
 				discountBreakdown[item.sku] = discountText;
 			}
 		}
+
+		// Apply product-specific manual coupon
+		if (
+			manualCoupon &&
+			manualCoupon.specific_products != null &&
+			manualCoupon.specific_products?.length > 0 &&
+			manualCoupon.discount_value
+		) {
+			const appliesToItem = manualCoupon.specific_products.some(
+				(p) => p.id === item.product_id || p.sku === item.sku,
+			);
+			if (appliesToItem) {
+				const discountAmount =
+					manualCoupon.discount_type === "percentage_product"
+						? (item.original_price * manualCoupon.discount_value) / 100
+						: manualCoupon.discount_type === "fixed_product"
+							? manualCoupon.discount_value
+							: 0;
+
+				discount += discountAmount * item.quantity;
+
+				const discountText =
+					manualCoupon.discount_type === "percentage_product"
+						? `${manualCoupon.discount_value}%`
+						: `PKR ${Number((discountAmount * item.quantity).toFixed(2))}`;
+
+				discountBreakdown[item.sku] = discountText;
+			}
+		}
 	});
 
-	// Coupon type must be automatic
-	// + type must be on the order level
-	// + there must be no specific products (to ensure that the coupon is order level not specific)
+	// Automatic order-level coupon
 	const orderLevelCoupon = coupons.find(
 		(c) =>
 			(c.discount_type === "fixed_order" || c.discount_type === "percentage_order") &&
@@ -173,6 +216,24 @@ export function calculateCartSummary({
 		} else if (orderLevelCoupon.discount_type === "percentage_order") {
 			discount += (subtotal * orderLevelCoupon.discount_value) / 100;
 			discountBreakdown[`Coupon - ${orderLevelCoupon.code}`] = `${orderLevelCoupon.discount_value}%`;
+		}
+	}
+
+	// Manual order-level coupon
+	if (
+		manualCoupon &&
+		manualCoupon.discount_value &&
+		["fixed_order", "percentage_order"].includes(manualCoupon.discount_type) &&
+		!manualCoupon.specific_products?.length &&
+		manualCoupon.coupon_type === "manual"
+	) {
+		if (manualCoupon.discount_type === "fixed_order") {
+			discount += manualCoupon.discount_value;
+			discountBreakdown[`Coupon - ${manualCoupon.code}`] =
+				`PKR ${Number(manualCoupon.discount_value.toFixed(2))}`;
+		} else if (manualCoupon.discount_type === "percentage_order") {
+			discount += (subtotal * manualCoupon.discount_value) / 100;
+			discountBreakdown[`Coupon - ${manualCoupon.code}`] = `${manualCoupon.discount_value}%`;
 		}
 	}
 
@@ -215,13 +276,83 @@ export function calculateCartSummary({
 	};
 }
 
-/**
- * Save cart to localStorage
- */
-function saveCart(items: CartItem[]) {
-	try {
-		localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-	} catch (error) {
-		console.error("Error saving cart to localStorage:", error);
+export function findAppliedDiscount(coupons: FullCoupon[], code: string, variant_id: string) {
+	const c = coupons.find((c) => c.code === code && c.specific_products != null);
+	if (!c) {
+		return {
+			isPercent: true,
+			discount_value: -1,
+		};
 	}
+
+	if (c.code === code && c.specific_products != null) {
+		const f = c.specific_products.find((item) => item.id === variant_id);
+		if (f) {
+			return {
+				isPercent:
+					c.discount_type === "percentage_order" || c.discount_type === "percentage_product"
+						? true
+						: false,
+				discount_value: c.discount_value,
+			};
+		} else {
+			return {
+				isPercent: true,
+				discount_value: 0,
+			};
+		}
+	} else {
+		return {
+			isPercent: true,
+			discount_value: -1,
+		};
+	}
+}
+
+export function calculateItemFinalPrice(item: CartItem, availableCoupons: FullCoupon[]) {
+	let finalPrice = item.original_price;
+	let hasDiscount = false;
+	let discountAmount = 0;
+	let coupon = null;
+
+	if (!item.applied_coupon_code) {
+		return { finalPrice, hasDiscount, discountAmount, coupon };
+	}
+
+	const appliedCoupon = availableCoupons.find((c) => c.code === item.applied_coupon_code);
+
+	if (!appliedCoupon || !appliedCoupon.discount_value) {
+		return { finalPrice, hasDiscount, discountAmount, coupon };
+	}
+
+	if (!appliedCoupon.specific_products || appliedCoupon.specific_products.length === 0) {
+		return { finalPrice, hasDiscount, discountAmount, coupon };
+	}
+
+	const itemMatchesSpecificProduct = appliedCoupon.specific_products.some((specificProduct) => {
+		const idMatch = specificProduct.id === item.product_id;
+		const skuMatch = specificProduct.sku === item.sku;
+		return idMatch || skuMatch;
+	});
+
+	if (!itemMatchesSpecificProduct) {
+		return { finalPrice, hasDiscount, discountAmount, coupon };
+	}
+
+	let calculatedDiscount = 0;
+	if (appliedCoupon.discount_type === "percentage_product") {
+		calculatedDiscount = (item.original_price * (appliedCoupon.discount_value || 0)) / 100;
+	} else if (appliedCoupon.discount_type === "fixed_product") {
+		calculatedDiscount = appliedCoupon.discount_value || 0;
+	} else {
+	}
+
+	discountAmount = calculatedDiscount;
+
+	finalPrice = Math.max(0, item.original_price - discountAmount);
+	hasDiscount = discountAmount > 0 && finalPrice < item.original_price;
+
+	coupon = appliedCoupon;
+
+	return { finalPrice, hasDiscount, discountAmount, coupon };
 }

@@ -7,75 +7,23 @@ import { Breadcrumbs } from "~/components/SEO/Breadcrumbs";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import type { CartItem } from "~/types/cart";
-import { clearCart, getCart, getNumberOfCartItems, removeFromCart, updateQuantity } from "~/utils/manageCart";
+import {
+	calculateItemFinalPrice,
+	clearCart,
+	getCart,
+	getNumberOfCartItems,
+	removeFromCart,
+	updateQuantity,
+} from "~/utils/manageCart";
 import { type loader as rootLoader } from "~/root";
 import { filterCoupons } from "~/utils/product-details-helpers";
-import type { FullCoupon } from "@ecom/shared/types/coupons";
 import { Badge } from "~/components/ui/badge";
 import QuantityInput from "~/components/Custom-Inputs/quantity-input-basic";
+import { toast } from "sonner";
 
 export const loader = () => {
 	return null;
 };
-
-function calculateItemFinalPrice(item: CartItem, availableCoupons: FullCoupon[]) {
-	let finalPrice = item.original_price;
-	let hasDiscount = false;
-	let discountAmount = 0;
-	let coupon = null;
-
-	if (!item.applied_coupon_code) {
-		// console.log("❌ No applied_coupon_code");
-		return { finalPrice, hasDiscount, discountAmount, coupon };
-	}
-
-	const appliedCoupon = availableCoupons.find((c) => c.code === item.applied_coupon_code);
-
-	if (!appliedCoupon || !appliedCoupon.discount_value) {
-		// console.log("❌ Coupon not found or no discount_value");
-		return { finalPrice, hasDiscount, discountAmount, coupon };
-	}
-
-	if (!appliedCoupon.specific_products || appliedCoupon.specific_products.length === 0) {
-		// console.log("❌ No specific_products or empty array");
-		return { finalPrice, hasDiscount, discountAmount, coupon };
-	}
-
-	const itemMatchesSpecificProduct = appliedCoupon.specific_products.some((specificProduct) => {
-		const idMatch = specificProduct.id === item.product_id;
-		const skuMatch = specificProduct.sku === item.sku;
-		// console.log(`  📦 Checking: ${specificProduct.id} === ${item.product_id} ? ${idMatch} | ${specificProduct.sku} === ${item.sku} ? ${skuMatch}`);
-		return idMatch || skuMatch;
-	});
-
-	// console.log("🔍 Item matches specific product:", itemMatchesSpecificProduct);
-
-	if (!itemMatchesSpecificProduct) {
-		// console.log("❌ Item does NOT match any specific_product");
-		return { finalPrice, hasDiscount, discountAmount, coupon };
-	}
-
-	// CALCULATE DISCOUNT
-	let calculatedDiscount = 0;
-	if (appliedCoupon.discount_type === "percentage_product") {
-		calculatedDiscount = (item.original_price * (appliedCoupon.discount_value || 0)) / 100;
-		// console.log(`💰 Percentage discount: ${(appliedCoupon.discount_value || 0)}% of ${item.original_price} = ${calculatedDiscount}`);
-	} else if (appliedCoupon.discount_type === "fixed_product") {
-		calculatedDiscount = appliedCoupon.discount_value || 0;
-		// console.log(`💰 Fixed discount: PKR ${calculatedDiscount}`);
-	} else {
-		// console.log(`❌ Unknown discount_type: ${appliedCoupon.discount_type}`);
-	}
-
-	discountAmount = calculatedDiscount;
-
-	finalPrice = Math.max(0, item.original_price - discountAmount);
-	hasDiscount = discountAmount > 0 && finalPrice < item.original_price;
-
-	coupon = appliedCoupon;
-
-	return { finalPrice, hasDiscount, discountAmount, coupon };
-}
 
 export default function CartPage() {
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
@@ -86,13 +34,11 @@ export default function CartPage() {
 
 	const navigate = useNavigate();
 
-	// Fetch cart on mount and when cart changes
 	useEffect(() => {
 		const items = getCart();
 		setCartItems(items);
 	}, []);
 
-	// Listen for storage changes (if multiple tabs)
 	useEffect(() => {
 		const handleStorageChange = () => {
 			const items = getCart();
@@ -120,8 +66,13 @@ export default function CartPage() {
 	};
 
 	const handleClearCart = () => {
-		clearCart();
-		setCartItems([]);
+		const st = clearCart();
+		if (st) {
+			setCartItems([]);
+			toast.success("Cart cleared successfully");
+		} else {
+			toast.error("Failed to clear cart. Please try again later.");
+		}
 	};
 
 	const itemCount = getNumberOfCartItems();
@@ -151,7 +102,6 @@ export default function CartPage() {
 			</div>
 		);
 	}
-	// console.log(cartItems);
 
 	return (
 		<>
@@ -192,15 +142,19 @@ export default function CartPage() {
 														<p className="text-xs text-muted-foreground mb-1">
 															{item.size && `Size: ${item.size} | `}
 															{item.color && `Color: ${item.color}`}
-															{item.applied_coupon_code && (
-																<Badge
-																	variant={"outline"}
-																	className="ml-2 text-muted-foreground bg-success/20"
-																>
-																	<Check />
-																	{item.applied_coupon_code}
-																</Badge>
-															)}
+															{item.applied_coupon_code &&
+																coupons.find(
+																	(c) =>
+																		c.code === item.applied_coupon_code,
+																) && (
+																	<Badge
+																		variant={"outline"}
+																		className="ml-2 text-muted-foreground bg-success/20"
+																	>
+																		<Check />
+																		{item.applied_coupon_code}
+																	</Badge>
+																)}
 														</p>
 														<div className="flex items-center gap-2">
 															<motion.span

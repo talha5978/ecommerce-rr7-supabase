@@ -121,12 +121,8 @@ export function calculateDiscountedPrice(originalPrice: number, coupon: FullCoup
 	}
 }
 
-// WHY THE CHANGES ARE NOT HAPPENING BETWEEN THE BOTH PANELS
-// Apply ordering, taxes, payments and checkout
-
 export function getApplicableCoupons(
 	allCoupons: FullCoupon[],
-	// data: ProductFullDetails,
 	selectedVariant: ProductVariant,
 	user: FullUser | null,
 ) {

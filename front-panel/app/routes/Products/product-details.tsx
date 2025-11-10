@@ -8,7 +8,7 @@ import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { getProductDetails } from "~/queries/products.q";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { memo, useEffect, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import QuantityInputBasic from "~/components/Custom-Inputs/quantity-input-basic";
 import { ColorInput, SizeInput } from "~/components/Products/ProductDetailsInputs";
 import {
@@ -29,6 +29,8 @@ import type { FullCoupon } from "@ecom/shared/types/coupons";
 import { motion } from "motion/react";
 import { addToCart } from "~/utils/manageCart";
 import type { CartItem } from "~/types/cart";
+import { addToFavourites } from "~/utils/manageFavourites";
+import CartSheet from "~/components/Cart/CartSheet";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const product_id = params.productId;
@@ -66,6 +68,8 @@ export default function ProductDetailsPage() {
 	const defaultColor = allColors[0]?.value || "";
 	const defaultAvailableSizes = getAvailableSizes(data, defaultColor);
 	const defaultSize = defaultAvailableSizes[0]?.value || "";
+
+	const [cartSheetOpen, setCartSheetOpen] = useState(false);
 
 	const form = useForm<FormValues>({
 		defaultValues: {
@@ -107,7 +111,7 @@ export default function ProductDetailsPage() {
 	// Filter applicable coupons based on selected variant (SKU)
 	const applicableCoupons = useMemo(() => {
 		if (!selectedVariant) return [];
-		return getApplicableCoupons(allCoupons, selectedVariant, current_user);
+		return getApplicableCoupons(allCoupons, selectedVariant, current_user ?? null);
 	}, [allCoupons, selectedVariant, data]);
 
 	// Auto-apply first applicable coupon or use selected manual coupon
@@ -156,22 +160,35 @@ export default function ProductDetailsPage() {
 
 			try {
 				addToCart(payload);
-				toast.success(`Added to cart successfully`, {
-					action: {
-						label: "View Cart",
-						onClick: () => {
-							navigate("/cart");
-						},
-					},
-				});
+				setCartSheetOpen(true);
 			} catch (error) {
 				toast.error("Something went wrong");
 			}
 		}
 	}
 
+	const handleFavouriteClick = () => {
+		addToFavourites({
+			image_url: data.product.cover_image,
+			original_price: data.variants[0]?.original_price ?? 0,
+			product_id: data.product.id,
+			product_name: data.product.name,
+			url_key: data.product.url_key,
+		});
+
+		toast.success("Added to favourites", {
+			action: {
+				label: "View Favourites",
+				onClick: () => {
+					navigate("/favourites");
+				},
+			},
+		});
+	};
+
 	return (
 		<>
+			<CartSheet open={cartSheetOpen} setOpen={setCartSheetOpen} />
 			<section className="max-container py-6 flex flex-col gap-3">
 				<Breadcrumbs
 					params={{
@@ -192,7 +209,10 @@ export default function ProductDetailsPage() {
 					<div className="flex-1 flex flex-col gap-3">
 						<div className="flex gap-2 justify-between">
 							<h1 className="font-semibold text-2xl">{data?.product.name}</h1>
-							<div className="p-2 rounded-full bg-accent w-fit h-fit">
+							<div
+								className="p-2 rounded-full bg-accent w-fit h-fit"
+								onClick={handleFavouriteClick}
+							>
 								<Heart className="w-4 h-4 hover:text-destructive hover:fill-destructive transition-colors duration-200 ease-in-out cursor-pointer" />
 							</div>
 						</div>
@@ -307,20 +327,19 @@ export default function ProductDetailsPage() {
 										/>
 									)}
 								/>
-								<Button
-									size="lg"
-									className="w-full flex-1 grow"
-									variant={"outline"}
-									disabled={isOutOfStock}
-									type="button"
-									onClick={handleAddtoCartClick}
-								>
-									Add to cart
-								</Button>
+								<div className="w-full">
+									<Button
+										size="lg"
+										className="w-full flex-1 grow"
+										variant={"default"}
+										disabled={isOutOfStock}
+										type="button"
+										onClick={handleAddtoCartClick}
+									>
+										Add to cart
+									</Button>
+								</div>
 							</div>
-							<Button size="lg" className="w-full" disabled={isOutOfStock}>
-								Buy Now
-							</Button>
 						</form>
 						<ProductAttributesSection product_attributes={data.product_attributes} />
 					</div>

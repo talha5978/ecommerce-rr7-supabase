@@ -45,7 +45,7 @@ const AddressPicker = ({ value, onChange }: AddressPickerProps) => {
 	);
 
 	const { control, setValue } = useForm<FormData>({
-		resolver: zodResolver(schema),
+		resolver: zodResolver(schema as any),
 		defaultValues: {
 			searchTerm: formattedAddress,
 			showSuggestions: false,
