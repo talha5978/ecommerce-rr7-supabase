@@ -1,5 +1,5 @@
 import { type SupabaseClient } from "@supabase/supabase-js";
-import { STORAGE_BUCKETS } from "@ecom/shared/constants/constants";
+import { PAYMENT_CURRENCY, STORAGE_BUCKETS } from "@ecom/shared/constants/constants";
 import { createSupabaseServerClient } from "@ecom/shared/lib/supabase/supabase.server";
 import { type Database } from "@ecom/shared/types/supabase";
 import { UserRole } from "@ecom/shared/permissions/permissions.enum";
@@ -16,6 +16,7 @@ export interface ServiceBase {
 	headers: Headers;
 	request: Request;
 	currentUser?: ServiceBaseCurrentUser | null | undefined;
+	payment_currency: string;
 }
 
 export class Service implements ServiceBase {
@@ -23,6 +24,7 @@ export class Service implements ServiceBase {
 	readonly headers;
 	readonly request;
 	currentUser?: ServiceBaseCurrentUser | null | undefined = null;
+	payment_currency = PAYMENT_CURRENCY;
 
 	protected readonly IMAGES_BUCKET = STORAGE_BUCKETS.images;
 
@@ -59,7 +61,7 @@ export class Service implements ServiceBase {
 	protected readonly TAX_APPLICATION_CATEGORIES_TABLE = "tax_applications_categories";
 	protected readonly TAX_TYPES_TABLE = "tax_types";
 
-	protected readonly ORDER_TABLE = "orders";
+	protected readonly ORDERS_TABLE = "orders";
 	protected readonly ORDER_ITEMS_TABLE = "order_items";
 	protected readonly ORDER_TAX_RATES_TABLE = "order_tax_rates";
 

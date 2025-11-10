@@ -76,7 +76,7 @@ import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 import { type TimeSlotUpdateInput, TimeSlotUpdateSchema } from "@ecom/shared/schemas/coupons.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import {
 	FormControl,
 	FormField,

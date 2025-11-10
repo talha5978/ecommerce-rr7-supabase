@@ -1,6 +1,7 @@
 // Front Panel -----
 
 // PRIMARY 🔴
+	TODO: We are storing the coupon code in the local storage also which is causing problems with the expired coupons
 	TODO: Shipping rate setting in admin panel
 	TODO: SHOW OTHER REMANING FIELDS IN THE PRODUCT DETAILS PAGE LIKE CATEGORY/SUB CATEGORY CARDS AND OTHER DATA
 	TODO: SHOW BADGES LIKE X% OFF AND OTHERS IN THE CART AND PRODUCT CARDS AND PRODUCT DETAILS PAGE
@@ -31,5 +32,4 @@ share them and export urls if we want to.
 // TODO: Add accordian based fields for tree in product filters
 //TODO: Show a sheet where we display the information of product when we click on the name of product in the table list IN THE COLLECTIONS PAGE
 // TODO: CREATE A fallback for the products dialog suspense in ALL PRODUCTS UNITS product dialog
-// //TODO: Check group_id!! in insertProductCondition service function in the coupons service
 // TODO: APPLY PAGINATION in the getProductNamesList service function IF IT IS IN DIALOG THEN APPLY INFINITE SCROLL IN THAT SELECT..

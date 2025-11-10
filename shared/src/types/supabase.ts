@@ -35,8 +35,8 @@ export type Database = {
 		Tables: {
 			addresses: {
 				Row: {
-					address_name: string;
-					address_type: Database["public"]["Enums"]["address_type_enum"] | null;
+					address_name: string | null;
+					address_type: Database["public"]["Enums"]["address_type_enum"];
 					city: string;
 					createdAt: string | null;
 					email: string;
@@ -46,13 +46,12 @@ export type Database = {
 					latitude: number | null;
 					longitude: number | null;
 					phone: string;
-					postal_code: string | null;
 					province: string | null;
 					user_id: string;
 				};
 				Insert: {
-					address_name: string;
-					address_type?: Database["public"]["Enums"]["address_type_enum"] | null;
+					address_name?: string | null;
+					address_type: Database["public"]["Enums"]["address_type_enum"];
 					city: string;
 					createdAt?: string | null;
 					email: string;
@@ -62,13 +61,12 @@ export type Database = {
 					latitude?: number | null;
 					longitude?: number | null;
 					phone: string;
-					postal_code?: string | null;
 					province?: string | null;
 					user_id: string;
 				};
 				Update: {
-					address_name?: string;
-					address_type?: Database["public"]["Enums"]["address_type_enum"] | null;
+					address_name?: string | null;
+					address_type?: Database["public"]["Enums"]["address_type_enum"];
 					city?: string;
 					createdAt?: string | null;
 					email?: string;
@@ -78,7 +76,6 @@ export type Database = {
 					latitude?: number | null;
 					longitude?: number | null;
 					phone?: string;
-					postal_code?: string | null;
 					province?: string | null;
 					user_id?: string;
 				};
@@ -516,7 +513,7 @@ export type Database = {
 			};
 			orders: {
 				Row: {
-					billing_address_id: string;
+					billing_address_id: string | null;
 					created_at: string;
 					discount: number;
 					id: string;
@@ -530,7 +527,7 @@ export type Database = {
 					user_id: string;
 				};
 				Insert: {
-					billing_address_id: string;
+					billing_address_id?: string | null;
 					created_at?: string;
 					discount: number;
 					id?: string;
@@ -544,7 +541,7 @@ export type Database = {
 					user_id: string;
 				};
 				Update: {
-					billing_address_id?: string;
+					billing_address_id?: string | null;
 					created_at?: string;
 					discount?: number;
 					id?: string;
@@ -597,7 +594,7 @@ export type Database = {
 					id: string;
 					method: Database["public"]["Enums"]["payment_methods"];
 					order_id: string;
-					refund_proof: string | null;
+					refund_proofs: string[] | null;
 					refunded_amount: number | null;
 					status: Database["public"]["Enums"]["payment_status"];
 					transaction_id: string | null;
@@ -610,7 +607,7 @@ export type Database = {
 					id?: string;
 					method: Database["public"]["Enums"]["payment_methods"];
 					order_id: string;
-					refund_proof?: string | null;
+					refund_proofs?: string[] | null;
 					refunded_amount?: number | null;
 					status: Database["public"]["Enums"]["payment_status"];
 					transaction_id?: string | null;
@@ -623,7 +620,7 @@ export type Database = {
 					id?: string;
 					method?: Database["public"]["Enums"]["payment_methods"];
 					order_id?: string;
-					refund_proof?: string | null;
+					refund_proofs?: string[] | null;
 					refunded_amount?: number | null;
 					status?: Database["public"]["Enums"]["payment_status"];
 					transaction_id?: string | null;

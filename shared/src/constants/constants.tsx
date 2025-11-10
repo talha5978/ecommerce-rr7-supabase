@@ -117,3 +117,6 @@ export const DISCOUNT_CUSTOMER_TYPE_ENUM = Constants.public.Enums.customer_type;
 export const DEFAULT_DICOUNT_TYPE: DiscountType = "fixed_order";
 
 export const CART_STORAGE_KEY = "clothing-store-cart";
+export const FAVOURITES_STORAGE_KEY = "clothing-store-favourites";
+
+export const PAYMENT_CURRENCY = "pkr";
