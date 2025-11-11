@@ -39,11 +39,8 @@ import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
 import { Textarea } from "~/components/ui/textarea";
 import type { PlaceOrderServicePayload } from "@ecom/shared/types/orders";
-import { FP_OrdersService } from "@ecom/shared/services/orders.service";
 import type { ActionResponse, ActionReturn } from "@ecom/shared/types/action-data";
-import { ApiError } from "@ecom/shared/utils/ApiError";
-import { StripeService } from "@ecom/shared/services/stripe.service";
-import { FP_PaymentsService } from "@ecom/shared/services/payments.service";
+import { CheckoutService } from "@ecom/shared/services/checkout.service";
 
 const AddressPicker = lazy(() => import("~/components/Custom-Inputs/address-picker"));
 
@@ -72,91 +69,9 @@ export const action = async ({ request }: ActionFunctionArgs): ActionReturnType 
 		payment_method: formData.get("payment_method") as unknown as p["payment_method"],
 	};
 
-	let order_id: string | null = null;
-	let clientSecret: string | null = null;
-	let paymentIntentId: string | null = null;
-
-	try {
-		try {
-			const order_svc = new FP_OrdersService(request);
-			const { order_id: svc_order_id } = await order_svc.placeInitialOrder({
-				// @ts-ignore
-				billing_address: payload.billing_address === "" ? undefined : payload.billing_address,
-				...payload,
-			});
-			order_id = svc_order_id;
-		} catch (error: any) {
-			return {
-				success: false,
-				clientSecret: null,
-				order_id,
-				error: error instanceof ApiError ? error.message : error.message || "Failed to place order",
-			};
-		}
-
-		if (order_id == null) {
-			return {
-				success: false,
-				clientSecret: null,
-				order_id,
-				error: new ApiError("Failed to place order", 500, []),
-			};
-		}
-
-		if (payload.payment_method == "online") {
-			const stripe_svc = new StripeService();
-			const {
-				clientSecret: svc_clientSecret,
-				error: paymentIntent_err,
-				paymentIntentId: svc_paymentIntentId,
-			} = await stripe_svc.createPaymentIntent({
-				orderId: order_id,
-				amount: Number(payload.cart_summary.total),
-			});
-
-			clientSecret = svc_clientSecret;
-			paymentIntentId = svc_paymentIntentId;
-
-			if (paymentIntent_err != null) {
-				return {
-					success: false,
-					clientSecret,
-					order_id,
-					error:
-						paymentIntent_err instanceof ApiError
-							? paymentIntent_err.message
-							: "Failed to initiate payment process",
-				};
-			}
-		}
-
-		const payment_svc = new FP_PaymentsService(request);
-		const payment_res = await payment_svc.insertInitialPaymentEntry({
-			order_id,
-			amount: Number(payload.cart_summary.total),
-			method: payload.payment_method,
-			payment_intent_id: paymentIntentId ?? undefined,
-			status: "pending",
-		});
-
-		if (payment_res.error != null) {
-			return {
-				success: false,
-				clientSecret,
-				order_id,
-				error: payment_res.error,
-			};
-		}
-
-		return { success: true, clientSecret, order_id, error: null };
-	} catch (error: any) {
-		return {
-			success: false,
-			clientSecret,
-			order_id,
-			error: error instanceof ApiError ? error.message : error.message || "Failed to place order",
-		};
-	}
+	const checkout_svc = new CheckoutService(request);
+	const { clientSecret, error, order_id, success } = await checkout_svc.confirmCheckout(payload);
+	return { clientSecret, error, order_id, success };
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -289,6 +204,7 @@ export default function CheckoutPage() {
 				const isCod = form.getValues("payment_method") === "cod";
 				if (isCod) {
 					toast.success("Order placed successfully");
+					navigate("/cart");
 				} else {
 					navigate(
 						`payment?success=${actionData.success}&order_id=${actionData.order_id}&client_secret=${actionData.clientSecret}`,
@@ -300,6 +216,13 @@ export default function CheckoutPage() {
 			}
 		}
 	}, [actionData, navigate]);
+
+	useEffect(() => {
+		if (cartItems.length === 0) {
+			toast.error("No product found in cart..");
+			navigate("/cart");
+		}
+	}, [cartItems]);
 
 	// console.log(cartItems);
 
@@ -975,7 +898,7 @@ export default function CheckoutPage() {
 											className={`w-full ${isSubmitting && "hover:gap-3 transition-all duration-150"}`}
 											size="lg"
 											type="submit"
-											disabled={isSubmitting}
+											disabled={isSubmitting || cartItems.length === 0}
 										>
 											Confirm Checkout
 											{isSubmitting ? (

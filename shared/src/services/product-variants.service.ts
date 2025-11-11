@@ -634,3 +634,33 @@ export class ProductVariantsService extends Service {
 		};
 	}
 }
+
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<FP_ProductVariantsService>(verifyUser))
+export class FP_ProductVariantsService extends Service {
+	/** Update a product variant stock after the order placement */
+	async updateProductVaraintStock(input: { variant_id: string; stock: number }[]): Promise<void> {
+		try {
+			const payload = input.map((item) => {
+				return {
+					id: item.variant_id,
+					stock: item.stock,
+				};
+			});
+
+			const promises: any[] = [];
+
+			for (let i = 0; i < payload.length; i++) {
+				const j = this.supabase
+					.from(this.PRODUCT_VARIANT_TABLE)
+					.update({ stock: payload[i].stock })
+					.eq("id", payload[i].id);
+
+				promises.push(j);
+			}
+
+			await Promise.all(promises);
+		} catch (error) {
+			throw new ApiError("Failed to update product variant stock", 500, [error]);
+		}
+	}
+}

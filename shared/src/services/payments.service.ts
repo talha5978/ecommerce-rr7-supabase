@@ -32,7 +32,7 @@ export class FP_PaymentsService extends Service {
 				method,
 				order_id,
 				status,
-				transaction_id: payment_intent_id,
+				payment_intent_id,
 			});
 
 			return {

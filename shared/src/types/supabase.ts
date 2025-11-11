@@ -469,48 +469,6 @@ export type Database = {
 					},
 				];
 			};
-			order_tax_rates: {
-				Row: {
-					created_at: string;
-					id: number;
-					order_id: string;
-					rate: number;
-					tax_amount: number;
-					tax_rate_id: number;
-				};
-				Insert: {
-					created_at?: string;
-					id?: number;
-					order_id: string;
-					rate: number;
-					tax_amount: number;
-					tax_rate_id: number;
-				};
-				Update: {
-					created_at?: string;
-					id?: number;
-					order_id?: string;
-					rate?: number;
-					tax_amount?: number;
-					tax_rate_id?: number;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "order_tax_rates_order_id_fkey";
-						columns: ["order_id"];
-						isOneToOne: false;
-						referencedRelation: "orders";
-						referencedColumns: ["id"];
-					},
-					{
-						foreignKeyName: "order_tax_rates_tax_rate_id_fkey";
-						columns: ["tax_rate_id"];
-						isOneToOne: false;
-						referencedRelation: "tax_rates";
-						referencedColumns: ["id"];
-					},
-				];
-			};
 			orders: {
 				Row: {
 					billing_address_id: string | null;
@@ -590,40 +548,37 @@ export type Database = {
 					amount: number;
 					created_at: string;
 					currency: string;
-					gateway_response: Json | null;
 					id: string;
 					method: Database["public"]["Enums"]["payment_methods"];
 					order_id: string;
+					payment_intent_id: string | null;
 					refund_proofs: string[] | null;
 					refunded_amount: number | null;
 					status: Database["public"]["Enums"]["payment_status"];
-					transaction_id: string | null;
 				};
 				Insert: {
 					amount: number;
 					created_at?: string;
 					currency: string;
-					gateway_response?: Json | null;
 					id?: string;
 					method: Database["public"]["Enums"]["payment_methods"];
 					order_id: string;
+					payment_intent_id?: string | null;
 					refund_proofs?: string[] | null;
 					refunded_amount?: number | null;
 					status: Database["public"]["Enums"]["payment_status"];
-					transaction_id?: string | null;
 				};
 				Update: {
 					amount?: number;
 					created_at?: string;
 					currency?: string;
-					gateway_response?: Json | null;
 					id?: string;
 					method?: Database["public"]["Enums"]["payment_methods"];
 					order_id?: string;
+					payment_intent_id?: string | null;
 					refund_proofs?: string[] | null;
 					refunded_amount?: number | null;
 					status?: Database["public"]["Enums"]["payment_status"];
-					transaction_id?: string | null;
 				};
 				Relationships: [
 					{

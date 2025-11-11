@@ -1,6 +1,7 @@
 // Front Panel -----
 
 // PRIMARY 🔴
+	TODO: Ab ye dekho k payments walay page ko behtar kesy kia ja sakta hai aur admin panel wali side pr payments aur orders wala nizam kro!!
 	TODO: We are storing the coupon code in the local storage also which is causing problems with the expired coupons
 	TODO: Shipping rate setting in admin panel
 	TODO: SHOW OTHER REMANING FIELDS IN THE PRODUCT DETAILS PAGE LIKE CATEGORY/SUB CATEGORY CARDS AND OTHER DATA

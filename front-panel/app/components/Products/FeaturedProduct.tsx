@@ -72,7 +72,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 								<Button
 									variant={"secondary"}
 									size={"sm"}
-									className="rounded-full hover:*:fill-primary transition-all duration-200 ease-in-out"
+									className="rounded-full hover:*:fill-destructive text-destructive transition-all duration-200 ease-in-out"
 									onClick={handleFavouriteClick}
 								>
 									<Heart />
