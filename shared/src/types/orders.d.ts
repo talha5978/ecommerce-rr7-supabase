@@ -1,5 +1,7 @@
 import type { Database } from "@ecom/shared/types/supabase";
+import { type ApiError } from "@ecom/shared/utils/ApiError";
 
+// Front Panel
 interface CartSummary {
 	subtotal: string;
 	shipping: string;
@@ -49,4 +51,34 @@ export type PlaceOrderServicePayload = {
 	cart_summary: CartSummary;
 	cart_items: Omit<Database["public"]["Tables"]["order_items"]["Insert"], "order_id">[];
 	payment_method: "cod" | "online";
+};
+
+// Admin Panel
+
+export type OrderRaw = Database["public"]["Tables"]["orders"]["Row"];
+type OrderStatus = Database["public"]["Enums"]["order_status"];
+type PaymentStatus = Database["public"]["Enums"]["payment_status"];
+type PaymentMethod = Database["public"]["Enums"]["payment_methods"];
+
+export type HighLevelOrder = {
+	id: string;
+	created_at: string;
+	status: OrderStatus;
+	total: number;
+	payment: {
+		method: PaymentMethod;
+		status: PaymentStatus;
+	};
+	user: {
+		user_id: string;
+		email: string;
+		name: string;
+		avatar: string;
+	};
+};
+
+export type GetHighLevelOrders = {
+	orders: HighLevelOrder[];
+	total: number;
+	error: ApiError | null;
 };

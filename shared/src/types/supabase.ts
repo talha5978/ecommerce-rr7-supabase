@@ -1070,7 +1070,7 @@ export type Database = {
 			coupon_type_enum: "manual" | "automatic";
 			customer_type: "admins" | "employee" | "all" | "consumer";
 			discount_type: "fixed_order" | "percentage_order" | "fixed_product" | "percentage_product";
-			order_status: "pending" | "paid" | "shipped" | "failed";
+			order_status: "pending" | "paid" | "shipped" | "failed" | "cancelled";
 			payment_methods: "cod" | "online";
 			payment_status: "pending" | "completed" | "failed" | "refunded" | "partially_refunded";
 		};
@@ -1206,7 +1206,7 @@ export const Constants = {
 			coupon_type_enum: ["manual", "automatic"],
 			customer_type: ["admins", "employee", "all", "consumer"],
 			discount_type: ["fixed_order", "percentage_order", "fixed_product", "percentage_product"],
-			order_status: ["pending", "paid", "shipped", "failed"],
+			order_status: ["pending", "paid", "shipped", "failed", "cancelled"],
 			payment_methods: ["cod", "online"],
 			payment_status: ["pending", "completed", "failed", "refunded", "partially_refunded"],
 		},

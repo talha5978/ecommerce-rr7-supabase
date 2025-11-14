@@ -20,6 +20,8 @@ class DefaultValues {
 
 	readonly DEFAULT_TAXES_PAGE_SIZE = 10;
 
+	readonly DEFAULT_ORDERS_PAGE_SIZE = 20;
+
 	readonly META_KEYWORDS_VALUE = 25;
 
 	readonly defaultProductSortByFilter = "createdAt";

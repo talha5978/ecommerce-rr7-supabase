@@ -89,6 +89,8 @@ export default [
 				]),
 			]),
 		]),
+
+		...prefix("/orders", [index("./routes/Orders/orders.tsx")]),
 	]),
 
 	route("*", "./routes/Error/404.tsx"),

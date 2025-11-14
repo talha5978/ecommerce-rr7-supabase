@@ -131,4 +131,13 @@ export const searchRegistry: SearchEntry[] = [
 		url: "/hero-sections/create",
 		entry_type: "page",
 	},
+
+	//Orders
+	{
+		id: "orders",
+		label: "Orders",
+		keywords: ["order", "orders"],
+		url: "/orders",
+		entry_type: "page",
+	},
 ];

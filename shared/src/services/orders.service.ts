@@ -3,12 +3,103 @@ import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
-import type { InsertOrderItemsPayload, PlaceOrderServicePayload } from "@ecom/shared/types/orders";
+import type {
+	GetHighLevelOrders,
+	HighLevelOrder,
+	InsertOrderItemsPayload,
+	PlaceOrderServicePayload,
+} from "@ecom/shared/types/orders";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
+import { defaults } from "@ecom/shared/constants/constants";
+import { AuthService } from "@ecom/shared/services/auth.service";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<OrdersService>(verifyUser))
-export class OrdersService extends Service {}
+export class OrdersService extends Service {
+	/** Fetch all orders with filters */
+	async getAllOrders(
+		q = "",
+		pageIndex = 0,
+		pageSize = defaults.DEFAULT_ORDERS_PAGE_SIZE,
+	): Promise<GetHighLevelOrders> {
+		try {
+			const from = pageIndex * pageSize;
+			const to = from + pageSize - 1;
+
+			let query = this.supabase
+				.from(this.ORDERS_TABLE)
+				.select(
+					`
+					id, status, created_at, total,
+					${this.USERS_TABLE}(user_id, first_name, last_name),
+					${this.PAYMENTS_TABLE}(method, status)
+				`,
+					{ count: "exact" },
+				)
+				.order("created_at", { ascending: false });
+
+			if (q.length > 0) {
+				query = query.eq("id", q);
+			}
+
+			query = query.range(from, to);
+
+			const { data, error: queryError, count } = await query;
+
+			let payload: HighLevelOrder[] =
+				data?.flatMap((order) => {
+					return {
+						id: order.id,
+						created_at: order.created_at,
+						status: order.status,
+						total: order.total,
+						payment: {
+							method: order[this.PAYMENTS_TABLE][0].method,
+							status: order[this.PAYMENTS_TABLE][0].status,
+						},
+						user: {
+							name:
+								order[this.USERS_TABLE].first_name + " " + order[this.USERS_TABLE].last_name,
+							user_id: order[this.USERS_TABLE].user_id,
+							email: "",
+							avatar: "",
+						},
+					};
+				}) ?? [];
+
+			if (data != null) {
+				for (let i = 0; i < payload.length; i++) {
+					const auth_svc = await this.createSubService(AuthService);
+					const { data: email_resp } = await auth_svc.getAuthSchemaUser(payload[i].user.user_id);
+
+					payload[i].user.email = email_resp.user?.email ?? "";
+					payload[i].user.avatar = email_resp.user?.user_metadata?.avatar_url ?? "";
+				}
+			}
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+				console.log(error);
+			}
+
+			return {
+				orders: payload,
+				total: count ?? 0,
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { orders: [], total: 0, error: err };
+			}
+			return {
+				orders: [],
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+}
 
 @UseClassMiddleware(loggerMiddleware)
 export class FP_OrdersService extends Service {

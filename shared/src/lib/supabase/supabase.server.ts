@@ -3,7 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@ecom/shared/types/supabase";
 
 function createSupabaseServerClient(request: Request) {
-	if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+	if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_SERVICE_ROLE__KEY) {
 		throw new Error("Missing Supabase environment variables");
 	}
 
@@ -15,7 +15,7 @@ function createSupabaseServerClient(request: Request) {
 	// @ts-ignore
 	const supabase: SupabaseClient<Database> = createServerClient(
 		process.env.VITE_SUPABASE_URL!,
-		process.env.VITE_SUPABASE_ANON_KEY!,
+		process.env.VITE_SUPABASE_SERVICE_ROLE__KEY!,
 		{
 			cookies: {
 				getAll() {

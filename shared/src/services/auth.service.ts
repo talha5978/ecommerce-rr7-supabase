@@ -11,7 +11,7 @@ import type { AdminUser, FullUser } from "@ecom/shared/types/user.d";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { Service } from "@ecom/shared/services/service";
-import { Session, User, type Provider } from "@supabase/auth-js";
+import { type Session, type User, type UserResponse, type Provider } from "@supabase/auth-js";
 
 @UseClassMiddleware(loggerMiddleware)
 export class AuthService extends Service {
@@ -330,6 +330,18 @@ export class AuthService extends Service {
 				headers: this.headers,
 				url: null,
 			};
+		}
+	}
+
+	async getAuthSchemaUser(id: string): Promise<UserResponse> {
+		try {
+			const resp = await this.supabase.auth.admin.getUserById(String(id)).then((res) => {
+				return res;
+			});
+
+			return resp;
+		} catch (error) {
+			throw error;
 		}
 	}
 }

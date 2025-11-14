@@ -52,6 +52,9 @@ export default defineConfig(({ mode }) => {
 			"process.env.VITE_PROJECT_ID": JSON.stringify(env.VITE_PROJECT_ID),
 			"process.env.VITE_SUPABASE_URL": JSON.stringify(env.VITE_SUPABASE_URL),
 			"process.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
+			"process.env.VITE_SUPABASE_SERVICE_ROLE__KEY": JSON.stringify(
+				env.VITE_SUPABASE_SERVICE_ROLE__KEY,
+			),
 		},
 		build: {
 			minify: "esbuild",
