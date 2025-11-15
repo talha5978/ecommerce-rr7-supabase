@@ -38,6 +38,7 @@ export default function CartSheet({ open, setOpen }: { open: boolean; setOpen: (
 	useEffect(() => {
 		const items = getCart();
 		setCartItems(items);
+		console.log(items, cartItems, getNumberOfCartItems());
 	}, []);
 
 	useEffect(() => {
@@ -77,7 +78,7 @@ export default function CartSheet({ open, setOpen }: { open: boolean; setOpen: (
 	};
 
 	const itemCount = getNumberOfCartItems();
-	console.log("Cart items: ", cartItems);
+	// console.log("Cart items: ", cartItems);
 
 	return (
 		<Sheet open={open} onOpenChange={setOpen}>

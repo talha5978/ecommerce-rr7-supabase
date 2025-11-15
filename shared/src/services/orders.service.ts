@@ -11,8 +11,10 @@ import type {
 } from "@ecom/shared/types/orders";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
-import { defaults } from "@ecom/shared/constants/constants";
+import { defaults, FilterOp } from "@ecom/shared/constants/constants";
 import { AuthService } from "@ecom/shared/services/auth.service";
+import { defaultOp, OrderFilters } from "@ecom/shared/schemas/orders-filter.schema";
+import { applyFilterOps } from "@ecom/shared/utils/applyFilterOps";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<OrdersService>(verifyUser))
 export class OrdersService extends Service {
@@ -21,6 +23,7 @@ export class OrdersService extends Service {
 		q = "",
 		pageIndex = 0,
 		pageSize = defaults.DEFAULT_ORDERS_PAGE_SIZE,
+		filters: OrderFilters = {},
 	): Promise<GetHighLevelOrders> {
 		try {
 			const from = pageIndex * pageSize;
@@ -36,7 +39,31 @@ export class OrdersService extends Service {
 				`,
 					{ count: "exact" },
 				)
-				.order("created_at", { ascending: false });
+				.order(filters.sortBy || defaults.defaultOrdersSortByFilter, {
+					ascending: filters.sortType === "asc",
+				});
+
+			if (filters.status != undefined) {
+				query = query.eq("status", filters.status);
+			}
+
+			const numericFields: Array<[keyof OrderFilters, keyof OrderFilters]> = [
+				["total", "total_op"],
+				["discount", "discount_op"],
+			];
+
+			for (const [colKey, opKey] of numericFields) {
+				const columnName = colKey as string;
+				const op = ((filters as OrderFilters)[opKey] as FilterOp) || defaultOp;
+				const value = (filters as OrderFilters)[colKey] as number | undefined;
+				query = applyFilterOps(query, columnName, op, value);
+			}
+
+			if (filters.createdAt) {
+				query = query
+					.gte("created_at", filters.createdAt.from.toISOString())
+					.lte("created_at", filters.createdAt.to.toISOString());
+			}
 
 			if (q.length > 0) {
 				query = query.eq("id", q);

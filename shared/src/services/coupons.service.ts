@@ -148,7 +148,7 @@ class Utils extends Service {
 
 	/**Utility function to give us fully mapped coupon data */
 	getMappedFullCoupon = (item: any, coupon_id: number): FullCoupon => {
-		console.log("ITEM IN THE  MAPPING FUNCTION", item[this.SPECIFIC_COUPON_PRODUCTS_TABLE]);
+		// console.log("ITEM IN THE  MAPPING FUNCTION", item[this.SPECIFIC_COUPON_PRODUCTS_TABLE]);
 
 		const coupon: FullCoupon = {
 			id: coupon_id ?? item?.coupon_id,

@@ -56,9 +56,9 @@ export type PlaceOrderServicePayload = {
 // Admin Panel
 
 export type OrderRaw = Database["public"]["Tables"]["orders"]["Row"];
-type OrderStatus = Database["public"]["Enums"]["order_status"];
-type PaymentStatus = Database["public"]["Enums"]["payment_status"];
-type PaymentMethod = Database["public"]["Enums"]["payment_methods"];
+export type OrderStatus = Database["public"]["Enums"]["order_status"];
+export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
+export type PaymentMethod = Database["public"]["Enums"]["payment_methods"];
 
 export type HighLevelOrder = {
 	id: string;

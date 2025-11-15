@@ -19,8 +19,8 @@ export class CheckoutService extends Service {
 		let paymentIntentId: string | null = null;
 
 		try {
+			const order_svc = await this.createSubService(FP_OrdersService);
 			try {
-				const order_svc = await this.createSubService(FP_OrdersService);
 				const { order_id: svc_order_id } = await order_svc.placeInitialOrder({
 					// @ts-ignore
 					billing_address: payload.billing_address === "" ? undefined : payload.billing_address,
@@ -62,6 +62,8 @@ export class CheckoutService extends Service {
 				paymentIntentId = svc_paymentIntentId;
 
 				if (paymentIntent_err != null) {
+					await order_svc.deleteOrderEntry(order_id);
+
 					return {
 						success: false,
 						clientSecret,
@@ -84,13 +86,7 @@ export class CheckoutService extends Service {
 			});
 
 			if (payment_res.error != null) {
-				const variants_data = payload.cart_items.flatMap((item) => ({
-					variant_id: item.variant_id,
-					stock: item.quantity,
-				}));
-
-				const variant_svc = await this.createSubService(FP_ProductVariantsService);
-				await variant_svc.updateProductVaraintStock(variants_data);
+				await order_svc.deleteOrderEntry(order_id);
 
 				return {
 					success: false,
@@ -98,6 +94,28 @@ export class CheckoutService extends Service {
 					order_id,
 					error: payment_res.error,
 				};
+			}
+
+			const variants_data = payload.cart_items.flatMap((item) => ({
+				variant_id: item.variant_id,
+				stock: item.quantity,
+			}));
+
+			try {
+				const variant_svc = await this.createSubService(FP_ProductVariantsService);
+				await variant_svc.updateProductVaraintStock(variants_data);
+			} catch (error) {
+				await order_svc.deleteOrderEntry(order_id);
+				await payment_svc.deletePaymentEntry(order_id);
+
+				if (error instanceof ApiError) {
+					return {
+						success: false,
+						clientSecret,
+						order_id,
+						error: error.message,
+					};
+				}
 			}
 
 			return { success: true, clientSecret, order_id, error: null };

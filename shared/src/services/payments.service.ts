@@ -10,6 +10,17 @@ import { type Database } from "@ecom/shared/types/supabase";
 
 @UseClassMiddleware(loggerMiddleware)
 export class FP_PaymentsService extends Service {
+	async deletePaymentEntry(order_id: string) {
+		const { error: dbError } = await this.supabase
+			.from(this.PAYMENTS_TABLE)
+			.delete()
+			.eq("order_id", order_id);
+
+		if (dbError) {
+			throw new ApiError(dbError.message, Number(dbError.code), [dbError.details]);
+		}
+	}
+
 	/** Create pending payment entry (with Wise integration for bank_transfer) */
 	@UseMiddleware(asServiceMiddleware<FP_PaymentsService>(verifyUser))
 	async insertInitialPaymentEntry({

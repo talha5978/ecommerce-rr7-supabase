@@ -1,11 +1,12 @@
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router";
+import { useLoaderData, useNavigate, useNavigation, type LoaderFunctionArgs } from "react-router";
 import { Button } from "~/components/ui/button";
 import { toast } from "sonner";
 import { memo, Suspense, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog";
 import { Skeleton } from "~/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
 const stripePromise = loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
@@ -27,6 +28,7 @@ function PaymentPage() {
 	const elements = useElements();
 	const navigate = useNavigate();
 	const [thankYouOpen, setThankYouOpen] = useState(false);
+	const [isSubmitting, setSubmittion] = useState(false);
 
 	useEffect(() => {
 		if (!stripe) {
@@ -44,12 +46,16 @@ function PaymentPage() {
 			return;
 		}
 
+		setSubmittion(true);
+
 		const { error } = await stripe.confirmPayment({
 			elements,
 			confirmParams: {
-				return_url: `/`,
+				return_url: window.location.origin,
 			},
 		});
+
+		setSubmittion(false);
 
 		if (error) {
 			toast.error(error.message ?? "Payment failed");
@@ -74,7 +80,8 @@ function PaymentPage() {
 						</Suspense>
 					</div>
 
-					<Button type="submit" className="w-full" disabled={!stripe || !elements}>
+					<Button type="submit" className="w-full" disabled={!stripe || !elements || isSubmitting}>
+						{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
 						{!stripe ? "Loading Stripe..." : "Pay Now"}
 					</Button>
 				</form>

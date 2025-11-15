@@ -40,6 +40,9 @@ class DefaultValues {
 
 	readonly defaultCollectionSortByFilter = "createdAt";
 	readonly defaultCollectionSortTypeFilter = "desc";
+
+	readonly defaultOrdersSortByFilter = "created_at";
+	readonly defaultOrdersSortTypeFilter = "desc";
 }
 
 export const defaults = new DefaultValues();
@@ -100,6 +103,8 @@ export const productVariantsSortByEnums = [
 	"stock",
 	"createdAt",
 ] as const;
+
+export const orderSortByEnums = ["id", "status", "total", "discount", "created_at"] as const;
 
 export const filterOps = ["eq", "gt", "gte", "lt", "lte"] as const;
 export type FilterOp = (typeof filterOps)[number];

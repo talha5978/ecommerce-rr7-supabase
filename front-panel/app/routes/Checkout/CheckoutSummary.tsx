@@ -202,6 +202,7 @@ export default function CheckoutPage() {
 		if (actionData) {
 			if (actionData.success) {
 				const isCod = form.getValues("payment_method") === "cod";
+				cartItems.forEach((item) => removeFromCart(item.id));
 				if (isCod) {
 					toast.success("Order placed successfully");
 					navigate("/cart");
@@ -210,19 +211,18 @@ export default function CheckoutPage() {
 						`payment?success=${actionData.success}&order_id=${actionData.order_id}&client_secret=${actionData.clientSecret}`,
 					);
 				}
-				cartItems.forEach((item) => removeFromCart(item.id));
 			} else if (actionData.error) {
 				toast.error(actionData.error);
 			}
 		}
 	}, [actionData, navigate]);
 
-	useEffect(() => {
-		if (cartItems.length === 0) {
-			toast.error("No product found in cart..");
-			navigate("/cart");
-		}
-	}, [cartItems]);
+	// useEffect(() => {
+	// 	if (cartItems.length === 0) {
+	// 		toast.error("No product found in cart..");
+	// 		navigate("/cart");
+	// 	}
+	// }, [cartItems]);
 
 	// console.log(cartItems);
 

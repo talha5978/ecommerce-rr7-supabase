@@ -1,13 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { ArrowUpDown, ListFilter, Loader2, MoreHorizontal, RotateCcw, Search } from "lucide-react";
-import { JSX, useEffect, useMemo, useState } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import {
+	ArrowDownWideNarrow,
+	ArrowUpDown,
+	ArrowUpNarrowWide,
+	ListFilter,
+	Loader2,
+	MoreHorizontal,
+	RotateCcw,
+	Search,
+} from "lucide-react";
+import { memo, useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
 	Form,
 	Link,
 	LoaderFunctionArgs,
-	useLoaderData,
 	useLocation,
 	useNavigate,
 	useNavigation,
@@ -24,7 +32,6 @@ import {
 	TableColumnsToggle,
 } from "~/components/Table/data-table";
 import { Button } from "~/components/ui/button";
-import { Checkbox } from "~/components/ui/checkbox";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -54,24 +61,33 @@ import {
 	SheetTitle,
 } from "~/components/ui/sheet";
 import { useIsMobile } from "~/hooks/use-mobile";
-import { getActiveProductsFiltersCount } from "~/utils/getActiveProductsFiltersCount";
 import { GetPaginationControls } from "~/utils/getPaginationControls";
 import { getPaginationQueryPayload } from "~/utils/getPaginationQueryPayload";
-import { getProductsResetFiltersUrl } from "~/utils/getProductsResetFiltersUrl";
-import { Route } from "./+types/orders";
-import { defaults, PAYMENT_CURRENCY } from "@ecom/shared/constants/constants";
-import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { type Route } from "./+types/orders";
 import {
-	ProductFilterFormSchema,
-	type ProductsFilterFormData,
-} from "@ecom/shared/schemas/products-filter.schema";
-import { cn, GetFormattedDate } from "@ecom/shared/lib/utils";
-import type { CategoryListRow } from "@ecom/shared/types/category";
+	defaults,
+	type FilterOp,
+	filterOps,
+	PAYMENT_CURRENCY,
+	sortTypeEnums,
+} from "@ecom/shared/constants/constants";
+import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
+import { GetFormattedDate } from "@ecom/shared/lib/utils";
 import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 import { highLvlOrdersQuery } from "~/queries/orders.q";
 import type { HighLevelOrder } from "@ecom/shared/types/orders";
 import TableId from "~/components/Table/TableId";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import {
+	defaultOp,
+	OrdersFilterFormSchema,
+	type OrderFilters,
+	type OrdersFilterFormData,
+} from "@ecom/shared/schemas/orders-filter.schema";
+import { getOrdersFiltersPayload } from "~/utils/getOrdersFiltersPayload";
+import { getActiveOrdersFiltersCount } from "~/utils/getActiveOrdersFiltersCount";
+import { getOrdersResetFiltersUrl } from "~/utils/getOrdersResetFiltersUrl";
+import { Constants } from "@ecom/shared/types/supabase";
 
 const defaultPage = "0";
 const defaultSize = defaults.DEFAULT_ORDERS_PAGE_SIZE.toString();
@@ -83,12 +99,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		defaultPageSize: defaults.DEFAULT_ORDERS_PAGE_SIZE,
 	});
 
+	const orderFilters: OrderFilters = getOrdersFiltersPayload({ request });
+
 	const data = await queryClient.fetchQuery(
 		highLvlOrdersQuery({
 			request,
 			q,
 			pageIndex,
 			pageSize,
+			filters: orderFilters,
 		}),
 	);
 
@@ -119,7 +138,7 @@ export default function OrdersPage({
 			toast.error(`${data.error.statusCode} - ${data.error.message}`);
 		}
 	}, [data.error]);
-	console.log("Re rendered");
+	// console.log("Re rendered");
 
 	const columns: ColumnDef<HighLevelOrder, unknown>[] = [
 		{
@@ -264,7 +283,7 @@ export default function OrdersPage({
 							<DropdownMenuItem
 								onClick={() => {
 									navigator.clipboard.writeText(rowData.id);
-									toast.success("Product ID copied", {
+									toast.success("Order ID copied", {
 										description: rowData.id,
 									});
 								}}
@@ -273,10 +292,7 @@ export default function OrdersPage({
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<Link to={`${rowData.id}/variants`} viewTransition prefetch="intent">
-								<DropdownMenuItem>View Variants</DropdownMenuItem>
-							</Link>
-							<Link to={`${rowData.id}/variants/create`} viewTransition prefetch="intent">
-								<DropdownMenuItem>Create Variant</DropdownMenuItem>
+								<DropdownMenuItem>See Details</DropdownMenuItem>
 							</Link>
 							<DropdownMenuSeparator />
 							<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
@@ -354,7 +370,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 	const [searchParams] = useSearchParams();
 	const currentQuery = searchParams.get("q") ?? "";
 
-	const activeFiltersCount = getActiveProductsFiltersCount(searchParams);
+	const activeFiltersCount = getActiveOrdersFiltersCount(searchParams);
 	const [filtersMenuOpen, setFiltersMenuOpen] = useState<boolean>(false);
 
 	function handleFiltersClick() {
@@ -363,7 +379,7 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 
 	function handleResetFilters() {
 		navigate(
-			getProductsResetFiltersUrl({
+			getOrdersResetFiltersUrl({
 				defaultPage,
 				defaultSize,
 				pathname: location.pathname,
@@ -409,10 +425,10 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align={isMobile ? "center" : "start"} className="w-fit">
-							<DropdownMenuLabel>Sort Products</DropdownMenuLabel>
+							<DropdownMenuLabel>Sort Orders</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							{/* Sorting Select! */}
-							{/* <SortSelector /> */}
+							<SortSelector />
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
@@ -452,7 +468,125 @@ function DataTableViewOptions({ table, disabled }: DataTableViewOptionsProps<Hig
 	);
 }
 
-function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boolean) => void }) {
+function SortSelector() {
+	const [searchParams] = useSearchParams();
+	const navigate = useNavigate();
+
+	const navigation = useNavigation();
+	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
+
+	type sortFormData = Pick<OrdersFilterFormData, "sortBy" | "sortType">;
+
+	const form = useForm<sortFormData>({
+		resolver: zodResolver(OrdersFilterFormSchema),
+		defaultValues: {
+			sortBy:
+				(searchParams.get("sortBy") as sortFormData["sortBy"]) || defaults.defaultOrdersSortByFilter,
+			sortType:
+				(searchParams.get("sortType") as sortFormData["sortType"]) ||
+				defaults.defaultOrdersSortTypeFilter,
+		},
+	});
+
+	const { handleSubmit, control } = form;
+
+	// Handle form submission
+	const onSortSubmit = (values: sortFormData) => {
+		const currentParams = new URLSearchParams(location.search);
+
+		// Remove old sort params if they exist
+		currentParams.delete("sortBy");
+		currentParams.delete("sortType");
+
+		// Add new sort params
+		if (values.sortBy) currentParams.set("sortBy", values.sortBy);
+		if (values.sortType) currentParams.set("sortType", values.sortType);
+
+		navigate(`?${currentParams.toString()}`);
+	};
+
+	return (
+		<form onSubmit={handleSubmit(onSortSubmit)} className="space-y-4 flex flex-col p-4 h-full">
+			<ShadcnForm {...form}>
+				{/* Sort by Filter */}
+				<FormField
+					control={control}
+					name="sortBy"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Sort By</FormLabel>
+							<FormControl>
+								<div className="*:w-full">
+									<Select value={field.value} onValueChange={field.onChange}>
+										<SelectTrigger>
+											<SelectValue placeholder="Select field" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="created_at">Date Created</SelectItem>
+											<SelectItem value="status">Order Status</SelectItem>
+											<SelectItem value="total">Total Price</SelectItem>
+											<SelectItem value="discount">Discount</SelectItem>
+											<SelectItem value="id">ID</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+							</FormControl>
+						</FormItem>
+					)}
+				/>
+
+				{/* Sort Type Filter */}
+				<FormField
+					control={control}
+					name="sortType"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Sort Direction</FormLabel>
+							<FormControl>
+								<div className="*:w-full">
+									<Select value={field.value} onValueChange={field.onChange}>
+										<SelectTrigger>
+											<SelectValue placeholder="asc / desc" />
+										</SelectTrigger>
+										<SelectContent>
+											{sortTypeEnums.map((sortType) => (
+												<SelectItem key={sortType} value={sortType}>
+													{sortType === "asc" ? (
+														<>
+															<span>Ascending</span>
+															<ArrowUpNarrowWide />
+														</>
+													) : (
+														<>
+															<span>Descending</span>
+															<ArrowDownWideNarrow />
+														</>
+													)}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							</FormControl>
+						</FormItem>
+					)}
+				/>
+				<Button type="submit" disabled={isSubmitting} size={"sm"}>
+					{isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
+					Apply
+				</Button>
+			</ShadcnForm>
+		</form>
+	);
+}
+
+const FiltersSheet = memo(function FiltersSheetFunc({
+	open,
+	setOpen,
+}: {
+	open?: boolean;
+	setOpen: (open: boolean) => void;
+}) {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -461,27 +595,23 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 	const currentPageIndex = searchParams.get("page") || defaultPage;
 	const currentPageSize = searchParams.get("size") || defaultSize;
 
-	const loaderData = useLoaderData<typeof loader>();
-
-	const categories: CategoryListRow[] = [];
 	const navigation = useNavigation();
 	const isSubmitting = navigation.state === "submitting" && navigation.formMethod === "POST";
 
-	type BoolVals = "true" | "false" | "null";
 	const createdFromParam = searchParams.get("createdFrom");
 	const createdToParam = searchParams.get("createdTo");
 
-	const form = useForm<ProductsFilterFormData>({
-		resolver: zodResolver(ProductFilterFormSchema),
+	const form = useForm<OrdersFilterFormData>({
+		resolver: zodResolver(OrdersFilterFormSchema),
 		defaultValues: {
 			q: currentQuery,
 			page: currentPageIndex,
 			size: currentPageSize,
-			status: (searchParams.get("status") as BoolVals) || "null",
-			is_featured: (searchParams.get("is_featured") as BoolVals) || "null",
-			category: searchParams.get("category")?.split(",") ?? [],
-			sub_category: searchParams.get("sub_category")?.split(",") ?? [],
-			free_shipping: (searchParams.get("free_shipping") as BoolVals) || "null",
+			status: searchParams.get("status") == null ? "null" : searchParams.get("status") || "null",
+			total: searchParams.get("total") || "",
+			total_op: (searchParams.get("total_op") as FilterOp) ?? defaultOp,
+			discount: searchParams.get("discount") || "",
+			discount_op: (searchParams.get("discount_op") as FilterOp) ?? defaultOp,
 			createdAt:
 				createdFromParam && createdToParam
 					? {
@@ -492,48 +622,27 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		},
 	});
 
-	const { handleSubmit, control, setValue, reset } = form;
-
-	const selectedCategories = useWatch({ control, name: "category" }) || [];
-	const selectedSubCategories = useWatch({ control, name: "sub_category" }) || [];
-
-	const validSubCategoryIds = useMemo(() => {
-		return categories
-			.filter((cat) => selectedCategories.includes(cat.id))
-			.flatMap((cat) => cat.sub_category.map((sc) => sc.id));
-	}, [categories, selectedCategories]);
-
-	useEffect(() => {
-		const filtered = selectedSubCategories.filter((id) => validSubCategoryIds.includes(id));
-		if (
-			filtered.length !== selectedSubCategories.length ||
-			filtered.some((id, i) => id !== selectedSubCategories[i])
-		) {
-			setValue("sub_category", filtered);
-		}
-	}, [selectedSubCategories, validSubCategoryIds, setValue]);
+	const { handleSubmit, control, reset } = form;
 
 	// Handle form submission
-	const onFormSubmit = (values: ProductsFilterFormData) => {
-		console.log(values);
-		// return;
-		const params = new URLSearchParams();
+	const onFormSubmit = (values: OrdersFilterFormData) => {
+		// console.log(values);
+		const params: URLSearchParams = new URLSearchParams();
 
 		// Append only explicitly set or changed values
-
 		if (values.q) params.set("q", values.q);
 		if (values.status && values.status !== "null") params.set("status", values.status);
-		if (values.is_featured && values.is_featured !== "null") {
-			params.set("is_featured", values.is_featured);
+
+		// for each numeric field
+		if (values.total) {
+			params.set("total", values.total);
+			params.set("total_op", values.total_op ?? defaultOp);
 		}
-		if (values.category && Array.isArray(values.category) && values.category.length > 0) {
-			params.set("category", values.category!.join(","));
+
+		if (values.discount) {
+			params.set("discount", values.discount);
+			params.set("discount_op", values.discount_op ?? defaultOp);
 		}
-		if (values.sub_category && Array.isArray(values.sub_category) && values.sub_category!.length > 0) {
-			params.set("sub_category", values.sub_category!.join(","));
-		}
-		if (values.free_shipping && values.free_shipping !== "null")
-			params.set("free_shipping", values.free_shipping);
 
 		if (values.createdAt) {
 			params.set("createdFrom", values.createdAt.from.toISOString());
@@ -543,14 +652,11 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 			params.delete("createdTo");
 		}
 
-		if (values.sortBy) params.set("sortBy", values.sortBy);
-		if (values.sortType) params.set("sortType", values.sortType);
-
 		// Only append pageIndex and pageSize if they differ from current values or are explicitly set
 		if (currentPageIndex !== defaultPage) {
 			params.set("page", String(currentPageIndex));
 		}
-		if (currentPageSize !== defaultSize) {
+		if (currentPageSize != defaultSize) {
 			params.set("size", String(currentPageSize));
 		}
 
@@ -564,10 +670,15 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		setOpen(false);
 	};
 
+	const operatorItems: { value: FilterOp; label: string }[] = filterOps.map((op: FilterOp) => ({
+		value: op,
+		label: op.toUpperCase(),
+	}));
+
 	function handleReset() {
 		reset(); // Resets the form state
 		navigate(
-			getProductsResetFiltersUrl({
+			getOrdersResetFiltersUrl({
 				defaultPage,
 				defaultSize,
 				pathname: location.pathname,
@@ -581,8 +692,8 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 		<Sheet open={!!open} onOpenChange={setOpen}>
 			<SheetContent>
 				<SheetHeader>
-					<SheetTitle>Product Filters</SheetTitle>
-					<SheetDescription>Filter products by their fields and values</SheetDescription>
+					<SheetTitle>Order Filters</SheetTitle>
+					<SheetDescription>Filter orders by by your defined criteria</SheetDescription>
 				</SheetHeader>
 				<form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 flex flex-col p-4 h-full">
 					<ShadcnForm {...form}>
@@ -598,7 +709,7 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 							name="status"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Status</FormLabel>
+									<FormLabel>Order Status</FormLabel>
 									<FormControl>
 										<div className="*:w-full">
 											<Select value={field.value} onValueChange={field.onChange}>
@@ -607,168 +718,11 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 												</SelectTrigger>
 												<SelectContent>
 													<SelectItem value="null">Select status</SelectItem>
-													<SelectItem value="true">Active</SelectItem>
-													<SelectItem value="false">Inactive</SelectItem>
-												</SelectContent>
-											</Select>
-										</div>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-
-						{/* Featured Filter */}
-						<FormField
-							control={control}
-							name="is_featured"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Featured</FormLabel>
-									<FormControl>
-										<div className="*:w-full">
-											<Select value={field.value} onValueChange={field.onChange}>
-												<SelectTrigger>
-													<SelectValue placeholder="Select featured status" />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value="null">
-														Select featured status
-													</SelectItem>
-													<SelectItem value="true">Active</SelectItem>
-													<SelectItem value="false">Inactive</SelectItem>
-												</SelectContent>
-											</Select>
-										</div>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-
-						{/* Category Tree */}
-						<FormItem>
-							<FormLabel>Categories</FormLabel>
-							<FormControl className="mt-1">
-								<div className="max-h-64 overflow-y-auto space-y-2">
-									{categories.map((cat) => {
-										const subIds = cat.sub_category.map((sc) => sc.id);
-										const childChecked = subIds.map((id) =>
-											selectedSubCategories.includes(id),
-										);
-										const allChecked = childChecked.every(Boolean);
-										const noneChecked = childChecked.every((c) => !c);
-										const indeterminate = !allChecked && !noneChecked;
-
-										return (
-											<details
-												key={cat.id}
-												className="rounded"
-												open={allChecked || indeterminate}
-											>
-												<summary className="flex items-center gap-2 cursor-pointer list-none hover:underline underline-offset-4">
-													<Checkbox
-														id={`cat-${cat.id}`}
-														checked={
-															allChecked
-																? true
-																: indeterminate
-																	? "indeterminate"
-																	: false
-														}
-														onCheckedChange={(checked) => {
-															const newSubs = new Set(selectedSubCategories);
-															subIds.forEach((id) =>
-																checked
-																	? newSubs.add(id)
-																	: newSubs.delete(id),
-															);
-
-															const newCats = new Set(selectedCategories);
-															checked
-																? newCats.add(cat.id)
-																: newCats.delete(cat.id);
-
-															setValue("sub_category", Array.from(newSubs));
-															setValue("category", Array.from(newCats));
-														}}
-													/>
-													<Label
-														htmlFor={`cat-${cat.id}`}
-														className="font-medium text-sm cursor-pointer"
-													>
-														{cat.category_name}
-													</Label>
-												</summary>
-
-												<div className="pl-4 m-2 mt-2 space-y-1 border-sidebar-border border-l">
-													{cat.sub_category.map((sub) => (
-														<div
-															key={sub.id}
-															className="flex items-center gap-2 hover:underline underline-offset-4"
-														>
-															<Checkbox
-																id={`subcat-${sub.id}`}
-																checked={selectedSubCategories.includes(
-																	sub.id,
-																)}
-																onCheckedChange={(checked) => {
-																	const newSubs = new Set(
-																		selectedSubCategories,
-																	);
-																	checked
-																		? newSubs.add(sub.id)
-																		: newSubs.delete(sub.id);
-
-																	// if any child remains, keep parent checked
-																	const newCats = new Set(
-																		selectedCategories,
-																	);
-																	const stillAny = subIds.some((id) =>
-																		newSubs.has(id),
-																	);
-																	stillAny
-																		? newCats.add(cat.id)
-																		: newCats.delete(cat.id);
-
-																	setValue(
-																		"sub_category",
-																		Array.from(newSubs),
-																	);
-																	setValue("category", Array.from(newCats));
-																}}
-															/>
-															<Label
-																htmlFor={`subcat-${sub.id}`}
-																className="font-medium text-sm cursor-pointer"
-															>
-																{sub.sub_category_name}
-															</Label>
-														</div>
+													{Constants.public.Enums.order_status.map((status) => (
+														<SelectItem key={status} value={status}>
+															{status.charAt(0).toUpperCase() + status.slice(1)}
+														</SelectItem>
 													))}
-												</div>
-											</details>
-										);
-									})}
-								</div>
-							</FormControl>
-						</FormItem>
-
-						{/* Free Shipping Filter */}
-						<FormField
-							control={control}
-							name="free_shipping"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Free Shipping</FormLabel>
-									<FormControl>
-										<div className="*:w-full">
-											<Select value={field.value} onValueChange={field.onChange}>
-												<SelectTrigger>
-													<SelectValue placeholder="Select free shipping" />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value="null">Select free shipping</SelectItem>
-													<SelectItem value="true">Available</SelectItem>
-													<SelectItem value="false">Not Available</SelectItem>
 												</SelectContent>
 											</Select>
 										</div>
@@ -776,6 +730,117 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 								</FormItem>
 							)}
 						/>
+
+						{/* Total Price */}
+						<div className="space-y-2">
+							<Label htmlFor="original_price_container">Total Price</Label>
+							<div id="original_price_container" className="flex gap-2">
+								{/* Operator select */}
+								<FormField
+									control={control}
+									name="total_op"
+									render={({ field }) => (
+										<FormItem>
+											<FormControl>
+												<Select value={field.value} onValueChange={field.onChange}>
+													<SelectTrigger className="w-[6rem] font-semibold">
+														<SelectValue />
+													</SelectTrigger>
+													<SelectContent className="!min-w-[6rem] *:font-semibold">
+														{operatorItems.map((item) => (
+															<SelectItem value={item.value} key={item.value}>
+																{item.label}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								{/* Total Price */}
+								<FormField
+									control={control}
+									name="total"
+									render={({ field }) => (
+										<FormItem>
+											<FormControl>
+												<div className="relative">
+													<Input
+														type="number"
+														min={1}
+														placeholder="e.g. 1000"
+														className="pr-11"
+														{...field}
+													/>
+													<p className="absolute right-2 top-1/2 -translate-y-1/2">
+														{PAYMENT_CURRENCY.toUpperCase()}
+													</p>
+												</div>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+						</div>
+
+						{/* Discount */}
+						<div className="space-y-2">
+							<Label htmlFor="original_price_container">Discount</Label>
+							<div id="original_price_container" className="flex gap-2">
+								{/* Operator select */}
+								<FormField
+									control={control}
+									name="discount_op"
+									render={({ field }) => (
+										<FormItem>
+											<FormControl>
+												<Select value={field.value} onValueChange={field.onChange}>
+													<SelectTrigger className="w-[6rem] font-semibold">
+														<SelectValue />
+													</SelectTrigger>
+													<SelectContent className="!min-w-[6rem] *:font-semibold">
+														{operatorItems.map((item) => (
+															<SelectItem value={item.value} key={item.value}>
+																{item.label}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={control}
+									name="discount"
+									render={({ field }) => (
+										<FormItem>
+											<FormControl>
+												<div className="relative">
+													<Input
+														type="number"
+														min={1}
+														placeholder="e.g. 1000"
+														className="pr-11"
+														{...field}
+													/>
+													<p className="absolute right-2 top-1/2 -translate-y-1/2">
+														{PAYMENT_CURRENCY.toUpperCase()}
+													</p>
+												</div>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+						</div>
 
 						{/* Date Created Filter */}
 						<Controller
@@ -811,4 +876,4 @@ function FiltersSheet({ open, setOpen }: { open?: boolean; setOpen: (open: boole
 			</SheetContent>
 		</Sheet>
 	);
-}
+});
