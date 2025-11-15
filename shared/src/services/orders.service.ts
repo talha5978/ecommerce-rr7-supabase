@@ -5,8 +5,10 @@ import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 import type {
 	GetHighLevelOrders,
+	GetOrderDetails,
 	HighLevelOrder,
 	InsertOrderItemsPayload,
+	OrderDetails,
 	PlaceOrderServicePayload,
 } from "@ecom/shared/types/orders";
 import { ApiError } from "@ecom/shared/utils/ApiError";
@@ -123,6 +125,100 @@ export class OrdersService extends Service {
 				orders: [],
 				total: 0,
 				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
+	/** Get full order details by id for order details page */
+	async getOrderDetailsById(order_id: string): Promise<GetOrderDetails> {
+		try {
+			const { data, error: dbError } = await this.supabase
+				.from(this.ORDERS_TABLE)
+				.select(
+					`
+					id, created_at, discount, order_note, shipping, status, sub_total, tax_amount, total,
+					${this.USERS_TABLE}(
+						user_id, first_name, last_name, phone_number,
+						${this.USER_ROLES_TABLE}(id, role_name)
+					),
+					shipping_address:${this.ADDRESSES_TABLE}!shipping_address_id(*),
+					billing_address:${this.ADDRESSES_TABLE}!billing_address_id(*),
+					${this.ORDER_ITEMS_TABLE}(
+						color, created_at, id, price, quantity, size, sku,
+						${this.PRODUCT_VARIANT_TABLE}(
+							images, id,
+							${this.PRODUCTS_TABLE}(
+								id, name
+							)
+						)
+					),
+					payment:${this.PAYMENTS_TABLE}(amount, created_at, currency, id, method, payment_intent_id, refund_proofs, refunded_amount, status)
+				`,
+				)
+				.eq("id", order_id)
+				.single();
+
+			let error: null | ApiError = null;
+
+			if (dbError) {
+				error = new ApiError(dbError.message, Number(dbError.code), [dbError.details]);
+			}
+
+			let payload: OrderDetails | null =
+				data != null
+					? {
+							created_at: data.created_at,
+							discount: data.discount,
+							id: data.id,
+							status: data.status,
+							sub_total: data.sub_total,
+							tax_amount: data.tax_amount,
+							total: data.total,
+							order_note: data.order_note ?? "",
+							shipping: data.shipping ?? 0,
+							user: {
+								user_id: data.app_users.user_id,
+								first_name: data.app_users.first_name,
+								last_name: data.app_users.last_name,
+								phone_number: data.app_users.phone_number,
+								role: {
+									role_id: data.app_users.user_roles.id,
+									role_name: data.app_users.user_roles.role_name,
+								},
+								avatar: "", // Fetched Later
+								email: "", // Fetched Later
+							},
+							billing_address: data.billing_address == null ? null : data.billing_address,
+							shipping_address: data.shipping_address,
+							order_items: data.order_items.map((item) => {
+								return {
+									...item,
+									product_variant: {
+										...item.product_variant,
+										product_id: item.product_variant.product.id,
+										product_name: item.product_variant.product.name,
+									},
+								};
+							}),
+							payment: data.payment[0],
+						}
+					: null;
+
+			if (data != null && payload != null) {
+				const auth_svc = await this.createSubService(AuthService);
+				const { data: email_resp } = await auth_svc.getAuthSchemaUser(payload.user.user_id);
+				payload.user.email = email_resp.user?.email ?? "";
+				payload.user.avatar = email_resp.user?.user_metadata?.avatar_url ?? "";
+			}
+
+			return {
+				order: payload,
+				error,
+			};
+		} catch (error) {
+			return {
+				order: null,
+				error: error instanceof ApiError ? error : new ApiError("Unknown error", 500, [error]),
 			};
 		}
 	}

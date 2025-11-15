@@ -90,7 +90,10 @@ export default [
 			]),
 		]),
 
-		...prefix("/orders", [index("./routes/Orders/orders.tsx")]),
+		...prefix("/orders", [
+			index("./routes/Orders/orders.tsx"),
+			route("order/:orderId", "./routes/Orders/order-details.tsx"),
+		]),
 	]),
 
 	route("*", "./routes/Error/404.tsx"),

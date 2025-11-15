@@ -1,6 +1,6 @@
 import type { OrderFilters } from "@ecom/shared/schemas/orders-filter.schema";
 import { OrdersService } from "@ecom/shared/services/orders.service";
-import type { GetHighLevelOrders } from "@ecom/shared/types/orders";
+import type { GetHighLevelOrders, GetOrderDetails } from "@ecom/shared/types/orders";
 import { queryOptions } from "@tanstack/react-query";
 
 interface ordersQueryArgs {
@@ -17,6 +17,17 @@ export const highLvlOrdersQuery = ({ request, q, pageIndex, pageSize, filters }:
 		queryFn: async () => {
 			const svc = new OrdersService(request);
 			const result = await svc.getAllOrders(q, pageIndex, pageSize, filters);
+			return result;
+		},
+	});
+};
+
+export const orderDetailsQuery = ({ request, orderId }: { request: Request; orderId: string }) => {
+	return queryOptions<GetOrderDetails>({
+		queryKey: ["singleOrderDetails", orderId],
+		queryFn: async () => {
+			const svc = new OrdersService(request);
+			const result = await svc.getOrderDetailsById(orderId);
 			return result;
 		},
 	});

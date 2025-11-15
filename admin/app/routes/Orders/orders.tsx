@@ -291,7 +291,7 @@ export default function OrdersPage({
 								Copy ID
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
-							<Link to={`${rowData.id}/variants`} viewTransition prefetch="intent">
+							<Link to={`order/${rowData.id}`} viewTransition prefetch="intent">
 								<DropdownMenuItem>See Details</DropdownMenuItem>
 							</Link>
 							<DropdownMenuSeparator />
