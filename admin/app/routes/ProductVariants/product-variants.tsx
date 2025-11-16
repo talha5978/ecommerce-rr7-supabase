@@ -9,6 +9,7 @@ import {
 	ListFilter,
 	Loader2,
 	MoreHorizontal,
+	PencilLineIcon,
 	PlusCircle,
 	RotateCcw,
 	Search,
@@ -302,12 +303,20 @@ export default function ProductVariantsPage({
 							<BackButton href={"/products"} />
 							<h1 className="text-2xl font-semibold">Variants</h1>
 						</div>
-						<Link to="create" viewTransition className="ml-auto">
-							<Button size={"sm"} className="ml-auto">
-								<PlusCircle width={18} />
-								<span>Add Variant</span>
-							</Button>
-						</Link>
+						<div className="flex gap-2 items-center">
+							<Link to={`/products/${productId}/update`} viewTransition className="ml-auto">
+								<Button size={"sm"} variant={"outline"} className="ml-auto">
+									<PencilLineIcon width={18} />
+									<span>Update Product</span>
+								</Button>
+							</Link>
+							<Link to="create" viewTransition className="ml-auto">
+								<Button size={"sm"} className="ml-auto">
+									<PlusCircle width={18} />
+									<span>Add Variant</span>
+								</Button>
+							</Link>
+						</div>
 					</div>
 					{query && (
 						<div className="mt-3">

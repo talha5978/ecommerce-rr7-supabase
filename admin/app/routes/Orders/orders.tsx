@@ -88,6 +88,8 @@ import { getOrdersFiltersPayload } from "~/utils/getOrdersFiltersPayload";
 import { getActiveOrdersFiltersCount } from "~/utils/getActiveOrdersFiltersCount";
 import { getOrdersResetFiltersUrl } from "~/utils/getOrdersResetFiltersUrl";
 import { Constants } from "@ecom/shared/types/supabase";
+import OrderStatusBadge from "~/components/Orders/OrderStatusBadge";
+import PaymentStatusBadge from "~/components/Orders/PaymentStatusBadge";
 
 const defaultPage = "0";
 const defaultSize = defaults.DEFAULT_ORDERS_PAGE_SIZE.toString();
@@ -159,35 +161,7 @@ export default function OrdersPage({
 		{
 			id: "Order Status",
 			accessorKey: "Order Status",
-			cell: ({
-				row: {
-					original: { status },
-				},
-			}: {
-				row: { original: HighLevelOrder };
-			}) => {
-				function getVariant(status: HighLevelOrder["status"]): [any, any] {
-					if (status === "pending") {
-						return ["warning", "dot"];
-					} else if (status === "failed") {
-						return ["destructive", "cross"];
-					} else if (status === "paid") {
-						return ["success", "dot"];
-					} else if (status === "shipped") {
-						return ["success", "tick"];
-					} else if (status === "cancelled") {
-						return ["default", "cross"];
-					} else {
-						throw new Error("Invalid order status");
-					}
-				}
-
-				return (
-					<StatusBadge variant={getVariant(status)[0]} icon={getVariant(status)[1]}>
-						{status.charAt(0).toUpperCase() + String(status).slice(1)}
-					</StatusBadge>
-				);
-			},
+			cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
 			header: () => "Order Status",
 		},
 		{
@@ -201,47 +175,19 @@ export default function OrdersPage({
 		{
 			id: "Payment",
 			accessorKey: "Payment",
-			cell: ({
-				row: {
-					original: { payment },
-				},
-			}: {
-				row: { original: HighLevelOrder };
-			}) => {
-				function getVariant(status: HighLevelOrder["payment"]["status"]): [any, any] {
-					if (status === "pending") {
-						return ["warning", "dot"];
-					} else if (status === "failed") {
-						return ["destructive", "cross"];
-					} else if (status === "completed") {
-						return ["success", "tick"];
-					} else if (status === "partially_refunded") {
-						return ["default", "dot"];
-					} else if (status === "refunded") {
-						return ["default", "tick"];
-					} else {
-						throw new Error("Invalid payment status");
-					}
-				}
-
-				return (
-					<StatusBadge variant={getVariant(payment.status)[0]} icon={getVariant(payment.status)[1]}>
-						{payment.status.charAt(0).toUpperCase() + String(payment.status).slice(1)}
-					</StatusBadge>
-				);
-			},
+			cell: ({ row }) => <PaymentStatusBadge payment={row.original.payment} />,
 			header: () => "Payment",
 		},
 		{
-			id: "User",
-			accessorKey: "User",
+			id: "Customer",
+			accessorKey: "Customer",
 			cell: ({ row }) => {
 				return (
 					<div className="flex gap-2 items-center">
 						<Avatar className="h-8 w-8 rounded-full my-1 ml-1 cursor-pointer">
 							<AvatarImage
 								src={row.original.user.avatar ?? ""}
-								alt={row.original.user.name ?? "User"}
+								alt={row.original.user.name ?? "Customer"}
 							/>
 							<AvatarFallback className="rounded-lg bg-muted-foreground/30" />
 						</Avatar>
@@ -258,7 +204,7 @@ export default function OrdersPage({
 					</div>
 				);
 			},
-			header: () => "User",
+			header: () => "Customer",
 		},
 		{
 			id: "Created At",

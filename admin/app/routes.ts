@@ -94,6 +94,8 @@ export default [
 			index("./routes/Orders/orders.tsx"),
 			route("order/:orderId", "./routes/Orders/order-details.tsx"),
 		]),
+
+		route("/generate-invoice-pdf", "./routes/_actions/generate-invoice-pdf.tsx"),
 	]),
 
 	route("*", "./routes/Error/404.tsx"),
