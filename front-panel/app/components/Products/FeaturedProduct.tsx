@@ -60,7 +60,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 			<AnimatePresence>
 				{isHovered && (
 					<motion.div
-						className="absolute flex flex-col bottom-20 left-0 right-0 px-4 py-2 items-center justify-center"
+						className="absolute flex flex-col md:bottom-25 left-0 right-0 px-4 py-2 items-center justify-center"
 						initial={{ y: "0%", opacity: 0 }}
 						animate={{ y: "0%", opacity: 1 }}
 						exit={{ opacity: 0 }}

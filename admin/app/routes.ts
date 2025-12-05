@@ -88,6 +88,7 @@ export default [
 					route("tax-types/:id/delete", "./routes/_actions/delete-tax-type.tsx"),
 				]),
 			]),
+			...prefix("shipping-and-dilivery", [index("./routes/Settings/shipping-and-dilivery.tsx")]),
 		]),
 
 		...prefix("/orders", [

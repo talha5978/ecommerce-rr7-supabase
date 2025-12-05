@@ -47,7 +47,7 @@ const SeeDetailsButton = ({ couponId }: { couponId: number }) => {
 	return (
 		<button
 			type="button"
-			className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition"
+			className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] transition-[color,box-shadow] outline-none"
 			onClick={() => handleSeeDetailsClick(Number(couponId))}
 		>
 			<ListMinus className="h-4 w-4" />
@@ -120,9 +120,9 @@ export const CouponCard = memo(({ coupon, className = "", ...props }: Props) => 
 						<p
 							className={`text-sm ${
 								calculatedStatus === "Live"
-									? "text-success/80"
+									? "text-success"
 									: calculatedStatus === "Expired"
-										? "text-destructive/70"
+										? "text-destructive"
 										: "text-warning"
 							}`}
 						>
@@ -158,7 +158,7 @@ export const CouponCard = memo(({ coupon, className = "", ...props }: Props) => 
 						<SeeDetailsButton couponId={id} />
 						<button
 							type="button"
-							className="inline-flex items-center gap-1 rounded-md border px-3 py-1 text-xs font-medium text-muted-foreground hover:opacity-90 transition"
+							className="inline-flex items-center gap-1 rounded-md border px-3 py-1 text-xs font-medium text-muted-foreground hover:opacity-90 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] transition-[color,box-shadow] outline-none"
 						>
 							<Pencil className="h-3 w-3" />
 							Edit

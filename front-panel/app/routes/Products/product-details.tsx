@@ -217,7 +217,6 @@ export default function ProductDetailsPage() {
 							</div>
 						</div>
 						<div className="flex gap-2 items-center">
-							<h2 className="text-muted-foreground text-sm">SKU</h2>
 							{selectedVariant && (
 								<Badge
 									variant="outline"

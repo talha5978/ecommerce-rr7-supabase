@@ -100,6 +100,21 @@ export class StoreSettingsService extends Service {
 
 		return data;
 	}
+
+	/** Update the shipping rate in the shipping and dilivery menu */
+	async updateShippingRate({ id, shipping_rate }: { id: string; shipping_rate: number }) {
+		const { data, error } = await this.supabase
+			.from("store_settings")
+			.update({ shipping_rate })
+			.eq("id", id)
+			.single();
+
+		if (error) {
+			throw error;
+		}
+
+		return data;
+	}
 }
 
 @UseClassMiddleware(loggerMiddleware)

@@ -1,6 +1,9 @@
 import type {
 	FP_Featured_Product,
 	FP_Featured_Products_Response,
+	FP_Search_Filters,
+	FP_SearchProductsFilterResponse,
+	FP_SearchProductsResponse,
 	FullProduct,
 	GetAllProductsResponse,
 	GetSingleProductResponse,
@@ -9,6 +12,7 @@ import type {
 	ProductUpdationPayload,
 	SKUsNamesListResponse,
 } from "@ecom/shared/types/products";
+import type { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 import { Service } from "@ecom/shared/services/service";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import { COUPONS_SKUS_PAGE_SIZE, defaults } from "@ecom/shared/constants/constants";
@@ -18,7 +22,11 @@ import { MetaDetailsService } from "@ecom/shared/services/meta-details.service";
 import { MediaService } from "@ecom/shared/services/media.service";
 import { stringToBooleanConverter } from "@ecom/shared/lib/utils";
 import { ProductRAttributesService } from "@ecom/shared/services/product-r-attributes.service";
-import type { ProductAttributeRow } from "@ecom/shared/types/attributes";
+import type {
+	AttributeType,
+	GroupedProductAttributes,
+	ProductAttributeRow,
+} from "@ecom/shared/types/attributes";
 import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
@@ -470,7 +478,7 @@ export class FP_ProductsService extends Service {
 	async getFeaturedProducts(pageIndex: number = 0): Promise<FP_Featured_Products_Response> {
 		try {
 			let query = this.supabase
-				.from("product")
+				.from(this.PRODUCTS_TABLE)
 				.select(
 					`
 						id,
@@ -514,7 +522,7 @@ export class FP_ProductsService extends Service {
 
 						// Fetch all variant attributes
 						const { data: variantAttrData, error: variantAttrError } = await this.supabase
-							.from("variant_attributes")
+							.from(this.VARIANT_ATTRIBUTES_TABLE)
 							.select("attribute_id")
 							.in("variant_id", variantIds);
 
@@ -531,7 +539,7 @@ export class FP_ProductsService extends Service {
 
 						const sizeAttributeIds = variantAttrData.map((v) => v.attribute_id);
 						const { data: sizeData, error: sizeError } = await this.supabase
-							.from("attributes")
+							.from(this.ATTRIBUTES_TABLE)
 							.select("value")
 							.in("id", sizeAttributeIds)
 							.eq("attribute_type", "size");
@@ -594,4 +602,272 @@ export class FP_ProductsService extends Service {
 			error,
 		};
 	}
+
+	async getAllProductsFiltersData(): Promise<FP_SearchProductsFilterResponse> {
+		try {
+			const from = 0;
+			const to = 9; // Should not be a static value but it's ok for now
+
+			const { data: categories_resp, error: cQueryError } = await this.supabase
+				.from(this.CATEGORY_TABLE)
+				.select(
+					`
+					id, category_name, sort_order,
+					${this.SUB_CATEGORY_TABLE}(id)
+				`,
+				)
+				.range(from, to)
+				.order("sort_order", { ascending: false });
+
+			let errors: ApiError[] = [];
+
+			if (cQueryError) {
+				errors.push(new ApiError(cQueryError.message, 500, [cQueryError.details]));
+			}
+
+			const categories =
+				categories_resp
+					?.filter((category) => category.sub_category.length > 0)
+					.map((category) => ({
+						id: category.id,
+						category_name: category.category_name,
+						sort_order: category.sort_order,
+					})) ?? [];
+
+			const { data: attributes, error: clr_queryError } = await this.supabase
+				.from(this.ATTRIBUTES_TABLE)
+				.select("*")
+				.order("attribute_type", { ascending: true });
+
+			const groupedData =
+				attributes?.reduce(
+					(
+						acc: {
+							[key in AttributeType]?: any[];
+						},
+						current,
+					) => {
+						const { attribute_type, ...rest } = current;
+						if (!acc[attribute_type]) {
+							acc[attribute_type] = [];
+						}
+						acc[attribute_type].push(rest);
+						return acc;
+					},
+					{},
+				) || null;
+
+			if (clr_queryError) {
+				errors.push(new ApiError(clr_queryError.message, 500, [clr_queryError.details]));
+			}
+
+			return {
+				data: {
+					categories: categories.map((c) => {
+						return {
+							id: c.id,
+							category_name: c.category_name,
+							sort_order: c.sort_order,
+						};
+					}),
+					attributes: groupedData,
+				},
+				errors,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { data: null, errors: [err] };
+			}
+			return {
+				data: null,
+				errors: [new ApiError("Unknown error", 500, [err])],
+			};
+		}
+	}
+
+	/** Fetch products with FILTERS for search page */
+
+	async getAllProducts(
+		pageIndex = 0,
+		pageSize = defaults.DEFAULT_FP_PRODUCTS_PAGE_SIZE,
+		filters: FP_Search_Filters,
+	): Promise<FP_SearchProductsResponse> {
+		try {
+			const from = pageIndex * pageSize;
+			const to = from + pageSize - 1;
+			const hasPriceFilter = filters.p_min !== null || filters.p_max !== null;
+			const hasColorFilter = (filters.colors?.length ?? 0) > 0;
+			const hasSizeFilter = (filters.sizes?.length ?? 0) > 0;
+			const hasMaterialFilter = (filters.material?.length ?? 0) > 0;
+			const hasStyleFilter = (filters.style?.length ?? 0) > 0;
+			const hasCategoryFilter = (filters.categories?.length ?? 0) > 0;
+			const hasVariantFilter = hasPriceFilter || hasColorFilter || hasSizeFilter;
+			const hasProductAttrFilter = hasMaterialFilter || hasStyleFilter;
+			let selectStr = `
+            id,
+            name,
+            cover_image,
+            variants:${this.PRODUCT_VARIANT_TABLE} (
+                id,
+                product_id,
+                original_price
+            ),
+            ${this.PRODUCT_ATTRIBUTES_TABLE} (
+                attribute_id
+            ),
+            ${this.META_DETAILS_TABLE} (
+                url_key
+            )
+        `;
+			if (hasVariantFilter) {
+				selectStr += `, filter_variants:${this.PRODUCT_VARIANT_TABLE}!inner ( original_price`;
+				if (hasColorFilter) {
+					selectStr += `, color_attrs:${this.VARIANT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+				}
+				if (hasSizeFilter) {
+					selectStr += `, size_attrs:${this.VARIANT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+				}
+				selectStr += ` )`;
+			}
+			if (hasMaterialFilter) {
+				selectStr += `, material_attrs:${this.PRODUCT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+			}
+			if (hasStyleFilter) {
+				selectStr += `, style_attrs:${this.PRODUCT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+			}
+			if (hasCategoryFilter) {
+				selectStr += `, sub_category!inner ( parent_id )`;
+			}
+			let query = this.supabase
+				.from(this.PRODUCTS_TABLE)
+				.select(selectStr, { count: "exact" })
+				.eq("status", true) as unknown as PostgrestFilterBuilder<any, any, any, RawProduct[]>;
+			if (filters.p_min !== null) {
+				query = query.gte("filter_variants.original_price", Number(filters.p_min));
+			}
+			if (filters.p_max !== null) {
+				query = query.lte("filter_variants.original_price", Number(filters.p_max));
+			}
+			if (hasColorFilter) {
+				query = query.in("filter_variants.color_attrs.attribute_id", filters.colors!);
+			}
+			if (hasSizeFilter) {
+				query = query.in("filter_variants.size_attrs.attribute_id", filters.sizes!);
+			}
+			if (hasMaterialFilter) {
+				query = query.in("material_attrs.attribute_id", filters.material!);
+			}
+			if (hasStyleFilter) {
+				query = query.in("style_attrs.attribute_id", filters.style!);
+			}
+			if (hasCategoryFilter) {
+				query = query.in("sub_category.parent_id", filters.categories!);
+			}
+			query = query.range(from, to);
+			const { data: rawData, error: fetchError, count } = await query;
+			let error: null | ApiError = null;
+			let products: FP_Featured_Product[] | null = null;
+			if (fetchError || rawData == null) {
+				error = new ApiError(fetchError.message, 500, [fetchError.details]);
+			} else {
+				const data = rawData;
+				products = await Promise.all(
+					data.map(async (product) => {
+						// Collect all variant IDs for the product
+						const variantIds = product.variants.map((v) => v.id);
+						// Fetch all variant attributes
+						const { data: variantAttrData, error: variantAttrError } = await this.supabase
+							.from(this.VARIANT_ATTRIBUTES_TABLE)
+							.select("attribute_id")
+							.in("variant_id", variantIds);
+						if (variantAttrError || !variantAttrData) {
+							return {
+								id: product.id,
+								name: product.name,
+								cover_image: product.cover_image,
+								available_sizes: [],
+								original_price: product.variants[0]?.original_price ?? 0,
+								url_key: product.meta_details?.url_key ?? "",
+							};
+						}
+						const sizeAttributeIds = variantAttrData.map((v) => v.attribute_id);
+						const { data: sizeData, error: sizeError } = await this.supabase
+							.from(this.ATTRIBUTES_TABLE)
+							.select("value")
+							.in("id", sizeAttributeIds)
+							.eq("attribute_type", "size");
+						if (sizeError || !sizeData) {
+							return {
+								id: product.id,
+								name: product.name,
+								cover_image: product.cover_image,
+								available_sizes: [],
+								original_price: product.variants[0]?.original_price ?? 0,
+								url_key: product.meta_details?.url_key ?? "",
+							};
+						}
+						const prices = product.variants.map((v) => v.original_price);
+						const minOriginalPrice = prices.length > 0 ? Math.min(...prices) : 0;
+						return {
+							id: product.id,
+							name: product.name,
+							cover_image: product.cover_image,
+							available_sizes: sizeData.map((s) => s.value),
+							original_price: minOriginalPrice,
+							url_key: product.meta_details?.url_key ?? "",
+						};
+					}),
+				);
+			}
+			return {
+				products,
+				total: count ?? 0,
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { products: [], total: 0, error: err };
+			}
+			return {
+				products: [],
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
 }
+
+type RawProduct = {
+	id: string;
+	name: string;
+	cover_image: string;
+	variants: {
+		id: string;
+		product_id: string;
+		original_price: number;
+	}[];
+	product_attributes: {
+		attribute_id: string;
+	}[];
+	meta_details: {
+		url_key: string;
+	} | null;
+	filter_variants?: {
+		original_price: number;
+		color_attrs?: {
+			attribute_id: string;
+		}[];
+		size_attrs?: {
+			attribute_id: string;
+		}[];
+	}[];
+	material_attrs?: {
+		attribute_id: string;
+	}[];
+	style_attrs?: {
+		attribute_id: string;
+	}[];
+	sub_category?: {
+		parent_id: string;
+	};
+};

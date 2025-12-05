@@ -10,7 +10,7 @@ export function getFavourites(): FavouriteItem[] {
 		const fJson = localStorage.getItem(FAVOURITES_STORAGE_KEY);
 		return fJson ? (JSON.parse(fJson) as FavouriteItem[]) : [];
 	} catch (error) {
-		console.error("Error reading favourites from localStorage:", error);
+		console.error("Error reading favourites from localStorage");
 		return [];
 	}
 }

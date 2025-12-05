@@ -50,6 +50,7 @@ const InvoiceTemplate = (data: Invoice) => {
 				<div>
 					<h3 className="text-lg font-semibold text-gray-800">Bill to:</h3>
 					<h3 className="text-lg font-semibold text-gray-800">{receiver.name}</h3>
+					<h2 className="text-sm text-gray-800">{receiver.email}</h2>
 					{}
 					<address className="mt-2 not-italic text-gray-500">
 						{receiver.address && receiver.address.length > 0 ? receiver.address : null}
@@ -122,6 +123,12 @@ const InvoiceTemplate = (data: Invoice) => {
 							</dd>
 						</dl>
 						<dl className="grid sm:grid-cols-5 gap-x-3">
+							<dt className="col-span-3 font-semibold text-gray-800">Tax:</dt>
+							<dd className="col-span-2 text-gray-500">
+								{formatNumberWithCommas(Number(details.tax))} {details.tax}
+							</dd>
+						</dl>
+						<dl className="grid sm:grid-cols-5 gap-x-3">
 							<dt className="col-span-3 font-semibold text-gray-800">Shipping:</dt>
 							<dd className="col-span-2 text-gray-500">
 								{formatNumberWithCommas(Number(details.shipping))} {details.currency}
@@ -138,7 +145,9 @@ const InvoiceTemplate = (data: Invoice) => {
 								<dt className="col-span-3 font-semibold text-gray-800">Total in words:</dt>
 								<dd className="col-span-2 text-gray-500">
 									<em>
-										{details.totalAmountInWords} {details.currency}
+										{details.totalAmountInWords.charAt(0).toUpperCase() +
+											details.totalAmountInWords.slice(1)}{" "}
+										{details.currency}
 									</em>
 								</dd>
 							</dl>

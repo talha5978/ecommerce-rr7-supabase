@@ -9,6 +9,7 @@ export default [
 	layout("./routes/layout.tsx", [
 		index("routes/Home/home.tsx"),
 		route("/product/:productId/:metaUrl", "./routes/Products/product-details.tsx"),
+		route("/search", "./routes/Details/Search.tsx"),
 
 		...prefix("/cart", [
 			route("", "./routes/Cart/cart.tsx"),

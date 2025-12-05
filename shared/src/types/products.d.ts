@@ -2,7 +2,7 @@ import type { ApiError } from "@ecom/shared/utils/ApiError";
 import type { Database } from "@ecom/shared/types/supabase";
 import type { MetaDetailsRow } from "@ecom/shared/types/meta_details";
 import type { FullSubCategoryRow } from "@ecom/shared/types/category";
-import type { ProductAttributeRow } from "@ecom/shared/types/attributes";
+import type { GroupedProductAttributes, ProductAttributeRow } from "@ecom/shared/types/attributes";
 
 export type ProductRow = Database["public"]["Tables"]["product"]["Row"];
 
@@ -73,4 +73,32 @@ export type FP_Featured_Product = {
 export type FP_Featured_Products_Response = {
 	products: FP_Featured_Product[] | null;
 	error: ApiError | null;
+};
+
+export type FP_Search_Filters = {
+	p_max: string | null;
+	p_min: string | null;
+	colors: string[] | null;
+	sizes: string[] | null;
+	material: string[] | null;
+	style: string[] | null;
+	categories: string[] | null;
+};
+
+export type FP_SearchProductsFilterResponse = {
+	data: {
+		categories: {
+			id: string;
+			category_name: string;
+			sort_order: number;
+		}[];
+		attributes: GroupedProductAttributes | null;
+	} | null;
+	errors: ApiError[];
+};
+
+export type FP_SearchProductsResponse = {
+	products: FP_Featured_Product[] | null;
+	error: ApiError | null;
+	total: number;
 };

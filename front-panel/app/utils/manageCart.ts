@@ -12,7 +12,7 @@ export function getCart(): CartItem[] {
 		const cartJson = localStorage.getItem(CART_STORAGE_KEY);
 		return cartJson ? (JSON.parse(cartJson) as CartItem[]) : [];
 	} catch (error) {
-		console.error("Error reading cart from localStorage:", error);
+		console.error("Error reading cart from localStorage");
 		return [];
 	}
 }

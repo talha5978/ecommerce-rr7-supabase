@@ -7,6 +7,7 @@ import { memo, Suspense, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+import { StripeService } from "@ecom/shared/services/stripe.service";
 
 const stripePromise = loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
@@ -48,11 +49,11 @@ function PaymentPage() {
 
 		setSubmittion(true);
 
-		const { error } = await stripe.confirmPayment({
+		const stripeSvc = new StripeService();
+		const error = await stripeSvc.confirmPayment({
 			elements,
-			confirmParams: {
-				return_url: window.location.origin,
-			},
+			return_url: window.location.origin,
+			stripe_instance: stripe,
 		});
 
 		setSubmittion(false);

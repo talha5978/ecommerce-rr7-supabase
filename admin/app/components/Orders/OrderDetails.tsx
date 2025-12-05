@@ -448,7 +448,7 @@ const PaymentBlock = ({ order }: { order: Order }) => {
 					</div>
 				</div>
 
-				<div className="flex gap-2">
+				<div className="flex gap-2 sm:flex-row flex-col">
 					<div className="p-4 rounded-lg border bg-muted/5">
 						<p className="text-xs text-muted-foreground mb-1">Amount</p>
 						<p className="text-md font-semibold">{formatCurrency(payment.amount)}</p>
@@ -622,7 +622,7 @@ const ImageCarousel = memo(({ images = [], altPrefix = "", className = "" }: Ima
 				ref={leftBtnRef}
 				onClick={() => scrollByPage("left")}
 				aria-label="Previous image"
-				className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-lg border shadow-sm backdrop-blur-sm bg-muted cursor-pointer hidden sm:flex"
+				className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-lg border shadow-sm backdrop-blur-sm bg-muted cursor-pointer  flex"
 				type="button"
 			>
 				<ChevronLeft className="h-4 w-4" />
@@ -633,7 +633,7 @@ const ImageCarousel = memo(({ images = [], altPrefix = "", className = "" }: Ima
 				ref={rightBtnRef}
 				onClick={() => scrollByPage("right")}
 				aria-label="Next image"
-				className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-lg border shadow-sm backdrop-blur-sm bg-muted cursor-pointer  hidden sm:flex"
+				className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-lg border shadow-sm backdrop-blur-sm bg-muted cursor-pointer   flex"
 				type="button"
 			>
 				<ChevronRight className="h-4 w-4" />

@@ -1,14 +1,8 @@
 // Front Panel -----
 
 // PRIMARY 🔴
-	TODO: Ab ye dekho k payments walay page ko behtar kesy kia ja sakta hai aur admin panel wali side pr payments aur orders wala nizam kro!!
-	TODO: We are storing the coupon code in the local storage also which is causing problems with the expired coupons
-	TODO: Shipping rate setting in admin panel
 	TODO: SHOW OTHER REMANING FIELDS IN THE PRODUCT DETAILS PAGE LIKE CATEGORY/SUB CATEGORY CARDS AND OTHER DATA
 	TODO: SHOW BADGES LIKE X% OFF AND OTHERS IN THE CART AND PRODUCT CARDS AND PRODUCT DETAILS PAGE
-	TODO: APPLY THE PAGINATION IN THE SKUS FIELDS IN THE COUPONS CREATION PAGE
-	TODO: calculate the discount for each product in the front panel
-	TODO: then apply the checkout + payments + order managment functionality
 
 // SECONDARY 
 	TODO: Show an error component in case of error instead of showing a whole Error page
@@ -30,7 +24,6 @@ see the products that are related to a category or sub category in their respect
 // TODO: Write functionality where we show the checkboxes in each row of products table and variants table! and we can
 share them and export urls if we want to.
 // TODO: Apply Rate limiting
-// TODO: Add accordian based fields for tree in product filters
 //TODO: Show a sheet where we display the information of product when we click on the name of product in the table list IN THE COLLECTIONS PAGE
 // TODO: CREATE A fallback for the products dialog suspense in ALL PRODUCTS UNITS product dialog
 // TODO: APPLY PAGINATION in the getProductNamesList service function IF IT IS IN DIALOG THEN APPLY INFINITE SCROLL IN THAT SELECT..

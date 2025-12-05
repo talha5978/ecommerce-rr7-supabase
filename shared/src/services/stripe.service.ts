@@ -1,6 +1,7 @@
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import Stripe from "stripe";
 import { PAYMENT_CURRENCY } from "@ecom/shared/constants/constants";
+import { StripeElements, Stripe as StripeInstance } from "@stripe/stripe-js";
 
 export class StripeService {
 	private stripe: Stripe;
@@ -44,31 +45,23 @@ export class StripeService {
 		}
 	}
 
-	// TODO: Add webhook for production use
-	/** Handle webhook events (Stripe-specific verification and parsing; call from webhook route) */
-	async handleWebhookEvent({
-		payload,
-		signature,
+	/** Confirms payment on the Payment page of stripe */
+	async confirmPayment({
+		elements,
+		return_url,
+		stripe_instance,
 	}: {
-		payload: string | Buffer;
-		signature: string;
-	}): Promise<{ event: Stripe.Event | null; error: ApiError | null }> {
-		try {
-			const event = this.stripe.webhooks.constructEvent(
-				payload,
-				signature,
-				process.env.VITE_STRIPE_WEBHOOK_SECRET!,
-			);
+		elements: StripeElements;
+		return_url: string;
+		stripe_instance: StripeInstance;
+	}) {
+		const { error } = await stripe_instance.confirmPayment({
+			elements,
+			confirmParams: {
+				return_url: return_url,
+			},
+		});
 
-			return { event, error: null };
-		} catch (err: any) {
-			return {
-				event: null,
-				error:
-					err instanceof ApiError
-						? err
-						: new ApiError("Webhook verification failed", 400, [err.message]),
-			};
-		}
+		return error;
 	}
 }
