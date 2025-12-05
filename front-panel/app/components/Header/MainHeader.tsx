@@ -5,8 +5,9 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "~/components/ui/tooltip
 import AccountSection from "~/components/Header/AccountSection";
 import { getNumberOfCartItems } from "~/utils/manageCart";
 import { getNumberOfFavourites } from "~/utils/manageFavourites";
+import type { FP_HeaderCategory } from "@ecom/shared/types/category";
 
-export default function MainHeader() {
+export default function MainHeader({ categories }: { categories: FP_HeaderCategory[] }) {
 	const cart_count = getNumberOfCartItems();
 	const favourite_count = getNumberOfFavourites();
 
@@ -23,8 +24,32 @@ export default function MainHeader() {
 				</span>
 			</Link>
 
+			{/* Categories section */}
+			<div className="flex justify-center flex-1">
+				<ul className="flex gap-3 *:block *:py-1">
+					{categories
+						.sort((a, b) => a.sort_order - b.sort_order)
+						.map((category) => {
+							return (
+								<li key={category.id}>
+									<Link
+										to={`/search?categories=${category.id}`}
+										className="hover:underline underline-offset-4 hover:text-primary transition-colors duration-200 ease-in-out"
+										prefetch="intent"
+										aria-label={category.category_name}
+										title={category.category_name}
+										viewTransition
+									>
+										{category.category_name}
+									</Link>
+								</li>
+							);
+						})}
+				</ul>
+			</div>
+
 			{/* Search Bar */}
-			<div className="flex-1 max-w-[25rem] mx-4">
+			<div className="max-w-[27rem] mx-4">
 				<div className="relative">
 					<Search
 						className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"

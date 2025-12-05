@@ -72,51 +72,56 @@ export default function SearchPage() {
 	const material = (filtersData.data?.attributes as Attribs)!.material ?? [];
 	const style = (filtersData.data?.attributes as Attribs)!.style ?? [];
 
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const urlFilters = {
+		categories: searchParams.get("categories")?.split(",").filter(Boolean) ?? [],
+		colors: searchParams.get("colors")?.split(",").filter(Boolean) ?? [],
+		sizes: searchParams.get("sizes")?.split(",").filter(Boolean) ?? [],
+		material: searchParams.get("material")?.split(",").filter(Boolean) ?? [],
+		style: searchParams.get("style")?.split(",").filter(Boolean) ?? [],
+		price: searchParams.get("p_min")
+			? [Number(searchParams.get("p_min")!), Number(searchParams.get("p_max") ?? maxDefault)]
+			: [0, maxDefault],
+	};
+
 	const form = useForm<SearchFilters>({
 		resolver: zodResolver(SearchFiltersSchema as any),
 		mode: "onSubmit",
-		defaultValues: {
-			categories: [],
-			sizes: [],
-			colors: [],
-			material: [],
-			style: [],
-			price: [0, maxDefault],
-		},
+		defaultValues: urlFilters,
 	});
 
 	const { control } = form;
 	const watched = useWatch({ control });
 
-	const [_, setSearchParams] = useSearchParams();
-
 	useEffect(() => {
-		if (!watched) return;
+		const newParams = new URLSearchParams();
 
-		const params = new URLSearchParams();
-
-		for (const key in watched) {
-			const value = watched[key as keyof typeof watched];
-			console.log(key, value);
-
-			if (!value) continue;
-
-			if (key === "price") {
-				params.set("p_min", String(value[0]));
-				params.set("p_max", String(value[1]));
-			} else {
-				if (Array.isArray(value)) {
-					value.forEach((v) => {
-						if (v !== "" && v != null) {
-							params.set(key, value.join(","));
-						}
-					});
-				}
+		(["categories", "colors", "sizes", "material", "style"] as const).forEach((key) => {
+			const value = watched[key];
+			if (value?.length) {
+				newParams.set(key, value.join(","));
 			}
+		});
+
+		if (watched.price) {
+			const [min, max] = watched.price;
+			if (min > 0) newParams.set("p_min", String(min));
+			if (max < maxDefault) newParams.set("p_max", String(max));
 		}
 
-		setSearchParams(params);
-	}, [watched]);
+		// Prevent unnecessary updates
+		const currentStr = searchParams.toString();
+		const nextStr = newParams.toString();
+		if (currentStr !== nextStr) {
+			setSearchParams(newParams, { replace: true });
+		}
+	}, [watched, searchParams, setSearchParams]);
+
+	// Sync URL → form on back/forward/refresh
+	useEffect(() => {
+		form.reset(urlFilters);
+	}, [searchParams]);
 
 	return (
 		<div className="grid md:grid-cols-4 max-container !h-full py-6">
