@@ -1,4 +1,4 @@
-import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
+import { ACTIVE_PROVINCES, SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -507,12 +507,7 @@ export default function CheckoutPage() {
 																			<SelectValue placeholder="Select province" />
 																		</SelectTrigger>
 																		<SelectContent>
-																			{[
-																				"punjab",
-																				"balochistan",
-																				"sindh",
-																				"KPK",
-																			].map((item) => (
+																			{ACTIVE_PROVINCES.map((item) => (
 																				<SelectItem
 																					key={item}
 																					value={item}

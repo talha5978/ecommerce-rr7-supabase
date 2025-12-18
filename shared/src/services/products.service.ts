@@ -22,11 +22,7 @@ import { MetaDetailsService } from "@ecom/shared/services/meta-details.service";
 import { MediaService } from "@ecom/shared/services/media.service";
 import { stringToBooleanConverter } from "@ecom/shared/lib/utils";
 import { ProductRAttributesService } from "@ecom/shared/services/product-r-attributes.service";
-import type {
-	AttributeType,
-	GroupedProductAttributes,
-	ProductAttributeRow,
-} from "@ecom/shared/types/attributes";
+import type { AttributeType, ProductAttributeRow } from "@ecom/shared/types/attributes";
 import { UseClassMiddleware } from "@ecom/shared/decorators/useClassMiddleware";
 import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
@@ -702,23 +698,23 @@ export class FP_ProductsService extends Service {
 			const hasStyleFilter = (filters.style?.length ?? 0) > 0;
 			const hasCategoryFilter = (filters.categories?.length ?? 0) > 0;
 			const hasVariantFilter = hasPriceFilter || hasColorFilter || hasSizeFilter;
-			const hasProductAttrFilter = hasMaterialFilter || hasStyleFilter;
+
 			let selectStr = `
-            id,
-            name,
-            cover_image,
-            variants:${this.PRODUCT_VARIANT_TABLE} (
-                id,
-                product_id,
-                original_price
-            ),
-            ${this.PRODUCT_ATTRIBUTES_TABLE} (
-                attribute_id
-            ),
-            ${this.META_DETAILS_TABLE} (
-                url_key
-            )
-        `;
+				id,
+				name,
+				cover_image,
+				variants:${this.PRODUCT_VARIANT_TABLE} (
+					id,
+					product_id,
+					original_price
+				),
+				${this.PRODUCT_ATTRIBUTES_TABLE} (
+					attribute_id
+				),
+				${this.META_DETAILS_TABLE} (
+					url_key
+				)
+			`;
 			if (hasVariantFilter) {
 				selectStr += `, filter_variants:${this.PRODUCT_VARIANT_TABLE}!inner ( original_price`;
 				if (hasColorFilter) {

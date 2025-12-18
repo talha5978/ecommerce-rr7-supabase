@@ -128,3 +128,5 @@ export const CART_STORAGE_KEY = "clothing-store-cart";
 export const FAVOURITES_STORAGE_KEY = "clothing-store-favourites";
 
 export const PAYMENT_CURRENCY = "pkr";
+
+export const ACTIVE_PROVINCES = ["punjab", "sindh", "balochistan", "KPK"] as const;
