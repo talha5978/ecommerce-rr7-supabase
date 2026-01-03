@@ -27,6 +27,7 @@ export function extractAuthId(request: Request): string | null {
 		"sb-refresh-token",
 		"access_token",
 		"refresh_token",
+		`sb-${process.env.VITE_PROJECT_ID}-auth-token`,
 		`sb-${process.env.VITE_PROJECT_ID}-access-token`,
 		`sb-${process.env.VITE_PROJECT_ID}-refresh-token`,
 	];
@@ -67,14 +68,6 @@ export function extractAuthId(request: Request): string | null {
 	return null;
 }
 
-/**
- * Debug helper: returns parsed cookie names (for one-time logging)
- */
-export function debugCookieNames(request: Request) {
-	const cookieHeader = request.headers.get("Cookie") ?? "";
-	return Object.keys(parseCookies(cookieHeader));
-}
-
 export function genAuthSecurity(request: Request): {
 	authId: string;
 	headers: Headers;
@@ -88,8 +81,8 @@ export function genAuthSecurity(request: Request): {
 		const cookies = parseCookies(cookieHeader);
 		// console.log(cookies);
 
-		// let anon = cookies["anon_session"];
-		let anon = cookies[`sb-${process.env.VITE_PROJECT_ID}-auth-token.1`];
+		let anon = cookies["anon_session"];
+		// let anon = cookies[`sb-${process.env.VITE_PROJECT_ID}-auth-token.1`];
 
 		if (!anon) {
 			anon = uuidv4();
@@ -102,7 +95,6 @@ export function genAuthSecurity(request: Request): {
 		}
 
 		authId = `guest:${anon}`;
-		// console.log("Cookie names present:", debugCookieNames(request));
 	}
 
 	return { authId, headers };
