@@ -10,6 +10,7 @@ import type {
 	GetProvinceWiseSalesData,
 	GetTopSellingProducts,
 	MainBarChartData,
+	RecentOrder,
 } from "@ecom/shared/types/admin-dashboard";
 
 @UseClassMiddleware(loggerMiddleware, asServiceMiddleware<AdminDashboardService>(verifyUser))
@@ -303,5 +304,67 @@ export class AdminDashboardService extends Service {
 				error: new ApiError("Failed to fetch province-wise sales", 500, [err]),
 			};
 		}
+	}
+
+	async getRecentOrders(): Promise<RecentOrder[]> {
+		const oneWeekAgo = new Date();
+		oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+		const { data, error } = await this.supabase
+			.from(this.ORDERS_TABLE)
+			.select(
+				`
+				id,
+				created_at,
+				total,
+				app_users (
+					first_name,
+					last_name
+				),
+				payments (
+					status,
+					currency
+				),
+				order_items (
+					sku,
+					quantity
+				),
+				addresses!orders_billing_address_id_fkey (
+					email,
+					phone
+				)
+			`,
+			)
+			.gte("created_at", oneWeekAgo.toISOString())
+			.order("created_at", { ascending: false });
+
+		if (error) {
+			throw error;
+		}
+
+		return (data ?? []).map((order): RecentOrder => {
+			const user = order.app_users;
+			const shippingAddr = order.addresses;
+			const payment = order.payments?.[0];
+
+			let paymentStatus = payment?.status || "pending";
+
+			return {
+				order_id: order.id,
+				customer_name: user ? `${user.first_name} ${user.last_name}`.trim() : "Unknown Customer",
+				customer_email: shippingAddr?.email,
+				customer_phone: shippingAddr?.phone,
+				payment_status: paymentStatus,
+				total_amount: order.total,
+				currency: payment?.currency,
+				order_date: order.created_at,
+				items:
+					order.order_items?.map((item) => ({
+						sku: item.sku,
+						qty: item.quantity,
+					})) ?? [],
+				avatar_url: null,
+			};
+		});
 	}
 }

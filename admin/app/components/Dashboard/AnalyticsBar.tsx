@@ -5,7 +5,7 @@ import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } 
 const getTopAnalytics = (
 	total_revenue: string,
 	total_orders: string,
-	total_customers: string,
+	total_skus: string,
 	avg_order_value: string,
 ) => {
 	return [
@@ -22,10 +22,9 @@ const getTopAnalytics = (
 			badge: "+12%",
 		},
 		{
-			title: "Total Customers",
-			value: total_customers,
-			footer: "Using data from all time",
-			badge: "+12%",
+			title: "Total SKUs",
+			value: total_skus,
+			footer: "All the skus in your database",
 		},
 		{
 			title: "Avg. Order Value",

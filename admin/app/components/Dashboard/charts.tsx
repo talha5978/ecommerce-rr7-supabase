@@ -14,7 +14,6 @@ import { memo, useMemo, useState } from "react";
 import DateRangePicker from "~/components/Custom-Inputs/date-range-picker";
 import { ACTIVE_PROVINCES } from "@ecom/shared/constants/constants";
 import { TrendingUp } from "lucide-react";
-// import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import type { MainBarChartData, ProvinceSalesDataItem } from "@ecom/shared/types/admin-dashboard";
 
 const chartConfig = {
@@ -227,7 +226,26 @@ export const ProvincePiChart = memo(({ chartData }: { chartData: ProvinceSalesDa
 							data={salesChartData}
 							nameKey="province"
 							innerRadius={65}
-							label
+							labelLine
+							label={({ cx, cy, midAngle, outerRadius, value }: { [key: string]: number }) => {
+								const RADIAN = Math.PI / 180;
+								const radius = outerRadius + 28;
+								const x = cx + radius * Math.cos(-midAngle * RADIAN);
+								const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+								return (
+									<text
+										x={x}
+										y={y}
+										fill="currentColor"
+										textAnchor={x > cx ? "start" : "end"}
+										dominantBaseline="central"
+										className="text-xs"
+									>
+										{value}
+									</text>
+								);
+							}}
 							strokeWidth={8}
 							activeIndex={0}
 							// activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => (

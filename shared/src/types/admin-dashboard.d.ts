@@ -44,3 +44,19 @@ export type GetProvinceWiseSalesData = {
 	data: ProvinceSales[];
 	error: null | ApiError;
 };
+
+export type RecentOrder = {
+	order_id: string;
+	customer_name: string;
+	customer_email?: string;
+	customer_phone?: string;
+	payment_status: "paid" | "pending" | "failed" | "refunded" | string;
+	total_amount: number;
+	currency?: string;
+	order_date: string | number | Date;
+	items: {
+		sku: string;
+		qty: number;
+	}[];
+	avatar_url?: string | null;
+};

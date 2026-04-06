@@ -1,6 +1,4 @@
 import type { Route } from "./+types/dashboard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { memo } from "react";
 import { AdminDashboardService } from "@ecom/shared/services/admin-dashboard.service";
 import { useLoaderData } from "react-router";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
@@ -9,6 +7,7 @@ import { TopSellingProductsList } from "~/components/Dashboard/TopSellingProduct
 import { StockThresholdList } from "~/components/Dashboard/StockThresholdList";
 import { ReviewsSection } from "~/components/Dashboard/ReviewsSection";
 import { TopAnalyticsBar } from "~/components/Dashboard/AnalyticsBar";
+import { RecentOrdersList } from "~/components/Dashboard/RecentOrders";
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const dashboardSvc = new AdminDashboardService(request);
@@ -16,8 +15,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const lowStocksVariants = await dashboardSvc.getLowStockVariants();
 	const topSellingProducts = await dashboardSvc.getTopSellingProducts();
 	const provinceData = await dashboardSvc.getProvinceWiseSales();
+	const recentOrders = await dashboardSvc.getRecentOrders();
 
-	return { mainChartData, lowStocksVariants, topSellingProducts, provinceData };
+	return { mainChartData, lowStocksVariants, topSellingProducts, provinceData, recentOrders };
 }
 
 export default function Dashboard() {
@@ -36,7 +36,7 @@ export default function Dashboard() {
 				<DashboardMainChart chartData={loaderData.mainChartData.data ?? []} />
 				<div className="sec2">
 					<TopSellingProductsList products={loaderData.topSellingProducts.products ?? []} />
-					<RecentOrdersList />
+					<RecentOrdersList orders={loaderData.recentOrders ?? []} />
 				</div>
 				<div className="sec2">
 					<StockThresholdList products={loaderData.lowStocksVariants.products ?? []} />
@@ -47,25 +47,3 @@ export default function Dashboard() {
 		</>
 	);
 }
-
-const RecentOrder = () => {
-	return (
-		<div className="flex gap-4">
-			{/* Show the customer name, email, phone number, order, payment status, total amount, and order date and orders in the form SKU1 x2, SKU2 x3 and 3 more and also take the user to details page */}
-		</div>
-	);
-};
-
-const RecentOrdersList = memo(() => {
-	return (
-		<Card className="w-full">
-			<CardHeader className="border-b py-2">
-				<CardTitle>
-					<h2>Recent Orders</h2>
-				</CardTitle>
-				<CardDescription>Here are the most recent orders on your store</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-4"></CardContent>
-		</Card>
-	);
-});

@@ -19,7 +19,10 @@ const StockThresholdTile = ({
 	stock,
 }: LowStockProduct) => {
 	return (
-		<div className="flex justify-between items-center" key={product_id}>
+		<div
+			className="flex justify-between items-center hover:bg-muted/80 dark:hover:bg-muted-foreground/10 px-5 py-4 transition-colors duration-150 ease-in-out rounded-lg"
+			key={product_id}
+		>
 			<div className="flex gap-4">
 				<div>
 					<ImageViewer
@@ -56,15 +59,7 @@ const StockThresholdTile = ({
 };
 
 function getActiveStockProducts(products: LowStockProduct[]) {
-	for (let i = 0; i < products.length; i++) {
-		for (let j = i + 1; j < products.length; j++) {
-			if (products[j].stock < products[i].stock) {
-				[products[j], products[i]] = [products[i], products[j]];
-			}
-		}
-	}
-
-	return products.slice(0, 4);
+	return [...products].sort((a, b) => a.stock - b.stock).slice(0, 4);
 }
 
 export const StockThresholdList = memo(({ products }: { products: LowStockProduct[] }) => {
@@ -87,13 +82,21 @@ export const StockThresholdList = memo(({ products }: { products: LowStockProduc
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4 pt-4">
-				{displayedProducts.length === 0 ? (
-					<p className="text-center text-muted-foreground py-8">
-						All products are sufficiently stocked!
-					</p>
-				) : (
-					displayedProducts.map((product) => <StockThresholdTile key={product.id} {...product} />)
-				)}
+				<div>
+					{displayedProducts.length === 0 ? (
+						<p className="text-center text-muted-foreground py-8">
+							All products are sufficiently stocked!
+						</p>
+					) : (
+						<ul className="space-y-1">
+							{displayedProducts.map((product) => (
+								<li>
+									<StockThresholdTile key={product.id} {...product} />
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
 				{hasMore && (
 					<div className="pt-4">
 						<Button variant="outline" className="w-full" onClick={() => setShowAll(!showAll)}>

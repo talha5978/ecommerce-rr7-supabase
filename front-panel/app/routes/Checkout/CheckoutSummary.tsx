@@ -167,7 +167,7 @@ export default function CheckoutPage() {
 		formData.set("cart_items", JSON.stringify(filtered_items));
 		formData.set("payment_method", payment_method ?? data.payment_method);
 
-		submit(formData, { method: "POST" });
+		submit(formData, { method: "POST", action: "/cart/checkout" });
 	};
 
 	const handleManualCouponsApply = () => {

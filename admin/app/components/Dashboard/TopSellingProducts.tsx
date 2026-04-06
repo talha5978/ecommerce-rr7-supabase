@@ -22,7 +22,7 @@ const TopSellingProductItem = ({
 			</div>
 			<div>
 				<Link to={`http://localhost:5173/product/${product_id}/knitted-polo-shirt`} target="_blank">
-					<h3 className="hover:cursor-pointer underline-offset-4 hover:text-primary hover:underline mb-1">
+					<h3 className="hover:cursor-pointer underline-offset-4 hover:text-primary hover:underline transition-all duration-150 ease-in-out mb-1">
 						{product_name}
 					</h3>
 				</Link>
