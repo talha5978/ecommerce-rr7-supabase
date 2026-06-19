@@ -2,27 +2,44 @@ import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
 import React, { memo } from "react";
 import { Link } from "react-router";
 import type { FP_HomeCollection } from "@ecom/shared/types/collections";
+import { ArrowRight } from "lucide-react";
 
 interface HomeCollectionCardProps {
 	collection: FP_HomeCollection;
 }
 
-const HomeCollectionCard: React.FC<HomeCollectionCardProps> = memo(({ collection, ...props }) => {
+const HomeCollectionCard: React.FC<HomeCollectionCardProps> = memo(({ collection }) => {
 	return (
-		<div className="w-full rounded-md shadow-md overflow-hidden" {...props}>
-			<Link to={`/collection/${collection.id}`}>
-				<div className="relative overflow-hidden">
-					<div className="w-full aspect-w-6 aspect-h-3">
-						<img
-							src={SUPABASE_IMAGE_BUCKET_PATH + collection.image_url}
-							alt={collection.description}
-							className="w-full h-full object-cover"
-						/>
-					</div>
-					<div className="absolute flex flex-col bottom-0 left-0 px-4 py-2">
-						<p className="text-sm bg-black/70 text-white">{collection.description}</p>
+		<div className="group relative w-full h-[380px] overflow-hidden rounded-xs bg-card border border-border shadow-xs hover:shadow-2xl transition-all duration-500">
+			<Link to={`/collection/${collection.id}`} className="block h-full">
+				{/* Image */}
+				<div className="absolute inset-0">
+					<img
+						src={SUPABASE_IMAGE_BUCKET_PATH + collection.image_url}
+						alt={collection.description}
+						className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+					/>
+					<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+				</div>
+
+				{/* Content */}
+				<div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+					<div className="space-y-3">
+						<h3 className="text-3xl font-semibold tracking-tighter leading-none drop-shadow-md">
+							{collection.description}
+						</h3>
+
+						<div className="inline-flex items-center gap-2 text-sm font-medium pt-2 border-t border-white/30">
+							Shop Now
+							<span className="group-hover:translate-x-1 transition-transform">
+								<ArrowRight className="w-4 h-4" />
+							</span>
+						</div>
 					</div>
 				</div>
+
+				{/* Subtle shine effect on hover */}
+				<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
 			</Link>
 		</div>
 	);

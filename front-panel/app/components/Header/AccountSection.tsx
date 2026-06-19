@@ -14,7 +14,7 @@ import type { FullUser } from "@ecom/shared/types/user";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-export default function AccountSection() {
+export default function AccountSection({ isMobile = false }: { isMobile?: boolean }) {
 	const { user } = useRouteLoaderData("root");
 	const currentUser: FullUser = user as FullUser;
 
@@ -35,7 +35,7 @@ export default function AccountSection() {
 	}, [actionData]);
 
 	return (
-		<div className="py-2 px-0 flex gap-2 justify-between text-sm font-medium">
+		<div className={`${!isMobile ? "py-2" : ""} px-0 flex gap-2 justify-between text-sm font-medium`}>
 			{!currentUser ? (
 				<Link to={"/login"}>
 					<div>
@@ -43,13 +43,22 @@ export default function AccountSection() {
 					</div>
 				</Link>
 			) : (
-				<div>
+				<div className="w-full">
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild tabIndex={0} className="cursor-pointer">
-							<User className="w-6 h-6" />
+						<DropdownMenuTrigger asChild tabIndex={0} className={`cursor-pointer`}>
+							{!isMobile ? (
+								<div className="relative p-2 hover:bg-accent rounded-full transition-colors">
+									<User className="w-5 h-5" />
+								</div>
+							) : (
+								<div className="flex items-center gap-3 py-2 px-4 hover:bg-accent border border-border rounded-sm transition-colors text-base font-normal w-full">
+									<User className="w-4 h-4" />
+									<span>My Account</span>
+								</div>
+							)}
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
-							className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+							className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xs"
 							side={"bottom"}
 							align="end"
 							sideOffset={4}

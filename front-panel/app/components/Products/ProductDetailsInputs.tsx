@@ -25,7 +25,7 @@ function ColorInput({ items, value, onValueChange }: Props) {
 					key={item.value}
 					htmlFor={item.id}
 					className={cn(
-						"flex items-center justify-center px-4 py-2 bg-accent rounded-md cursor-pointer transition-colors hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-ring",
+						"flex items-center justify-center px-4 py-2 bg-accent rounded-xs cursor-pointer transition-colors hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-ring",
 						item.value === value && "outline-2 outline-primary bg-accent/80",
 					)}
 				>
@@ -54,7 +54,7 @@ function SizeInput({ items, value, onValueChange }: Props) {
 					key={item.value}
 					htmlFor={item.id}
 					className={cn(
-						"flex items-center justify-center px-4 py-2 bg-accent rounded-md cursor-pointer transition-colors hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-ring",
+						"flex items-center justify-center px-4 py-2 bg-accent rounded-xs cursor-pointer transition-colors hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-ring",
 						item.value === value && "outline-2 outline-primary bg-accent/80",
 					)}
 				>

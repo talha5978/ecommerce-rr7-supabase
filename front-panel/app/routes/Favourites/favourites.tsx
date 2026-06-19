@@ -88,9 +88,9 @@ export default function FavouritesPage() {
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
 							{favourites.map((item) => {
 								return (
-									<div className="w-full max-w-xs rounded-md shadow-md overflow-hidden">
+									<div className="w-full max-w-xs rounded-xs shadow-md overflow-hidden">
 										<Link
-											to={`/products/${item.product_id}/${item.url_key}`}
+											to={`/product/${item.product_id}/${item.url_key}`}
 											prefetch="intent"
 										>
 											<div className="w-full aspect-w-4 aspect-h-3 relative">

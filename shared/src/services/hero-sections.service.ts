@@ -66,12 +66,14 @@ export class HeroSectionsService extends Service {
 	}
 
 	async createHeroSection(input: HeroSectionCreateData): Promise<void> {
-		const { description, image, sort_order, status, url } = input;
+		const { description, image, image_mobile, sort_order, status, url } = input;
 
 		let img_public_url = "";
+		let img_public_url_mobile = "";
+
+		const mediaSvc = await this.createSubService(MediaService);
 
 		if (image && image.size > 0) {
-			const mediaSvc = await this.createSubService(MediaService);
 			const { data } = await mediaSvc.uploadImage(image);
 			img_public_url = data?.path ?? "";
 			if (!img_public_url || img_public_url == "") {
@@ -79,9 +81,18 @@ export class HeroSectionsService extends Service {
 			}
 		}
 
+		if (image_mobile && image_mobile.size > 0) {
+			const { data } = await mediaSvc.uploadImage(image_mobile);
+			img_public_url_mobile = data?.path ?? "";
+			if (!img_public_url_mobile || img_public_url_mobile == "") {
+				throw new ApiError("Failed to upload mobile image", 500, []);
+			}
+		}
+
 		const { error } = await this.supabase.from(this.HERO_SECTIONS_TABLE).insert({
 			description,
 			image: img_public_url,
+			image_mobile: img_public_url_mobile,
 			sort_order: sort_order,
 			status: stringToBooleanConverter(status),
 			url,
@@ -120,11 +131,11 @@ export class HeroSectionsService extends Service {
 	}
 
 	async updateHeroSection(heroSectionId: number, input: Partial<HeroUpdateActionData>): Promise<void> {
-		const { description, sort_order, image, status, url } = input;
+		const { description, sort_order, image, status, url, image_mobile } = input;
 
 		const { data, error } = await this.supabase
 			.from(this.HERO_SECTIONS_TABLE)
-			.select("image")
+			.select("image, image_mobile")
 			.eq("id", heroSectionId)
 			.single();
 
@@ -151,11 +162,29 @@ export class HeroSectionsService extends Service {
 			newImagePath = data.path;
 		}
 
+		const currentStoredMobileImg = data.image_mobile;
+		let newMobileImagePath: string | null = null;
+
+		if (image_mobile) {
+			if (typeof image_mobile === "string") {
+				throw new ApiError("Please upload new image instead of image url", 400, []);
+			}
+
+			const { data } = await mediaSvc.uploadImage(image_mobile);
+
+			if (!data?.path || data?.path == "") {
+				throw new ApiError("Failed to upload image", 500, []);
+			}
+
+			newMobileImagePath = data.path;
+		}
+
 		const payload: Partial<HeroSectionUpdationPayload> = {};
 
 		if (description !== undefined) payload.description = description;
 		if (sort_order !== undefined) payload.sort_order = sort_order;
 		if (newImagePath != null) payload.image = newImagePath;
+		if (newMobileImagePath != null) payload.image_mobile = newMobileImagePath;
 		if (status !== undefined) {
 			payload.status = stringToBooleanConverter(status);
 		}
@@ -179,6 +208,10 @@ export class HeroSectionsService extends Service {
 
 		if (newImagePath != null) {
 			await mediaSvc.deleteImage(currentStoredImg);
+		}
+
+		if (newMobileImagePath != null && currentStoredMobileImg != null) {
+			await mediaSvc.deleteImage(currentStoredMobileImg);
 		}
 	}
 
@@ -225,7 +258,7 @@ export class FP_HeroSectionsService extends Service {
 		try {
 			const { data, error: queryError } = await this.supabase
 				.from(this.HERO_SECTIONS_TABLE)
-				.select("id, image, url")
+				.select("id, image, url, image_mobile")
 				.eq("status", true)
 				.order("sort_order", { ascending: true });
 

@@ -3,6 +3,7 @@ import { useLoaderData, type LoaderFunctionArgs } from "react-router";
 import CollectionsSection from "~/components/Collections/CollectionsSections";
 import HeroSection from "~/components/Hero/HeroSection";
 import FeaturedProductsSection from "~/components/Products/FeaturedProductsSection";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { getAllFPCollections } from "~/queries/collections.q";
 import { getAllFPHeroSections } from "~/queries/hero-sections.q";
 import { get_FP_featuredProducts } from "~/queries/products.q";
@@ -24,6 +25,10 @@ export default function HomePage() {
 
 	return (
 		<>
+			<MetaDetails
+				metaTitle="Home | Voguewalk"
+				metaDescription="Discover exiciting offers, discounts, new arrivals for this season. Shop Now!"
+			/>
 			<HeroSection data={hero_sections} />
 			<CollectionsSection collections={collections} />
 			<FeaturedProductsSection products={featured_products} />

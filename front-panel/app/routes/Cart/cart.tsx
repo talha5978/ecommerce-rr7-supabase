@@ -131,7 +131,7 @@ export default function CartPage() {
 															SUPABASE_IMAGE_BUCKET_PATH + "/" + item.image_url
 														}
 														alt={item.product_name}
-														className="w-20 h-24 object-cover rounded-lg mr-4"
+														className="w-20 h-24 object-cover rounded-xs mr-4"
 														loading="lazy"
 													/>
 													<div className="flex-1 min-w-0">

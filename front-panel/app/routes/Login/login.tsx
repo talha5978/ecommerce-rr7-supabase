@@ -25,6 +25,7 @@ import { Separator } from "~/components/ui/separator";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { extractAuthId } from "@ecom/shared/lib/auth-utils.server";
 import { currentFullUserQuery } from "~/queries/auth.q";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
 
 export async function action({ request }: ActionFunctionArgs) {
 	try {
@@ -116,126 +117,131 @@ function LoginPage() {
 	}, [actionData]);
 
 	return (
-		<section className="flex w-full h-svh items-center py-4 px-4">
-			<div className="flex flex-col gap-6 max-w-md mx-auto">
-				<form action="" onSubmit={handleSubmit(onFormSubmit)}>
-					<Form {...form}>
-						<div className={"flex flex-col gap-6"}>
-							<Card>
-								<CardHeader className="text-center">
-									<CardTitle className="text-xl">
-										<h1>Welcome!</h1>
-									</CardTitle>
-									<CardDescription>
-										<h2>Login with your Google account</h2>
-									</CardDescription>
-								</CardHeader>
-								<CardContent>
-									<div className="flex [&>*]:flex-1 gap-2 sm:flex-row flex-col">
-										<Button
-											variant="outline"
-											type="button"
-											className="w-full"
-											onClick={handleGoogleLogin}
-											disabled={isSubmitting}
-										>
-											<GoogleIcon />
-											Login with Google
-										</Button>
-									</div>
-									<div className="relative my-4 flex items-center justify-center overflow-hidden">
-										<Separator />
-										<div className="px-2 text-center bg-card text-sm">OR</div>
-										<Separator />
-									</div>
-									<div className="flex flex-col gap-4 my-4">
-										<FormField
-											control={control}
-											name="email"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel htmlFor="email">Email</FormLabel>
-													<FormControl>
-														<div className="relative">
-															<MailIcon
-																className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-																width={18}
-															/>
-															<Input
-																placeholder="user@email.com"
-																className="w-full px-8"
-																{...field}
-															/>
-														</div>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<FormField
-											control={control}
-											name="password"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel htmlFor="password">Password</FormLabel>
-													<FormControl>
-														<div className="flex flex-col gap-1">
+		<>
+			<MetaDetails metaTitle="Login" metaDescription="Login to your account" />
+			<section className="flex w-full h-svh items-center py-4 px-4">
+				<div className="flex flex-col gap-6 max-w-md mx-auto">
+					<form action="" onSubmit={handleSubmit(onFormSubmit)}>
+						<Form {...form}>
+							<div className={"flex flex-col gap-6"}>
+								<Card>
+									<CardHeader className="text-center">
+										<CardTitle className="text-xl">
+											<h1>Welcome!</h1>
+										</CardTitle>
+										<CardDescription>
+											<h2>Login with your Google account</h2>
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<div className="flex [&>*]:flex-1 gap-2 sm:flex-row flex-col">
+											<Button
+												variant="outline"
+												type="button"
+												className="w-full"
+												onClick={handleGoogleLogin}
+												disabled={isSubmitting}
+											>
+												<GoogleIcon />
+												Login with Google
+											</Button>
+										</div>
+										<div className="relative my-4 flex items-center justify-center overflow-hidden">
+											<Separator />
+											<div className="px-2 text-center bg-card text-sm">OR</div>
+											<Separator />
+										</div>
+										<div className="flex flex-col gap-4 my-4">
+											<FormField
+												control={control}
+												name="email"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel htmlFor="email">Email</FormLabel>
+														<FormControl>
 															<div className="relative">
-																<LockIcon
+																<MailIcon
 																	className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
 																	width={18}
 																/>
 																<Input
-																	type={showPassword ? "text" : "password"}
-																	placeholder="Password"
+																	placeholder="user@email.com"
 																	className="w-full px-8"
 																	{...field}
 																/>
-																<button
-																	onClick={togglePasswordVisibility}
-																	type="button"
-																	className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-																>
-																	{showPassword ? (
-																		<EyeOffIcon className="h-5 w-5 text-muted-foreground" />
-																	) : (
-																		<EyeIcon className="h-5 w-5 text-muted-foreground" />
-																	)}
-																</button>
 															</div>
-															<Link
-																to="/forgot-password"
-																className="ml-auto text-sm underline-offset-4 hover:underline"
-															>
-																Forgot your password?
-															</Link>
-														</div>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									</div>
-									<Button type="submit" className="w-full" disabled={isSubmitting}>
-										{isSubmitting && <Loader2 className="animate-spin" />}
-										<span>Login</span>
-									</Button>
-									<div className="flex justify-center gap-1 items-center">
-										<p className="text-sm mt-2">Don&apos;t have an account?</p>
-										<Link
-											to="/signup"
-											className="text-sm underline-offset-4 hover:underline mt-2"
-										>
-											Signup
-										</Link>
-									</div>
-								</CardContent>
-							</Card>
-						</div>
-					</Form>
-				</form>
-			</div>
-		</section>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={control}
+												name="password"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel htmlFor="password">Password</FormLabel>
+														<FormControl>
+															<div className="flex flex-col gap-1">
+																<div className="relative">
+																	<LockIcon
+																		className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+																		width={18}
+																	/>
+																	<Input
+																		type={
+																			showPassword ? "text" : "password"
+																		}
+																		placeholder="Password"
+																		className="w-full px-8"
+																		{...field}
+																	/>
+																	<button
+																		onClick={togglePasswordVisibility}
+																		type="button"
+																		className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+																	>
+																		{showPassword ? (
+																			<EyeOffIcon className="h-5 w-5 text-muted-foreground" />
+																		) : (
+																			<EyeIcon className="h-5 w-5 text-muted-foreground" />
+																		)}
+																	</button>
+																</div>
+																<Link
+																	to="/forgot-password"
+																	className="ml-auto text-sm underline-offset-4 hover:underline"
+																>
+																	Forgot your password?
+																</Link>
+															</div>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</div>
+										<Button type="submit" className="w-full" disabled={isSubmitting}>
+											{isSubmitting && <Loader2 className="animate-spin" />}
+											<span>Login</span>
+										</Button>
+										<div className="flex justify-center gap-1 items-center">
+											<p className="text-sm mt-2">Don&apos;t have an account?</p>
+											<Link
+												to="/signup"
+												className="text-sm underline-offset-4 hover:underline mt-2"
+											>
+												Signup
+											</Link>
+										</div>
+									</CardContent>
+								</Card>
+							</div>
+						</Form>
+					</form>
+				</div>
+			</section>
+		</>
 	);
 }
 

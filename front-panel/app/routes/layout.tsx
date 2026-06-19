@@ -1,4 +1,5 @@
 import { Outlet, useRouteLoaderData } from "react-router";
+import Footer from "~/components/Footer/Footer";
 import Header from "~/components/Header/Header";
 import { type loader } from "~/root";
 
@@ -10,6 +11,7 @@ export default function GlobalLayout() {
 		<>
 			<Header categories={header_categories} />
 			<Outlet />
+			<Footer categories={header_categories} />
 		</>
 	);
 }

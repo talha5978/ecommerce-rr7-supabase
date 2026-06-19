@@ -37,7 +37,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 
 	return (
 		<div
-			className="w-full max-w-xs rounded-md shadow-md overflow-hidden relative"
+			className="w-full max-w-xs rounded-xs shadow-xs overflow-hidden relative bg-card"
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}
 			{...props}
@@ -53,7 +53,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 					</div>
 				</div>
 				<div className="p-4">
-					<h3 className="font-semibold line-clamp-2">{product.name}</h3>
+					<h3 className="font-semibold line-clamp-1">{product.name}</h3>
 					<p className="text-muted-foreground text-sm font-medium">PKR {product.original_price}</p>
 				</div>
 			</Link>

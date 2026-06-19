@@ -15,7 +15,7 @@ import { Input } from "~/components/ui/input";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import type { ActionResponse } from "@ecom/shared/types/action-data";
-import { HERO_SECTION_DIMENSIONS } from "@ecom/shared/constants/constants";
+import { HERO_MOBILE_DIMENSIONS, HERO_SECTION_DIMENSIONS } from "@ecom/shared/constants/constants";
 import { getHeroSectionByIdQuery } from "~/queries/hero-sections.q";
 import {
 	HeroSectionUpdateFormValues,
@@ -30,7 +30,7 @@ import { HeroSectionsService } from "@ecom/shared/services/hero-sections.service
 import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
 
 const getFieldsToCheck = () => {
-	return ["url", "description", "sort_order", "status", "image"] as const;
+	return ["url", "description", "sort_order", "status", "image", "image_mobile"] as const;
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
@@ -125,6 +125,7 @@ export default function UpdateHeroSectionForm({
 		mode: "onSubmit",
 		defaultValues: {
 			image: hero_section?.image ?? "",
+			image_mobile: hero_section?.image_mobile ?? "",
 			description: hero_section?.description ?? "",
 			sort_order: String(hero_section?.sort_order) ?? "1",
 			status: String(hero_section?.status) ?? "false",
@@ -149,6 +150,7 @@ export default function UpdateHeroSectionForm({
 			url: values.url.trim().toLowerCase(),
 			status: values.status ?? "false",
 			image: values.image,
+			image_mobile: values.image_mobile,
 		};
 
 		const fields = getFieldsToCheck();
@@ -232,24 +234,42 @@ export default function UpdateHeroSectionForm({
 									)}
 								/>
 
-								{/* Image Upload */}
-								<FormField
-									control={control}
-									name="image"
-									render={() => (
-										<FormItem>
-											<FormLabel>Image</FormLabel>
-											<FormControl>
-												<ImageInput
-													name="image"
-													dimensions={HERO_SECTION_DIMENSIONS}
-													className="aspect-[16/9] max-w-[400px]"
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+								<div className="flex gap-4">
+									<FormField
+										control={control}
+										name="image"
+										render={() => (
+											<FormItem>
+												<FormLabel>Image</FormLabel>
+												<FormControl>
+													<ImageInput
+														name="image"
+														dimensions={HERO_SECTION_DIMENSIONS}
+														className="aspect-[16/9] max-w-[400px]"
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={control}
+										name="image_mobile"
+										render={() => (
+											<FormItem>
+												<FormLabel>Mobile Image</FormLabel>
+												<FormControl>
+													<ImageInput
+														name="image_mobile"
+														dimensions={HERO_MOBILE_DIMENSIONS}
+														className="aspect-[16/9] max-w-[400px]"
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
 
 								{/* Sort Order */}
 								<FormField

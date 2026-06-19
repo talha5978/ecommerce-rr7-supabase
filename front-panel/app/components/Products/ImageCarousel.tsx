@@ -58,10 +58,10 @@ const ImageContainer: React.FC<{
 	classNameThumbnail?: string;
 }> = ({ alt, aspectRatio, classNameImage, classNameThumbnail, fit = "cover", image, showImageControls }) => {
 	return (
-		<div className={cn("relative overflow-hidden rounded-lg", getAspectRatioClass(aspectRatio))}>
+		<div className={cn("relative overflow-hidden rounded-xs", getAspectRatioClass(aspectRatio))}>
 			<Dialog>
 				<DialogTrigger asChild>
-					<div className={`cursor-pointer rounded-lg`}>
+					<div className={`cursor-pointer rounded-xs`}>
 						<img
 							src={SUPABASE_IMAGE_BUCKET_PATH + "/" + image.url}
 							alt={image.title || alt}
@@ -94,7 +94,7 @@ const ImageContainer: React.FC<{
 												src={SUPABASE_IMAGE_BUCKET_PATH + "/" + image.url}
 												alt={image.title || "Full size"}
 												className={cn(
-													"max-h-[90vh] max-w-[90vw] object-contain rounded-lg",
+													"max-h-[90vh] max-w-[90vw] object-contain rounded-xs",
 													classNameImage,
 												)}
 												onError={handleImgError}
@@ -153,12 +153,12 @@ const Thumb: React.FC<ThumbPropType> = (props) => {
 		>
 			<button
 				onClick={onClick}
-				className="relative w-full cursor-pointer touch-manipulation appearance-none overflow-hidden rounded-md border-0 bg-transparent p-0"
+				className="relative w-full cursor-pointer touch-manipulation appearance-none overflow-hidden rounded-xs border-0 bg-transparent p-0"
 				type="button"
 			>
 				<div
 					className={cn(
-						"relative w-full overflow-hidden rounded-lg bg-gray-100",
+						"relative w-full overflow-hidden rounded-xs bg-gray-100",
 						getAspectRatioClass("square"),
 					)}
 				>
@@ -167,7 +167,7 @@ const Thumb: React.FC<ThumbPropType> = (props) => {
 						alt={title || `Thumbnail ${index + 1}`}
 						width={400}
 						height={600}
-						className={cn("h-full w-full object-cover rounded-lg")}
+						className={cn("h-full w-full object-cover rounded-xs")}
 						onError={handleImgError}
 					/>
 				</div>
@@ -369,7 +369,7 @@ const ImageCarousel: React.FC<ImageCarousel_BasicProps> = memo(
 					)}
 					aria-label="Image carousel controls"
 				>
-					<div ref={emblaRef} className="overflow-hidden rounded-lg">
+					<div ref={emblaRef} className="overflow-hidden rounded-xs">
 						<div className="-ml-4 flex">
 							{images?.map((image, index) => (
 								<div

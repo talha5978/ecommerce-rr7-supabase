@@ -37,6 +37,14 @@ export const HeroSectionCreateSchema = z.object({
 			(file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
 			"Only JPEG, PNG, or WebP image formats are allowed.",
 		),
+
+	image_mobile: z
+		.instanceof(File, { message: "Image is required." })
+		.refine((file) => file.size <= MAX_IMAGE_SIZE, "Image must be less than 1MB.")
+		.refine(
+			(file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
+			"Only JPEG, PNG, or WebP image formats are allowed.",
+		),
 });
 
 export type HeroSectionCreateFormValues = z.input<typeof HeroSectionCreateSchema>;
@@ -47,6 +55,7 @@ export const HeroSectionCreateActionDataSchema = z.object({
 	url: z.string(),
 	status: z.string(),
 	image: z.instanceof(File),
+	image_mobile: z.instanceof(File),
 });
 
 export type HeroSectionCreateData = z.infer<typeof HeroSectionCreateActionDataSchema>;
@@ -88,12 +97,24 @@ export const HeroSectionUpdateSchema = z.object({
 			),
 		z.string().min(1, "Image path is required."),
 	]),
+
+	image_mobile: z.union([
+		z
+			.instanceof(File, { message: "Image is required." })
+			.refine((file) => file.size <= MAX_IMAGE_SIZE, "Image must be less than 1MB.")
+			.refine(
+				(file) => ALLOWED_IMAGE_FORMATS.includes(file.type),
+				"Only JPEG, PNG, or WebP image formats are allowed.",
+			),
+		z.string().min(1, "Image path is required."),
+	]),
 });
 
 export type HeroSectionUpdateFormValues = z.input<typeof HeroSectionUpdateSchema>;
 
 export const HeroSecUpdateActionDataSchema = z.object({
 	image: z.union([z.instanceof(File), z.string()]).optional(),
+	image_mobile: z.union([z.instanceof(File), z.string()]).optional(),
 	description: z.string().optional(),
 	sort_order: z.number().optional(),
 	url: z.string().optional(),

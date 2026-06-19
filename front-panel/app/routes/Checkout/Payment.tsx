@@ -75,7 +75,7 @@ function PaymentPage() {
 				<h1 className="text-2xl font-bold text-center mb-2">Complete Payment</h1>
 				<p className="text-center text-muted-foreground mb-8">Order ID: {order_id}</p>
 				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
-					<div className="p-4 rounded-md border border-muted-foreground/10">
+					<div className="p-4 rounded-xs border border-muted-foreground/10">
 						<Suspense fallback={<Skeleton className="w-full h-20" />}>
 							<PaymentElement />
 						</Suspense>

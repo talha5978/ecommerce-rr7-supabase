@@ -69,8 +69,13 @@ export const COLLECTION_IMG_DIMENSIONS = {
 };
 
 export const HERO_SECTION_DIMENSIONS = {
-	min: { width: 320, height: 180 },
-	max: { width: 1920, height: 1080 },
+	min: { width: 1920, height: 1080 },
+	max: { width: 4000, height: 4000 },
+};
+
+export const HERO_MOBILE_DIMENSIONS = {
+	min: { width: 1080, height: 1350 },
+	max: { width: 1400, height: 2000 },
 };
 
 export const REQUIRED_VARIANT_ATTRIBS = ["color", "size"];

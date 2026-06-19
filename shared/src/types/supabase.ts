@@ -367,6 +367,7 @@ export type Database = {
 					description: string;
 					id: number;
 					image: string;
+					image_mobile: string | null;
 					sort_order: number;
 					status: boolean;
 					url: string;
@@ -376,6 +377,7 @@ export type Database = {
 					description: string;
 					id?: number;
 					image: string;
+					image_mobile?: string | null;
 					sort_order?: number;
 					status?: boolean;
 					url: string;
@@ -385,6 +387,7 @@ export type Database = {
 					description?: string;
 					id?: number;
 					image?: string;
+					image_mobile?: string | null;
 					sort_order?: number;
 					status?: boolean;
 					url?: string;

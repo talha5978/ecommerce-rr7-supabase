@@ -31,6 +31,8 @@ import { addToCart } from "~/utils/manageCart";
 import type { CartItem } from "~/types/cart";
 import { addToFavourites } from "~/utils/manageFavourites";
 import CartSheet from "~/components/Cart/CartSheet";
+import { MetaDetails } from "~/components/SEO/MetaDetails";
+import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const product_id = params.productId;
@@ -188,6 +190,14 @@ export default function ProductDetailsPage() {
 
 	return (
 		<>
+			<MetaDetails
+				metaTitle={data?.product.meta_title + " | Voguewalk"}
+				metaKeywords={data?.product.meta_keywords || undefined}
+				metaDescription={data?.product.meta_description}
+				canonicalUrl={`${process.env.VITE_MAIN_APP_URL}/product/${data?.product.id}/${data?.product.url_key}`}
+				ogUrl={`${process.env.VITE_MAIN_APP_URL}/product/${data?.product.id}/${data?.product.url_key}`}
+				ogImage={`${SUPABASE_IMAGE_BUCKET_PATH}/${data?.product.cover_image}`}
+			/>
 			<CartSheet open={cartSheetOpen} setOpen={setCartSheetOpen} />
 			<section className="max-container py-6 flex flex-col gap-3">
 				<Breadcrumbs
@@ -199,10 +209,7 @@ export default function ProductDetailsPage() {
 				/>
 				<div className="flex md:flex-row flex-col gap-6 w-full">
 					<div className="flex-1 flex gap-10 flex-col">
-						<div className="min-[1000px]:inline hidden">
-							<ProductImageCarousel images={carouselImages} />
-						</div>
-						<div className="inline min-[1000px]:hidden">
+						<div className="inline">
 							<ProductImageCarousel images={carouselImages} thumbPosition="bottom" />
 						</div>
 					</div>
@@ -352,50 +359,37 @@ const ProductAttributesSection = memo(
 	({ product_attributes }: { product_attributes: ProductAttribute[] }) => {
 		const productAttribsToShow = getProductAttributesToShow(product_attributes);
 
+		if (!productAttribsToShow || Object.keys(productAttribsToShow).length === 0) {
+			return null;
+		}
+
 		return (
-			<div className="mt-4 flex flex-col gap-2">
-				<h2 className="font-semibold text-lg">Product Details</h2>
-				<div className="border-1 rounded-sm border-primary">
-					<div className="flex *:flex-1 items-center *:bg-accent">
-						<div className="product-details-table-entry">Attribute(s)</div>
-						<div className="product-details-table-entry">Value(s)</div>
-					</div>
-					<div className="flex *:flex-1 items-center">
-						{productAttribsToShow["material"] && (
-							<>
-								<p className="product-details-table-entry">Material</p>
-								{productAttribsToShow["material"]?.map((attribute: ProductAttribute) => (
-									<p key={attribute.id} className="product-details-table-entry">
-										{attribute.name}
-									</p>
+			<div className="mt-8">
+				<h2 className="font-semibold text-xl mb-4">Product Details</h2>
+
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+					{Object.entries(productAttribsToShow).map(([type, attributes]) => (
+						<div
+							key={type}
+							className="bg-card border border-border rounded-sm p-5 hover:shadow-sm transition-shadow"
+						>
+							<div className="uppercase text-xs tracking-widest text-muted-foreground mb-3">
+								{type}
+							</div>
+
+							<div className="flex flex-wrap gap-2">
+								{attributes.map((attr: ProductAttribute) => (
+									<Badge
+										key={attr.id}
+										variant="secondary"
+										className="text-sm py-1.5 px-4 font-medium"
+									>
+										{attr.name}
+									</Badge>
 								))}
-							</>
-						)}
-					</div>
-					<div className="flex *:flex-1 items-center">
-						{productAttribsToShow["style"] && (
-							<>
-								<p className="product-details-table-entry">Style</p>
-								{productAttribsToShow["style"]?.map((attribute: ProductAttribute) => (
-									<p key={attribute.id} className="product-details-table-entry">
-										{attribute.name}
-									</p>
-								))}
-							</>
-						)}
-					</div>
-					<div className="flex *:flex-1 items-center">
-						{productAttribsToShow["brand"] && (
-							<>
-								<p className="product-details-table-entry">Brand</p>
-								{productAttribsToShow["brand"]?.map((attribute: ProductAttribute) => (
-									<p key={attribute.id} className="product-details-table-entry">
-										{attribute.name}
-									</p>
-								))}
-							</>
-						)}
-					</div>
+							</div>
+						</div>
+					))}
 				</div>
 			</div>
 		);

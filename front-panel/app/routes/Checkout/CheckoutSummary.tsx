@@ -614,7 +614,7 @@ export default function CheckoutPage() {
 																item.image_url
 															}
 															alt={item.product_name}
-															className="w-20 h-24 object-cover rounded-lg mr-4"
+															className="w-20 h-24 object-cover rounded-xs mr-4"
 															loading="lazy"
 														/>
 														{item.applied_coupon_code &&

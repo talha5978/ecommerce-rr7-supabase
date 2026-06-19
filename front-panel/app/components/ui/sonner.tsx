@@ -2,12 +2,17 @@ import { useTheme } from "next-themes";
 import { Toaster as Sonner, ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-	const { theme = "system" } = useTheme();
+	const { theme = "light" } = useTheme();
 
 	return (
 		<Sonner
 			theme={theme as ToasterProps["theme"]}
 			className="toaster group"
+			toastOptions={{
+				classNames: {
+					toast: "!rounded-xs",
+				},
+			}}
 			style={
 				{
 					"--normal-bg": "var(--popover)",
@@ -16,12 +21,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
 					cursor: "pointer",
 				} as React.CSSProperties
 			}
-			closeButton={true}
-			position="top-right"
+			closeButton={false}
+			position="top-center"
 			richColors
-			duration={2850}
-			swipeDirections={["right"]}
-			visibleToasts={3}
+			duration={3000}
+			swipeDirections={["top"]}
+			visibleToasts={4}
 			{...props}
 		/>
 	);

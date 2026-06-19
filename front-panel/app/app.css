@@ -21,7 +21,7 @@
 	--muted: oklch(0.967 0.0029 264.5419);
 	--muted-foreground: oklch(0.551 0.0234 264.3637);
 	--table-row-muted-button: oklch(0.95 0 0);
-	--accent: oklch(0.9299 0.0334 272.7879);
+	--accent: #e0e7ff;
 	--accent-foreground: oklch(0.3729 0.0306 259.7328);
 	--success: oklch(0.627 0.194 149.214);
 	--warning: oklch(0.681 0.162 75.834);
@@ -252,4 +252,28 @@ input::-webkit-inner-spin-button {
 
 .product-details-table-entry {
 	@apply w-1/2 px-3 py-3 border;
+}
+
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+.carousel {
+	--slides-spacing: 0;
+}
+
+.hero-slide {
+	@apply relative w-full overflow-hidden;
+}
+
+.hero-slide img {
+	transition: transform 1000ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-slide:hover img {
+	transform: scale(1.04);
 }

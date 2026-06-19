@@ -27,5 +27,5 @@ export const TopLoadingBar = () => {
 		}
 	}, [navigation.state, navigation.location, isLoadingBarStarted]);
 
-	return <LoadingBar color="var(--color-primary)" ref={loadingBarRef} />;
+	return <LoadingBar color="var(--color-primary)" height={5} ref={loadingBarRef} />;
 };

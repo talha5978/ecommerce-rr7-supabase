@@ -3,7 +3,7 @@ import { type ApiError } from "@ecom/shared/utils/ApiError";
 
 type PureThing = Database["public"]["Tables"]["hero_sections"]["Row"];
 
-export type HighLevelHeroSection = Omit<PureThing, "image">;
+export type HighLevelHeroSection = Omit<PureThing, "image", "image_mobile">;
 
 export type GetHighLvlHeroSections = {
 	hero_sections: HighLevelHeroSection[];
@@ -21,6 +21,7 @@ export type HeroSectionUpdationPayload = Database["public"]["Tables"]["hero_sect
 export type HomeHeroSection = {
 	id: number;
 	image: string;
+	image_mobile: string | null;
 	url: string;
 };
 

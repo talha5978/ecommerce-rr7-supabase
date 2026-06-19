@@ -56,6 +56,7 @@ export default defineConfig(({ mode }) => {
 			),
 			"process.env.VITE_STRIPE_PUBLISHABLE_KEY": JSON.stringify(env.VITE_STRIPE_PUBLISHABLE_KEY),
 			"process.env.VITE_STRIPE_SECRET_KEY": JSON.stringify(env.VITE_STRIPE_SECRET_KEY),
+			"process.env.VITE_MAIN_APP_URL": JSON.stringify(env.VITE_MAIN_APP_URL),
 		},
 		build: {
 			minify: "esbuild",

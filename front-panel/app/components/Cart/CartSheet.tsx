@@ -1,4 +1,4 @@
-import { Link, useNavigate, useRouteLoaderData } from "react-router";
+import { Link, useRouteLoaderData } from "react-router";
 import {
 	Sheet,
 	SheetContent,
@@ -27,8 +27,6 @@ import { ShoppingBag, Trash2 } from "lucide-react";
 import QuantityInput from "~/components/Custom-Inputs/quantity-input-basic";
 
 export default function CartSheet({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
-	const navigate = useNavigate();
-
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
 	const coupons = filterCoupons(rootLoaderData?.coupons ?? []);
 
@@ -105,7 +103,7 @@ export default function CartSheet({ open, setOpen }: { open: boolean; setOpen: (
 											<img
 												src={SUPABASE_IMAGE_BUCKET_PATH + "/" + item.image_url}
 												alt={item.product_name}
-												className="w-20 h-24 object-cover rounded-lg mr-4"
+												className="w-20 h-24 object-cover rounded-xs mr-4"
 												loading="lazy"
 											/>
 											<div className="flex-1 min-w-0">

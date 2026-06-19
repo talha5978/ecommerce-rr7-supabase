@@ -168,7 +168,7 @@ const AddressPicker = ({ value, onChange }: AddressPickerProps) => {
 					)}
 				/>
 				{showSuggestions && suggestions.length > 0 && (
-					<ul className="absolute z-[1000] w-full bg-secondary rounded-md shadow-lg max-h-60 overflow-y-auto">
+					<ul className="absolute z-[1000] w-full bg-secondary rounded-xs shadow-lg max-h-60 overflow-y-auto">
 						{suggestions.map((result, index) => (
 							<li
 								key={index}

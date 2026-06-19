@@ -77,13 +77,11 @@ const QuantityInput = ({
 	};
 
 	return (
-		<div
-			className={cn("inline-flex w-fit cursor-pointer rounded-lg shadow-xs shadow-black/5", className)}
-		>
+		<div className={cn("inline-flex w-fit cursor-pointer rounded-xs", className)}>
 			<button
 				type="button"
 				className={cn(
-					"hover:bg-muted-foreground/10 flex cursor-pointer items-center justify-center rounded-s-lg border px-3 py-1 focus-visible:z-10 disabled:cursor-not-allowed disabled:opacity-50",
+					"hover:bg-muted-foreground/10 flex cursor-pointer items-center justify-center rounded-s-xs border px-3 py-1 focus-visible:z-10 disabled:cursor-not-allowed disabled:opacity-50",
 					disabled && "pointer-events-none",
 				)}
 				onClick={handleDecrease}
@@ -108,7 +106,7 @@ const QuantityInput = ({
 			<button
 				type="button"
 				className={cn(
-					"hover:bg-muted-foreground/10 flex cursor-pointer items-center justify-center rounded-e-lg border px-3 py-1 focus-visible:z-10 disabled:cursor-not-allowed disabled:opacity-50",
+					"hover:bg-muted-foreground/10 flex cursor-pointer items-center justify-center rounded-e-xs border px-3 py-1 focus-visible:z-10 disabled:cursor-not-allowed disabled:opacity-50",
 					disabled && "pointer-events-none",
 				)}
 				onClick={handleIncrease}

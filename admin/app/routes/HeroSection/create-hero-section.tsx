@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ApiError } from "@ecom/shared/utils/ApiError";
 import type { ActionResponse } from "@ecom/shared/types/action-data";
-import { HERO_SECTION_DIMENSIONS } from "@ecom/shared/constants/constants";
+import { HERO_MOBILE_DIMENSIONS, HERO_SECTION_DIMENSIONS } from "@ecom/shared/constants/constants";
 import {
 	HeroSectionCreateActionDataSchema,
 	type HeroSectionCreateFormValues,
@@ -36,6 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		status: formData.get("status") as string,
 		url: formData.get("url") as string,
 		image: formData.get("image") as File,
+		image_mobile: formData.get("image_mobile") as File,
 	};
 
 	const parseResult = HeroSectionCreateActionDataSchema.safeParse(data);
@@ -84,6 +85,7 @@ export default function HeroSectionCreatePage() {
 		mode: "onSubmit",
 		defaultValues: {
 			image: undefined,
+			image_mobile: undefined,
 			description: "",
 			sort_order: "1",
 			url: "",
@@ -103,6 +105,7 @@ export default function HeroSectionCreatePage() {
 		formData.set("sort_order", values.sort_order ?? "0");
 		formData.set("url", values.url.trim().toLowerCase());
 		formData.set("image", values.image);
+		formData.set("image_mobile", values.image_mobile);
 
 		submit(formData, { method: "POST", encType: "multipart/form-data" });
 	}
@@ -159,24 +162,42 @@ export default function HeroSectionCreatePage() {
 									)}
 								/>
 
-								{/* Image Upload */}
-								<FormField
-									control={control}
-									name="image"
-									render={() => (
-										<FormItem>
-											<FormLabel>Image</FormLabel>
-											<FormControl>
-												<ImageInput
-													name="image"
-													dimensions={HERO_SECTION_DIMENSIONS}
-													className="aspect-[16/9] max-w-[400px]"
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+								<div className="flex gap-4">
+									<FormField
+										control={control}
+										name="image"
+										render={() => (
+											<FormItem>
+												<FormLabel>Image</FormLabel>
+												<FormControl>
+													<ImageInput
+														name="image"
+														dimensions={HERO_SECTION_DIMENSIONS}
+														className="aspect-[16/9] max-w-[400px]"
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={control}
+										name="image_mobile"
+										render={() => (
+											<FormItem>
+												<FormLabel>Mobile Image</FormLabel>
+												<FormControl>
+													<ImageInput
+														name="image_mobile"
+														dimensions={HERO_MOBILE_DIMENSIONS}
+														className="aspect-[16/9] max-w-[400px]"
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
 
 								{/* Sort Order */}
 								<FormField
