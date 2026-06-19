@@ -12,7 +12,6 @@
 		"jsx": "react-jsx",
 		"isolatedModules": false,
 		"skipLibCheck": true,
-		"baseUrl": ".",
 		"paths": {
 			"@ecom/shared/*": ["./src/*"],
 			"~/*": ["./src/*"]
