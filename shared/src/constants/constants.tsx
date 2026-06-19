@@ -60,12 +60,12 @@ export const getSimpleImgFormats = () => {
 
 export const PRODUCT_IMG_DIMENSIONS = {
 	min: { width: 500, height: 600 },
-	max: { width: 1200, height: 1200 },
+	max: { width: 2000, height: 2000 },
 };
 
 export const COLLECTION_IMG_DIMENSIONS = {
 	min: { width: 600, height: 400 },
-	max: { width: 1600, height: 1200 },
+	max: { width: 2000, height: 2000 },
 };
 
 export const HERO_SECTION_DIMENSIONS = {
