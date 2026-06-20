@@ -30,6 +30,12 @@ export const get_FP_featuredProducts = ({ request }: featuredProductsQueryArgs) 
 		queryFn: async () => {
 			const prodSvc = new FP_ProductsService(request);
 			const result = await prodSvc.getFeaturedProducts();
+			result.products?.map((product) => {
+				if (product.available_sizes != null && product.available_sizes.length > 0) {
+					product.available_sizes = sortProductSizes(product.available_sizes);
+				}
+			});
+
 			return result;
 		},
 	});
