@@ -5,7 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { BadgeQuestionMark } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { type LoaderFunctionArgs, useLoaderData, useRouteLoaderData, useSearchParams } from "react-router";
+import {
+	type LoaderFunctionArgs,
+	useLoaderData,
+	useNavigate,
+	useRouteLoaderData,
+	useSearchParams,
+} from "react-router";
 import z from "zod";
 import FeaturedProductCard from "~/components/Products/FeaturedProduct";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
@@ -17,6 +23,8 @@ import { get_FP_searchProducts, get_FP_searchProductsFilters } from "~/queries/p
 import { filterCoupons } from "~/utils/product-details-helpers";
 import type { loader as rootLoader } from "~/root";
 
+const PAGE_SIZE = 24;
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const searchParams = new URL(request.url).searchParams;
 	const p_max = searchParams.get("p_max");
@@ -26,6 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const material = searchParams.get("material")?.split(",") ?? [];
 	const style = searchParams.get("style")?.split(",") ?? [];
 	const categories = searchParams.get("categories")?.split(",") ?? [];
+	const page = Number(searchParams.get("page") ?? "1");
 
 	const productsResp = await queryClient.fetchQuery(
 		get_FP_searchProducts({
@@ -39,6 +48,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				style,
 				categories,
 			},
+			pageIndex: page - 1,
+			pageSize: PAGE_SIZE,
 		}),
 	);
 
@@ -81,6 +92,8 @@ export default function SearchPage() {
 
 	const [searchParams, setSearchParams] = useSearchParams();
 
+	const navigate = useNavigate();
+
 	const urlFilters = {
 		categories: searchParams.get("categories")?.split(",").filter(Boolean) ?? [],
 		colors: searchParams.get("colors")?.split(",").filter(Boolean) ?? [],
@@ -102,25 +115,54 @@ export default function SearchPage() {
 	const watched = useWatch({ control });
 
 	useEffect(() => {
-		const newParams = new URLSearchParams();
+		const newParams = new URLSearchParams(searchParams);
+		let hasFilterChange = false;
 
 		(["categories", "colors", "sizes", "material", "style"] as const).forEach((key) => {
 			const value = watched[key];
+			const currentValue = searchParams.get(key);
+
 			if (value?.length) {
-				newParams.set(key, value.join(","));
+				const newValue = value.join(",");
+				if (newValue !== currentValue) {
+					newParams.set(key, newValue);
+					hasFilterChange = true;
+				}
+			} else {
+				if (currentValue) {
+					newParams.delete(key);
+					hasFilterChange = true;
+				}
 			}
 		});
 
 		if (watched.price) {
 			const [min, max] = watched.price;
-			if (min > 0) newParams.set("p_min", String(min));
-			if (max < maxDefault) newParams.set("p_max", String(max));
+			const currentMin = searchParams.get("p_min");
+			const currentMax = searchParams.get("p_max");
+
+			if (min > 0) {
+				if (String(min) !== currentMin) hasFilterChange = true;
+				newParams.set("p_min", String(min));
+			} else {
+				if (currentMin) hasFilterChange = true;
+				newParams.delete("p_min");
+			}
+
+			if (max < maxDefault) {
+				if (String(max) !== currentMax) hasFilterChange = true;
+				newParams.set("p_max", String(max));
+			} else {
+				if (currentMax) hasFilterChange = true;
+				newParams.delete("p_max");
+			}
 		}
 
-		// Prevent unnecessary updates
-		const currentStr = searchParams.toString();
-		const nextStr = newParams.toString();
-		if (currentStr !== nextStr) {
+		if (hasFilterChange) {
+			newParams.set("page", "1");
+		}
+
+		if (newParams.toString() !== searchParams.toString()) {
 			setSearchParams(newParams, { replace: true });
 		}
 	}, [watched, searchParams, setSearchParams]);
@@ -142,6 +184,15 @@ export default function SearchPage() {
 			price: [0, maxDefault],
 		});
 	}
+
+	const currentPage = Number(searchParams.get("page") ?? "1");
+	const totalPages = Math.ceil((loaderData.productsResp.total || 0) / PAGE_SIZE);
+
+	const goToPage = (page: number) => {
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set("page", String(page));
+		setSearchParams(newParams, { replace: true });
+	};
 
 	return (
 		<>
@@ -427,6 +478,69 @@ export default function SearchPage() {
 							</div>
 						)}
 					</div>
+
+					{/* Pagination */}
+					{totalPages > 1 && (
+						<div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+							<Button
+								variant="outline"
+								disabled={currentPage === 1}
+								onClick={() => goToPage(currentPage - 1)}
+								className="min-w-[100px]"
+							>
+								Previous
+							</Button>
+
+							<div className="hidden sm:flex items-center gap-1">
+								{Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+									const showPage =
+										pageNum === 1 ||
+										pageNum === totalPages ||
+										Math.abs(pageNum - currentPage) <= 1 ||
+										totalPages <= 7;
+
+									if (showPage) {
+										return (
+											<Button
+												key={pageNum}
+												variant={pageNum === currentPage ? "default" : "outline"}
+												size="icon"
+												onClick={() => goToPage(pageNum)}
+												className="w-9 h-9"
+											>
+												{pageNum}
+											</Button>
+										);
+									}
+
+									if (
+										(pageNum === 2 && currentPage > 4) ||
+										(pageNum === totalPages - 1 && currentPage < totalPages - 3)
+									) {
+										return (
+											<span key={pageNum} className="px-3 text-muted-foreground">
+												...
+											</span>
+										);
+									}
+									return null;
+								})}
+							</div>
+
+							<div className="sm:hidden text-sm text-muted-foreground font-medium">
+								Page {currentPage} of {totalPages}
+							</div>
+
+							<Button
+								variant="outline"
+								disabled={currentPage === totalPages}
+								onClick={() => goToPage(currentPage + 1)}
+								className="min-w-[100px]"
+							>
+								Next
+							</Button>
+						</div>
+					)}
 				</section>
 			</div>
 		</>

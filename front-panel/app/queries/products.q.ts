@@ -68,7 +68,7 @@ export const get_FP_searchProducts = ({
 	pageSize = 20,
 }: searchProductsQueryArgs) => {
 	return queryOptions<FP_SearchProductsResponse>({
-		queryKey: ["fp_search_products", filters],
+		queryKey: ["fp_search_products", filters, pageIndex, pageSize],
 		queryFn: async () => {
 			const prodSvc = new FP_ProductsService(request);
 			const result = await prodSvc.getAllProducts(pageIndex, pageSize, filters);
