@@ -35,6 +35,7 @@ import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
 import RelatedProducts from "~/components/Products/RelatedProducts";
 import type { FP_SearchProductsResponse } from "@ecom/shared/types/products";
+import TrustBadges from "~/components/Products/TrustBadges";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const product_id = params.productId;
@@ -433,6 +434,8 @@ export default function ProductDetailsPage() {
 						<ProductAttributesSection product_attributes={data.product_attributes} />
 					</div>
 				</div>
+
+				<TrustBadges />
 
 				{relatedProducts != null &&
 					Array.isArray(relatedProducts.products) &&

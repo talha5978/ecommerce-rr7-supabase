@@ -277,3 +277,23 @@ input::-webkit-inner-spin-button {
 .hero-slide:hover img {
 	transform: scale(1.04);
 }
+
+.trust-badge {
+	@apply flex flex-col gap-3 items-center py-10;
+}
+
+.trust-badge > .icon-wrapper {
+	@apply w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center;
+}
+
+.trust-badge > .icon-wrapper > .trust-icon {
+	@apply w-8 h-8 text-primary;
+}
+
+.trust-badge .trust-heading {
+	@apply font-medium text-base mb-1;
+}
+
+.trust-badge .trust-sub-heading {
+	@apply text-sm text-muted-foreground;
+}
