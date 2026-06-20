@@ -175,7 +175,7 @@ export default function SearchPage() {
 				metaDescription="Discover exiciting offers, discounts, new arrivals for this season. Shop Now!"
 			/>
 			<div className="grid md:grid-cols-4 gap-2 max-container !h-full py-6">
-				<aside className="col-span-1 max-[920px]:hidden p-6 flex flex-col gap-4 [&>.fBx]:space-y-2 space-y-2 bg-card shadow-sm">
+				<aside className="col-span-1 max-[920px]:hidden p-6 flex flex-col gap-4 [&>.fBx]:space-y-2 space-y-2 bg-card shadow-sm h-fit">
 					<div className="flex items-center justify-between mb-4">
 						<h2 className="text-xl font-bold text-primary">Filters</h2>
 						<Button size={"sm"} variant={"link"} type="button" onClick={clearAllFilters}>

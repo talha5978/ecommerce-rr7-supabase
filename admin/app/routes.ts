@@ -12,10 +12,12 @@ export default [
 
 			...prefix(":categoryId", [
 				route("update", "./routes/Category/update-category.tsx"),
+				route("delete", "./routes/_actions/delete-category.ts"),
 				...prefix("sub-categories", [
 					index("./routes/SubCategory/sub-categories.tsx"),
 					route("create", "./routes/SubCategory/create-sub-category.tsx"),
 					route(":subCategoryId/update", "./routes/SubCategory/update-sub-category.tsx"),
+					route("delete", "./routes/_actions/delete-sub-category.ts"),
 				]),
 			]),
 		]),

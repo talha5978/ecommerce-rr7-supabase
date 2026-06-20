@@ -506,6 +506,28 @@ export class CategoryService extends Service {
 			await metaDetailsService.updateMetaDetails({ meta_details, metaDetailsId });
 		}
 	}
+
+	async deleteCategory(categoryId: string): Promise<{ success: boolean; message: string }> {
+		const resp = await this.supabase.rpc("delete_category", {
+			p_category_id: categoryId,
+		});
+
+		return {
+			success: resp.data![0].success,
+			message: resp.data![0].message,
+		};
+	}
+
+	async deleteSubCategory(subCatId: string): Promise<{ success: boolean; message: string }> {
+		const resp = await this.supabase.rpc("delete_sub_category", {
+			p_sub_category_id: subCatId,
+		});
+
+		return {
+			success: resp.data![0].success,
+			message: resp.data![0].message,
+		};
+	}
 }
 
 @UseClassMiddleware(loggerMiddleware)

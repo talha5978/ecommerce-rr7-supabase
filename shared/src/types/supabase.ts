@@ -6,31 +6,6 @@ export type Database = {
 	__InternalSupabase: {
 		PostgrestVersion: "12.2.3 (519615d)";
 	};
-	graphql_public: {
-		Tables: {
-			[_ in never]: never;
-		};
-		Views: {
-			[_ in never]: never;
-		};
-		Functions: {
-			graphql: {
-				Args: {
-					extensions?: Json;
-					operationName?: string;
-					query?: string;
-					variables?: Json;
-				};
-				Returns: Json;
-			};
-		};
-		Enums: {
-			[_ in never]: never;
-		};
-		CompositeTypes: {
-			[_ in never]: never;
-		};
-	};
 	public: {
 		Tables: {
 			addresses: {
@@ -1018,6 +993,20 @@ export type Database = {
 				};
 				Returns: string;
 			};
+			delete_category: {
+				Args: { p_category_id: string };
+				Returns: {
+					message: string;
+					success: boolean;
+				}[];
+			};
+			delete_sub_category: {
+				Args: { p_sub_category_id: string };
+				Returns: {
+					message: string;
+					success: boolean;
+				}[];
+			};
 			get_high_level_collections: {
 				Args: {
 					p_page?: number;
@@ -1199,9 +1188,6 @@ export type CompositeTypes<
 		: never;
 
 export const Constants = {
-	graphql_public: {
-		Enums: {},
-	},
 	public: {
 		Enums: {
 			address_type_enum: ["shipping", "billing", "both"],

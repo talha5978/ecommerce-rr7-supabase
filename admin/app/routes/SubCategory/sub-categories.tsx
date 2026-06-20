@@ -1,8 +1,16 @@
 import type { HighLevelSubCategory } from "@ecom/shared/types/category";
 import { GetFormattedDate } from "@ecom/shared/lib/utils";
 import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { MoreHorizontal, PlusCircle, Search, TriangleAlert } from "lucide-react";
-import { Form, Link, LoaderFunctionArgs, useLocation, useNavigation, useSearchParams } from "react-router";
+import { Loader2, MoreHorizontal, PlusCircle, Search, TriangleAlert } from "lucide-react";
+import {
+	Form,
+	Link,
+	LoaderFunctionArgs,
+	useFetcher,
+	useLocation,
+	useNavigation,
+	useSearchParams,
+} from "react-router";
 import BackButton from "~/components/Nav/BackButton";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import {
@@ -27,6 +35,8 @@ import { Route } from "./+types/sub-categories";
 import { defaults } from "@ecom/shared/constants/constants";
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { Breadcrumbs } from "~/components/SEO/BreadCrumbs";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const categoryId = (params.categoryId as string) || "";
@@ -68,6 +78,28 @@ export default function SubCategoriesPage({
 
 	const isFetchingThisRoute =
 		navigation.state === "loading" && navigation.location?.pathname === location.pathname;
+
+	const fetcher = useFetcher();
+
+	// Handle fetcher state for toasts and query invalidation
+	useEffect(() => {
+		if (fetcher.data) {
+			if (fetcher.data.success) {
+				toast.success(fetcher.data.message || "Sub category deleted successfully");
+			} else if (fetcher.data.error) {
+				toast.error(fetcher.data.error);
+			}
+		}
+	}, [fetcher.data, queryClient]);
+
+	const handleDeleteClick = (subCategoryId: string) => {
+		const formData = new FormData();
+		formData.append("subCategoryId", subCategoryId);
+		fetcher.submit(formData, {
+			method: "POST",
+			action: `/categories/${categoryId}/sub-categories/delete`,
+		});
+	};
 
 	const tableColumns: ColumnDef<HighLevelSubCategory, unknown>[] = [
 		{
@@ -137,11 +169,13 @@ export default function SubCategoriesPage({
 									<DropdownMenuItem>Update</DropdownMenuItem>
 								</Link>
 								<DropdownMenuItem
+									disabled={fetcher.state === "submitting"}
 									variant="destructive"
-									// onClick={() =>
-									// 	handleDetailsClick(rowData)
-									// }
+									onClick={() => handleDeleteClick(rowData.id)}
 								>
+									{fetcher.state === "submitting" ? (
+										<Loader2 className="animate-spin" color="white" />
+									) : null}
 									Delete
 								</DropdownMenuItem>
 							</DropdownMenuContent>

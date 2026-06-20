@@ -80,7 +80,6 @@ export default function CategoriesPage({
 		if (fetcher.data) {
 			if (fetcher.data.success) {
 				toast.success("Category deleted successfully");
-				queryClient.invalidateQueries({ queryKey: ["categories"] });
 			} else if (fetcher.data.error) {
 				toast.error(fetcher.data.error);
 			}

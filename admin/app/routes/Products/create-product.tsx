@@ -92,6 +92,7 @@ export const action = protectAction<ActionReturn>({
 		await queryClient.invalidateQueries({ queryKey: ["fp_featured_products"] });
 		await queryClient.invalidateQueries({ queryKey: ["productNames"] });
 		await queryClient.invalidateQueries({ queryKey: ["collectionDataItems"] });
+		queryClient.invalidateQueries({ queryKey: ["subCategories"] });
 
 		return { success: true };
 	} catch (error: any) {
