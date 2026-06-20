@@ -1,5 +1,5 @@
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
-import { AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
+import type { AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BadgeQuestionMark } from "lucide-react";
 import { useEffect } from "react";
@@ -13,6 +13,30 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { get_FP_searchProducts, get_FP_searchProductsFilters } from "~/queries/products.q";
+
+const SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+function sortSizes(attributes: ProductAttribute[]) {
+	return [...attributes].sort((a, b) => {
+		const aValue = a.value.trim().toUpperCase();
+		const bValue = b.value.trim().toUpperCase();
+
+		const aIndex = SIZE_ORDER.indexOf(aValue);
+		const bIndex = SIZE_ORDER.indexOf(bValue);
+
+		const aIsAlpha = aIndex !== -1;
+		const bIsAlpha = bIndex !== -1;
+
+		if (aIsAlpha && bIsAlpha) {
+			return aIndex - bIndex;
+		}
+
+		if (aIsAlpha) return -1;
+		if (bIsAlpha) return 1;
+
+		return Number(aValue) - Number(bValue);
+	});
+}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const searchParams = new URL(request.url).searchParams;
@@ -40,6 +64,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	const filtersData = await queryClient.fetchQuery(get_FP_searchProductsFilters({ request }));
+
+	if (sizes && filtersData.data?.attributes != null && "size" in filtersData.data.attributes) {
+		const filterSizes = filtersData.data?.attributes?.["size"] || [];
+		if (filterSizes) {
+			filtersData.data.attributes["size"] = sortSizes(filterSizes as ProductAttribute[]);
+		}
+	}
 
 	return {
 		productsResp,
