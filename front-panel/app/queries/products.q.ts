@@ -22,6 +22,8 @@ interface productDetailsQueryArgs {
 interface searchProductsQueryArgs {
 	request: Request;
 	filters: FP_Search_Filters;
+	pageIndex?: number;
+	pageSize?: number;
 }
 
 export const get_FP_featuredProducts = ({ request }: featuredProductsQueryArgs) => {
@@ -59,12 +61,17 @@ export const get_FP_searchProductsFilters = ({ request }: featuredProductsQueryA
 	});
 };
 
-export const get_FP_searchProducts = ({ request, filters }: searchProductsQueryArgs) => {
+export const get_FP_searchProducts = ({
+	request,
+	filters,
+	pageIndex = 0,
+	pageSize = 20,
+}: searchProductsQueryArgs) => {
 	return queryOptions<FP_SearchProductsResponse>({
 		queryKey: ["fp_search_products", filters],
 		queryFn: async () => {
 			const prodSvc = new FP_ProductsService(request);
-			const result = await prodSvc.getAllProducts(0, 20, filters);
+			const result = await prodSvc.getAllProducts(pageIndex, pageSize, filters);
 			result.products?.map((product) => {
 				if (product.available_sizes != null && product.available_sizes.length > 0) {
 					product.available_sizes = sortProductSizes(product.available_sizes);

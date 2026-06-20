@@ -84,6 +84,7 @@ export type CollectionsNamesListResponse = {
 
 // Front panel collections
 export type FP_HomeCollection = {
+	name: string;
 	description: string;
 	id: string;
 	image_url: string;

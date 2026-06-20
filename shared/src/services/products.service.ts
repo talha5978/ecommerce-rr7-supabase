@@ -685,7 +685,6 @@ export class FP_ProductsService extends Service {
 	}
 
 	/** Fetch products with FILTERS for search page */
-
 	async getAllProducts(
 		pageIndex = 0,
 		pageSize = defaults.DEFAULT_FP_PRODUCTS_PAGE_SIZE,

@@ -76,7 +76,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 					<img
 						src={SUPABASE_IMAGE_BUCKET_PATH + product.cover_image}
 						alt={product.name}
-						className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+						className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 bg-white"
 					/>
 
 					{hasDiscount && applicableCoupon && (
@@ -90,10 +90,10 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 					<AnimatePresence>
 						{isHovered && (
 							<motion.div
-								className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 px-3 pb-3 pt-10"
+								className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 px-3 pb-3 pt-5"
 								style={{
 									background:
-										"linear-gradient(to top, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.28) 65%, transparent 100%)",
+										"linear-gradient(to top, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.28) 35%, transparent 100%)",
 								}}
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}

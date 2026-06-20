@@ -1,12 +1,12 @@
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
-import { CircleCheck, Copy, Heart } from "lucide-react";
+import { ChevronRight, CircleCheck, Copy, Heart } from "lucide-react";
 import { type LoaderFunctionArgs, useLoaderData, useNavigate, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
 import ProductImageCarousel from "~/components/Products/ProductImagesCarousel";
 import { Breadcrumbs } from "~/components/SEO/Breadcrumbs";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
-import { getProductDetails } from "~/queries/products.q";
+import { get_FP_searchProducts, getProductDetails } from "~/queries/products.q";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { memo, useEffect, useMemo, useState } from "react";
 import QuantityInputBasic from "~/components/Custom-Inputs/quantity-input-basic";
@@ -33,6 +33,8 @@ import { addToFavourites } from "~/utils/manageFavourites";
 import CartSheet from "~/components/Cart/CartSheet";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
 import { SUPABASE_IMAGE_BUCKET_PATH } from "@ecom/shared/constants/constants";
+import RelatedProducts from "~/components/Products/RelatedProducts";
+import type { FP_SearchProductsResponse } from "@ecom/shared/types/products";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const product_id = params.productId;
@@ -41,8 +43,41 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			status: 400,
 		});
 	}
+
 	const data = await queryClient.fetchQuery(getProductDetails({ request, product_id: String(product_id) }));
-	return { data: data.product, error: data.error };
+
+	let relatedProducts: FP_SearchProductsResponse | null = null;
+
+	if (data.product?.product.category_id) {
+		relatedProducts = await queryClient.fetchQuery(
+			get_FP_searchProducts({
+				request,
+				filters: {
+					categories: [data.product?.product.category_id],
+					colors: [],
+					material: [],
+					p_max: null,
+					p_min: null,
+					sizes: [],
+					style: [],
+				},
+			}),
+		);
+	}
+
+	return { data: data.product, error: data.error, relatedProducts };
+};
+
+const formatCurrency = (value: number | string | undefined) => {
+	if (value == null || value === "") return "N/A";
+	const num = typeof value === "number" ? value : Number(value);
+	if (Number.isNaN(num)) return String(value);
+	return new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: "PKR",
+		maximumFractionDigits: 2,
+		useGrouping: true,
+	}).format(num);
 };
 
 type FormValues = {
@@ -53,7 +88,7 @@ type FormValues = {
 };
 
 export default function ProductDetailsPage() {
-	const { data, error } = useLoaderData<typeof loader>();
+	const { data, error, relatedProducts } = useLoaderData<typeof loader>();
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
 	const allCoupons: FullCoupon[] = filterCoupons(rootLoaderData?.coupons ?? []);
 	const current_user = rootLoaderData?.user;
@@ -223,30 +258,51 @@ export default function ProductDetailsPage() {
 								<Heart className="w-4 h-4 hover:text-destructive hover:fill-destructive transition-colors duration-200 ease-in-out cursor-pointer" />
 							</div>
 						</div>
-						<div className="flex gap-2 items-center">
-							{selectedVariant && (
-								<Badge
-									variant="outline"
-									className="w-fit hover:bg-accent transition-colors duration-150 ease-in-out cursor-pointer hover:underline underline-offset-2"
-									onClick={() => {
-										navigator.clipboard.writeText(selectedVariant.sku);
-										toast.success(`SKU ${selectedVariant.sku} Copied`);
-									}}
-								>
-									<Copy strokeWidth={1.65} width={13} />
-									{selectedVariant.sku}
+						<div className="flex justify-baseline gap-4 flex-wrap">
+							<div className="flex gap-2 items-center">
+								{selectedVariant && (
+									<Badge
+										variant="outline"
+										className="w-fit hover:bg-accent transition-colors duration-150 ease-in-out cursor-pointer hover:underline underline-offset-2"
+										onClick={() => {
+											navigator.clipboard.writeText(selectedVariant.sku);
+											toast.success(`SKU ${selectedVariant.sku} Copied`);
+										}}
+									>
+										<Copy strokeWidth={1.65} width={13} />
+										{selectedVariant.sku}
+									</Badge>
+								)}
+							</div>
+							<div className="flex gap-1 items-center flex-wrap">
+								<Badge variant="secondary" className="text-xs">
+									{data.product.category_name}
 								</Badge>
-							)}
+								<span className="text-muted-foreground text-xs">
+									<ChevronRight className="w-3 h-3" />
+								</span>
+								<Badge variant="secondary" className="text-xs">
+									{data.product.sub_category_name}
+								</Badge>
+								{data.product.free_shipping && (
+									<Badge
+										variant="outline"
+										className="ml-2 text-xs text-success border-success/40"
+									>
+										Free shipping
+									</Badge>
+								)}
+							</div>
 						</div>
 						<p className="text-muted-foreground">{data?.product.description}</p>
 						<div className="flex items-center gap-2">
 							<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-								<span className="text-2xl font-bold">PKR {finalPrice.toFixed(2)}</span>
+								<span className="text-2xl font-bold">{formatCurrency(finalPrice)}</span>
 							</motion.span>
 							{effectiveCoupon && finalPrice < (selectedVariant?.original_price ?? 0) && (
 								<motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 									<del className="text-destructive">
-										PKR {(selectedVariant?.original_price ?? 0).toFixed(2)}
+										{formatCurrency(selectedVariant?.original_price ?? 0)}
 									</del>
 								</motion.span>
 							)}
@@ -347,9 +403,42 @@ export default function ProductDetailsPage() {
 								</div>
 							</div>
 						</form>
+						{data.collections.length > 0 && (
+							<motion.div
+								className="flex flex-col gap-1.5 mt-4"
+								initial={{ opacity: 0, y: 10 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ delay: 0.2 }}
+							>
+								<Label className="text-muted-foreground text-xs">Part of</Label>
+								<div className="flex flex-wrap gap-2">
+									{data.collections.map((col, index) => (
+										<motion.div
+											key={col.id}
+											initial={{ opacity: 0, scale: 0.9 }}
+											animate={{ opacity: 1, scale: 1 }}
+											transition={{ delay: 0.05 * index }}
+										>
+											<Badge
+												variant="outline"
+												className="text-xs cursor-pointer hover:bg-accent"
+											>
+												{col.name}
+											</Badge>
+										</motion.div>
+									))}
+								</div>
+							</motion.div>
+						)}
 						<ProductAttributesSection product_attributes={data.product_attributes} />
 					</div>
 				</div>
+
+				{relatedProducts != null &&
+					Array.isArray(relatedProducts.products) &&
+					relatedProducts.products?.length > 0 && (
+						<RelatedProducts products={relatedProducts.products} />
+					)}
 			</section>
 		</>
 	);
@@ -364,7 +453,7 @@ const ProductAttributesSection = memo(
 		}
 
 		return (
-			<div className="mt-8">
+			<div className="mt-4">
 				<h2 className="font-semibold text-xl mb-4">Product Details</h2>
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

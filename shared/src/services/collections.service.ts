@@ -488,7 +488,7 @@ export class FP_CollectionsService extends Service {
 		try {
 			const { data, error: queryError } = await this.supabase
 				.from(this.COLLECTION_TABLE)
-				.select(`description, id, image_url, ${this.META_DETAILS_TABLE}(url_key)`)
+				.select(`name, description, id, image_url, ${this.META_DETAILS_TABLE}(url_key)`)
 				.eq("status", true)
 				.order("sort_order", { ascending: true });
 
@@ -502,6 +502,7 @@ export class FP_CollectionsService extends Service {
 					data?.map((item) => {
 						return {
 							id: item.id,
+							name: item.name,
 							description: item.description,
 							image_url: item.image_url,
 							url: item.meta_details.url_key,

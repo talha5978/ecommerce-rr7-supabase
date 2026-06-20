@@ -492,13 +492,13 @@ export default function UpdateCollectionPage({
 									<CardTitle className="text-lg">General</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-4">
-									{/* Product Name */}
+									{/* Collection Name */}
 									<FormField
 										control={control}
 										name="name"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>Product Name</FormLabel>
+												<FormLabel>Collection Name</FormLabel>
 												<FormControl>
 													<Input placeholder="e.g. New Arrivals" {...field} />
 												</FormControl>
