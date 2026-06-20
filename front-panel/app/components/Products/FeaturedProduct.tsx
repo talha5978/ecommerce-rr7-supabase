@@ -12,6 +12,17 @@ interface FeaturedProductCardProps {
 	product: FP_Featured_Product;
 }
 
+const formatCurrency = (value: number | string | undefined) => {
+	if (value == null || value === "") return "N/A";
+	const num = typeof value === "number" ? value : Number(value);
+	if (Number.isNaN(num)) return String(value);
+	return new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: "PKR",
+		useGrouping: true,
+	}).format(num);
+};
+
 const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product, ...props }) => {
 	const [isHovered, setIsHovered] = useState(false);
 	const navigate = useNavigate();
@@ -54,7 +65,9 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 				</div>
 				<div className="p-4">
 					<h3 className="font-semibold line-clamp-1">{product.name}</h3>
-					<p className="text-muted-foreground text-sm font-medium">PKR {product.original_price}</p>
+					<p className="text-muted-foreground text-sm font-medium">
+						{formatCurrency(product.original_price)}
+					</p>
 				</div>
 			</Link>
 			<AnimatePresence>
