@@ -125,6 +125,14 @@ export default function SubCategoriesPage({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
+								<Link
+									to={`/products?category=${categoryId}&sub_category=${rowData.id}`}
+									viewTransition
+									prefetch="intent"
+									target="_blank"
+								>
+									<DropdownMenuItem>View Products</DropdownMenuItem>
+								</Link>
 								<Link to={`${rowData.id}/update`} viewTransition prefetch="intent">
 									<DropdownMenuItem>Update</DropdownMenuItem>
 								</Link>
