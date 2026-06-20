@@ -530,6 +530,7 @@ export class FP_ProductsService extends Service {
 								available_sizes: [],
 								original_price: product.product_variant[0]?.original_price ?? 0,
 								url_key: product.meta_details?.url_key ?? "",
+								variant_ids: variantIds,
 							};
 						}
 
@@ -548,6 +549,7 @@ export class FP_ProductsService extends Service {
 								available_sizes: [],
 								original_price: product.product_variant[0]?.original_price ?? 0,
 								url_key: product.meta_details?.url_key ?? "",
+								variant_ids: variantIds,
 							};
 						}
 
@@ -558,6 +560,7 @@ export class FP_ProductsService extends Service {
 							available_sizes: sizeData.map((s) => s.value),
 							original_price: product.product_variant[0]?.original_price ?? 0,
 							url_key: product.meta_details?.url_key ?? "",
+							variant_ids: variantIds,
 						};
 					}),
 				);
@@ -784,6 +787,7 @@ export class FP_ProductsService extends Service {
 								available_sizes: [],
 								original_price: product.variants[0]?.original_price ?? 0,
 								url_key: product.meta_details?.url_key ?? "",
+								variant_ids: variantIds,
 							};
 						}
 						const sizeAttributeIds = variantAttrData.map((v) => v.attribute_id);
@@ -800,6 +804,7 @@ export class FP_ProductsService extends Service {
 								available_sizes: [],
 								original_price: product.variants[0]?.original_price ?? 0,
 								url_key: product.meta_details?.url_key ?? "",
+								variant_ids: variantIds,
 							};
 						}
 						const prices = product.variants.map((v) => v.original_price);
@@ -811,6 +816,7 @@ export class FP_ProductsService extends Service {
 							available_sizes: sizeData.map((s) => s.value),
 							original_price: minOriginalPrice,
 							url_key: product.meta_details?.url_key ?? "",
+							variant_ids: variantIds,
 						};
 					}),
 				);

@@ -1,10 +1,11 @@
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import type { AttributeType, ProductAttribute } from "@ecom/shared/types/attributes";
+import type { FullCoupon } from "@ecom/shared/types/coupons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BadgeQuestionMark } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { type LoaderFunctionArgs, useLoaderData, useSearchParams } from "react-router";
+import { type LoaderFunctionArgs, useLoaderData, useRouteLoaderData, useSearchParams } from "react-router";
 import z from "zod";
 import FeaturedProductCard from "~/components/Products/FeaturedProduct";
 import { MetaDetails } from "~/components/SEO/MetaDetails";
@@ -13,30 +14,8 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { get_FP_searchProducts, get_FP_searchProductsFilters } from "~/queries/products.q";
-
-const SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-
-function sortSizes(attributes: ProductAttribute[]) {
-	return [...attributes].sort((a, b) => {
-		const aValue = a.value.trim().toUpperCase();
-		const bValue = b.value.trim().toUpperCase();
-
-		const aIndex = SIZE_ORDER.indexOf(aValue);
-		const bIndex = SIZE_ORDER.indexOf(bValue);
-
-		const aIsAlpha = aIndex !== -1;
-		const bIsAlpha = bIndex !== -1;
-
-		if (aIsAlpha && bIsAlpha) {
-			return aIndex - bIndex;
-		}
-
-		if (aIsAlpha) return -1;
-		if (bIsAlpha) return 1;
-
-		return Number(aValue) - Number(bValue);
-	});
-}
+import { filterCoupons } from "~/utils/product-details-helpers";
+import type { loader as rootLoader } from "~/root";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const searchParams = new URL(request.url).searchParams;
@@ -65,13 +44,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const filtersData = await queryClient.fetchQuery(get_FP_searchProductsFilters({ request }));
 
-	if (sizes && filtersData.data?.attributes != null && "size" in filtersData.data.attributes) {
-		const filterSizes = filtersData.data?.attributes?.["size"] || [];
-		if (filterSizes) {
-			filtersData.data.attributes["size"] = sortSizes(filterSizes as ProductAttribute[]);
-		}
-	}
-
 	return {
 		productsResp,
 		filtersData,
@@ -95,6 +67,9 @@ const maxDefault = 25000;
 
 export default function SearchPage() {
 	const loaderData = useLoaderData<typeof loader>();
+	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
+	const allCoupons: FullCoupon[] = filterCoupons(rootLoaderData?.coupons ?? []) ?? [];
+
 	const products = loaderData.productsResp.products ?? [];
 	const filtersData = loaderData.filtersData;
 	const categories = filtersData.data?.categories ?? [];
@@ -175,7 +150,7 @@ export default function SearchPage() {
 				metaDescription="Discover exiciting offers, discounts, new arrivals for this season. Shop Now!"
 			/>
 			<div className="grid md:grid-cols-4 gap-2 max-container !h-full py-6">
-				<aside className="col-span-1 max-[920px]:hidden p-6 flex flex-col gap-4 [&>.fBx]:space-y-2 space-y-2 bg-card shadow-sm h-fit">
+				<aside className="col-span-1 max-[920px]:hidden p-6 flex flex-col gap-4 [&>.fBx]:space-y-2 space-y-2 bg-card shadow-sm h-fit border border-border">
 					<div className="flex items-center justify-between mb-4">
 						<h2 className="text-xl font-bold text-primary">Filters</h2>
 						<Button size={"sm"} variant={"link"} type="button" onClick={clearAllFilters}>
@@ -433,7 +408,11 @@ export default function SearchPage() {
 					<div className="grid max-[920px]:grid-cols-3 max-[640px]:grid-cols-2 max-[325px]:grid-cols-1 min-[920px]:grid-cols-4 gap-4">
 						{products.length > 0 ? (
 							products.map((product) => (
-								<FeaturedProductCard product={product} key={product.id} />
+								<FeaturedProductCard
+									key={product.id}
+									product={product}
+									allCoupons={allCoupons}
+								/>
 							))
 						) : (
 							<div className="col-span-full flex flex-col items-center justify-center py-20 text-center">

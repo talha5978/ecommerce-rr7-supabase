@@ -7,6 +7,8 @@ import type {
 	FP_SearchProductsResponse,
 } from "@ecom/shared/types/products";
 import type { GetProductFullDetailsResp } from "@ecom/shared/types/product-details";
+import { sortProductSizes, sortSizes } from "~/utils/sortSizes";
+import type { ProductAttribute } from "@ecom/shared/types/attributes";
 
 interface featuredProductsQueryArgs {
 	request: Request;
@@ -38,8 +40,15 @@ export const get_FP_searchProductsFilters = ({ request }: featuredProductsQueryA
 		queryKey: ["fp_search_products_filters"],
 		queryFn: async () => {
 			const prodSvc = new FP_ProductsService(request);
-			const result = await prodSvc.getAllProductsFiltersData();
-			return result;
+			const filtersData = await prodSvc.getAllProductsFiltersData();
+			if (filtersData.data?.attributes != null && "size" in filtersData.data.attributes) {
+				const filterSizes = filtersData.data?.attributes?.["size"] || [];
+				if (filterSizes) {
+					filtersData.data.attributes["size"] = sortSizes(filterSizes as ProductAttribute[]);
+				}
+			}
+
+			return filtersData;
 		},
 	});
 };
@@ -48,9 +57,14 @@ export const get_FP_searchProducts = ({ request, filters }: searchProductsQueryA
 	return queryOptions<FP_SearchProductsResponse>({
 		queryKey: ["fp_search_products", filters],
 		queryFn: async () => {
-			// console.log("categories: ", filters.categories, " ", filters.categories?.length);
 			const prodSvc = new FP_ProductsService(request);
 			const result = await prodSvc.getAllProducts(0, 20, filters);
+			result.products?.map((product) => {
+				if (product.available_sizes != null && product.available_sizes.length > 0) {
+					product.available_sizes = sortProductSizes(product.available_sizes);
+				}
+			});
+
 			return result;
 		},
 	});

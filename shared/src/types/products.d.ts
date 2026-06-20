@@ -68,6 +68,7 @@ export type FP_Featured_Product = {
 	available_sizes: string[];
 	original_price: number;
 	url_key: string;
+	variant_ids: string[];
 };
 
 export type FP_Featured_Products_Response = {

@@ -4,6 +4,7 @@ import type {
 	ProductFullDetails,
 	ProductVariant,
 } from "@ecom/shared/types/product-details";
+import type { FP_Featured_Product } from "@ecom/shared/types/products";
 import type { FullUser } from "@ecom/shared/types/user";
 
 type Attribute = {
@@ -162,5 +163,45 @@ export function getApplicableCoupons(
 		}
 
 		return true;
+	});
+}
+
+export function getApplicableCouponsForFeaturedProduct(
+	allCoupons: FullCoupon[],
+	product: FP_Featured_Product,
+	user: FullUser | null,
+) {
+	return allCoupons?.filter((coupon) => {
+		// Specific Product Check
+		if (coupon.specific_products && coupon.specific_products.length > 0) {
+			return coupon.specific_products.some((sp) => product.variant_ids.some((id) => id === sp.id));
+		}
+
+		// Customer Condition Check
+		if (user) {
+			if (coupon.customer_conditions?.customer_emails?.length > 0) {
+				return coupon.customer_conditions.customer_emails.some((email) => email === user.email);
+			}
+
+			if (coupon.customer_conditions?.customer_group) {
+				switch (coupon.customer_conditions.customer_group) {
+					case "admins":
+						return user.role?.role_name === "admin";
+					case "employee":
+						return user.role?.role_name === "employee";
+					case "consumer":
+						return user.role?.role_name === "consumer";
+					case "all":
+						return true;
+				}
+			}
+		} else {
+			// Not logged in
+			if (coupon.customer_conditions?.customer_group) {
+				return coupon.customer_conditions.customer_group === "all";
+			}
+		}
+
+		return true; // No restriction
 	});
 }
