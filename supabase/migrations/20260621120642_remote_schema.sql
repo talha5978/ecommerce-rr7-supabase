@@ -393,8 +393,7 @@ ALTER FUNCTION "public"."get_product_attribute_types"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_product_full_details"("p_product_id" "uuid") RETURNS "jsonb"
     LANGUAGE "sql"
-    AS $$
-WITH
+    AS $$WITH
 product_data AS (
   SELECT
     p.*,
@@ -480,11 +479,6 @@ collections_data AS (
       json_build_object(
         'id', co.id,
         'name', co.name,
-        'description', co.description,
-        'image_url', co.image_url,
-        'sort_order', co.sort_order,
-        'status', co.status,
-        'created_at', co."createdAt",
         'meta_details', (
           SELECT json_build_object(
             'id', md.id,
@@ -498,6 +492,7 @@ collections_data AS (
   FROM public.collection_products cp
   JOIN public.collections co ON cp.collection_id = co.id
   WHERE cp.product_id = p_product_id
+    AND co.status = true
   GROUP BY cp.product_id
 )
 SELECT json_build_object(
@@ -510,8 +505,7 @@ SELECT json_build_object(
 FROM product_data pd
 LEFT JOIN variants_data vd ON pd.id = vd.product_id
 LEFT JOIN product_attributes_data pad ON pd.id = pad.product_id
-LEFT JOIN collections_data cd ON pd.id = cd.product_id;
-$$;
+LEFT JOIN collections_data cd ON pd.id = cd.product_id;$$;
 
 
 ALTER FUNCTION "public"."get_product_full_details"("p_product_id" "uuid") OWNER TO "postgres";
