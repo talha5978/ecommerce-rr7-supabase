@@ -8,7 +8,7 @@ export class StripeService {
 	payment_currency: string;
 
 	constructor() {
-		this.stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY!);
+		this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 		this.payment_currency = PAYMENT_CURRENCY;
 	}
 

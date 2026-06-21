@@ -44,18 +44,14 @@ export default defineConfig(({ mode }) => {
 				"@radix-ui/react-dropdown-menu",
 				"@radix-ui/react-tooltip",
 				"@radix-ui/react-dialog",
+				"lucide-react",
 			],
 		},
 		define: {
 			"process.env.VITE_ENV": JSON.stringify(env.VITE_ENV),
 			"process.env.VITE_PROJECT_ID": JSON.stringify(env.VITE_PROJECT_ID),
 			"process.env.VITE_SUPABASE_URL": JSON.stringify(env.VITE_SUPABASE_URL),
-			"process.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-			"process.env.VITE_SUPABASE_SERVICE_ROLE__KEY": JSON.stringify(
-				env.VITE_SUPABASE_SERVICE_ROLE__KEY,
-			),
 			"process.env.VITE_STRIPE_PUBLISHABLE_KEY": JSON.stringify(env.VITE_STRIPE_PUBLISHABLE_KEY),
-			"process.env.VITE_STRIPE_SECRET_KEY": JSON.stringify(env.VITE_STRIPE_SECRET_KEY),
 			"process.env.VITE_MAIN_APP_URL": JSON.stringify(env.VITE_MAIN_APP_URL),
 		},
 		build: {
@@ -64,6 +60,9 @@ export default defineConfig(({ mode }) => {
 		},
 		server: {
 			port: 5173,
+		},
+		ssr: {
+			noExternal: ["lucide-react", "path-to-regexp"],
 		},
 	};
 });
