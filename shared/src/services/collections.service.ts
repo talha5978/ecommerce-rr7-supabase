@@ -4,6 +4,7 @@ import type {
 	CollectionDataItemsResponse,
 	CollectionDataSubCategory,
 	CollectionsNamesListResponse,
+	FP_CollectionData,
 	FP_HomeCollectionsResp,
 	FullCollection,
 	GetFullCollection,
@@ -291,7 +292,7 @@ export class CollectionsService extends Service {
 	async getFullCollection(collection_id: string): Promise<GetFullCollection> {
 		try {
 			const { data, error: queryError } = await this.supabase
-				.from("collections")
+				.from(this.COLLECTION_TABLE)
 				.select(
 					`
 					*,
@@ -517,6 +518,41 @@ export class FP_CollectionsService extends Service {
 			return {
 				collections: [],
 
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
+
+	// get collection details for collection page
+	async getFullCollection(collection_id: string): Promise<FP_CollectionData> {
+		try {
+			const { data, error: queryError } = await this.supabase
+				.from(this.COLLECTION_TABLE)
+				.select(
+					`
+					id, name, description,
+					${this.META_DETAILS_TABLE}(*)
+				`,
+				)
+				.eq("status", true)
+				.eq("id", collection_id)
+				.single();
+
+			let error: null | ApiError = null;
+			if (queryError) {
+				error = new ApiError(queryError.message, 500, [queryError.details]);
+			}
+
+			return {
+				collection: data as FP_CollectionData["collection"],
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { collection: null, error: err };
+			}
+			return {
+				collection: null,
 				error: new ApiError("Unknown error", 500, [err]),
 			};
 		}

@@ -19,6 +19,8 @@ export default [
 			]),
 		]),
 
+		route("/collection/:collectionId/:urlKey", "./routes/Collections/collection.tsx"),
+
 		route("/favourites", "./routes/Favourites/favourites.tsx"),
 	]),
 	route("*", "./routes/Error/404.tsx"),

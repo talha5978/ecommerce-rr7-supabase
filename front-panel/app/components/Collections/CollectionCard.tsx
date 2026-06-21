@@ -11,7 +11,12 @@ interface HomeCollectionCardProps {
 const HomeCollectionCard: React.FC<HomeCollectionCardProps> = memo(({ collection }) => {
 	return (
 		<div className="group relative w-full h-[380px] overflow-hidden rounded-xs bg-card border border-border shadow-sm hover:shadow-md transition-all duration-500">
-			<Link to={`/collection/${collection.id}`} className="block h-full">
+			<Link
+				to={`/collection/${collection.id}/${collection.url}`}
+				prefetch="none"
+				viewTransition
+				className="block h-full"
+			>
 				{/* Image */}
 				<div className="absolute inset-0">
 					<img

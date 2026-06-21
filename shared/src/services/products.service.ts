@@ -836,6 +836,168 @@ export class FP_ProductsService extends Service {
 			};
 		}
 	}
+
+	/** Fetch products by Collection ID */
+	async getProductsByCollection(
+		collectionId: string,
+		pageIndex = 0,
+		pageSize = 20,
+		filters: FP_Search_Filters,
+	): Promise<FP_SearchProductsResponse> {
+		try {
+			const { data: collectionProducts, error: cpError } = await this.supabase
+				.from(this.COLLECTION_PRODUCTS_TABLE)
+				.select("product_id")
+				.eq("collection_id", collectionId);
+
+			if (cpError || !collectionProducts || collectionProducts.length === 0) {
+				return { products: [], total: 0, error: null };
+			}
+
+			const productIds: string[] = collectionProducts.map((cp) => cp.product_id);
+
+			const from = pageIndex * pageSize;
+			const to = from + pageSize - 1;
+			const hasPriceFilter = filters.p_min !== null || filters.p_max !== null;
+			const hasColorFilter = (filters.colors?.length ?? 0) > 0;
+			const hasSizeFilter = (filters.sizes?.length ?? 0) > 0;
+			const hasMaterialFilter = (filters.material?.length ?? 0) > 0;
+			const hasStyleFilter = (filters.style?.length ?? 0) > 0;
+			const hasVariantFilter = hasPriceFilter || hasColorFilter || hasSizeFilter;
+
+			let selectStr = `
+				id,
+				name,
+				cover_image,
+				variants:${this.PRODUCT_VARIANT_TABLE} (
+					id,
+					product_id,
+					original_price
+				),
+				${this.PRODUCT_ATTRIBUTES_TABLE} (
+					attribute_id
+				),
+				${this.META_DETAILS_TABLE} (
+					url_key
+				)
+			`;
+			if (hasVariantFilter) {
+				selectStr += `, filter_variants:${this.PRODUCT_VARIANT_TABLE}!inner ( original_price`;
+				if (hasColorFilter) {
+					selectStr += `, color_attrs:${this.VARIANT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+				}
+				if (hasSizeFilter) {
+					selectStr += `, size_attrs:${this.VARIANT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+				}
+				selectStr += ` )`;
+			}
+			if (hasMaterialFilter) {
+				selectStr += `, material_attrs:${this.PRODUCT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+			}
+			if (hasStyleFilter) {
+				selectStr += `, style_attrs:${this.PRODUCT_ATTRIBUTES_TABLE}!inner ( attribute_id )`;
+			}
+
+			let query = this.supabase
+				.from(this.PRODUCTS_TABLE)
+				.select(selectStr, { count: "exact" })
+				.eq("status", true)
+				.in("id", productIds) as unknown as PostgrestFilterBuilder<any, any, any, RawProduct[]>;
+
+			if (filters.p_min !== null) {
+				query = query.gte("filter_variants.original_price", Number(filters.p_min));
+			}
+			if (filters.p_max !== null) {
+				query = query.lte("filter_variants.original_price", Number(filters.p_max));
+			}
+			if (hasColorFilter) {
+				query = query.in("filter_variants.color_attrs.attribute_id", filters.colors!);
+			}
+			if (hasSizeFilter) {
+				query = query.in("filter_variants.size_attrs.attribute_id", filters.sizes!);
+			}
+			if (hasMaterialFilter) {
+				query = query.in("material_attrs.attribute_id", filters.material!);
+			}
+			if (hasStyleFilter) {
+				query = query.in("style_attrs.attribute_id", filters.style!);
+			}
+
+			query = query.range(from, to);
+			const { data: rawData, error: fetchError, count } = await query;
+			let error: null | ApiError = null;
+			let products: FP_Featured_Product[] | null = null;
+			if (fetchError || rawData == null) {
+				error = new ApiError(fetchError.message, 500, [fetchError.details]);
+			} else {
+				const data = rawData;
+				products = await Promise.all(
+					data.map(async (product) => {
+						// Collect all variant IDs for the product
+						const variantIds = product.variants.map((v) => v.id);
+						// Fetch all variant attributes
+						const { data: variantAttrData, error: variantAttrError } = await this.supabase
+							.from(this.VARIANT_ATTRIBUTES_TABLE)
+							.select("attribute_id")
+							.in("variant_id", variantIds);
+						if (variantAttrError || !variantAttrData) {
+							return {
+								id: product.id,
+								name: product.name,
+								cover_image: product.cover_image,
+								available_sizes: [],
+								original_price: product.variants[0]?.original_price ?? 0,
+								url_key: product.meta_details?.url_key ?? "",
+								variant_ids: variantIds,
+							};
+						}
+						const sizeAttributeIds = variantAttrData.map((v) => v.attribute_id);
+						const { data: sizeData, error: sizeError } = await this.supabase
+							.from(this.ATTRIBUTES_TABLE)
+							.select("value")
+							.in("id", sizeAttributeIds)
+							.eq("attribute_type", "size");
+						if (sizeError || !sizeData) {
+							return {
+								id: product.id,
+								name: product.name,
+								cover_image: product.cover_image,
+								available_sizes: [],
+								original_price: product.variants[0]?.original_price ?? 0,
+								url_key: product.meta_details?.url_key ?? "",
+								variant_ids: variantIds,
+							};
+						}
+						const prices = product.variants.map((v) => v.original_price);
+						const minOriginalPrice = prices.length > 0 ? Math.min(...prices) : 0;
+						return {
+							id: product.id,
+							name: product.name,
+							cover_image: product.cover_image,
+							available_sizes: sizeData.map((s) => s.value),
+							original_price: minOriginalPrice,
+							url_key: product.meta_details?.url_key ?? "",
+							variant_ids: variantIds,
+						};
+					}),
+				);
+			}
+			return {
+				products,
+				total: count ?? 0,
+				error,
+			};
+		} catch (err: any) {
+			if (err instanceof ApiError) {
+				return { products: [], total: 0, error: err };
+			}
+			return {
+				products: [],
+				total: 0,
+				error: new ApiError("Unknown error", 500, [err]),
+			};
+		}
+	}
 }
 
 type RawProduct = {

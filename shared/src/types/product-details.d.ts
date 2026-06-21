@@ -31,11 +31,6 @@ export interface ProductVariant {
 export interface Collection {
 	id: string;
 	name: string;
-	description: string;
-	image_url: string;
-	sort_order: number;
-	status: boolean;
-	created_at: string;
 	meta_details: {
 		id: string;
 		url_key: string;

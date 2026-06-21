@@ -72,7 +72,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = memo(({ product,
 			{...props}
 		>
 			<Link to={`/product/${product.id}/${product.url_key}`} prefetch="intent" className="block">
-				<div className="relative aspect-[4/4.3] overflow-hidden bg-muted">
+				<div className="relative aspect-[3.7/4.3] overflow-hidden bg-muted">
 					<img
 						src={SUPABASE_IMAGE_BUCKET_PATH + product.cover_image}
 						alt={product.name}

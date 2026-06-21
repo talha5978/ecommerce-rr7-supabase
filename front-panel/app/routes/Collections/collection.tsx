@@ -13,13 +13,19 @@ import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { get_FP_searchProducts, get_FP_searchProductsFilters } from "~/queries/products.q";
+import { get_FP_searchProductsFilters } from "~/queries/products.q";
+import { getCollectionDetails } from "~/queries/collections.q";
 import { filterCoupons } from "~/utils/product-details-helpers";
 import type { loader as rootLoader } from "~/root";
 
 const PAGE_SIZE = 24;
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const collectionId = params.collectionId;
+	if (!collectionId) {
+		throw new Response("Collection id is required", { status: 400 });
+	}
+
 	const searchParams = new URL(request.url).searchParams;
 	const p_max = searchParams.get("p_max");
 	const p_min = searchParams.get("p_min");
@@ -27,11 +33,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const sizes = searchParams.get("sizes")?.split(",") ?? [];
 	const material = searchParams.get("material")?.split(",") ?? [];
 	const style = searchParams.get("style")?.split(",") ?? [];
-	const categories = searchParams.get("categories")?.split(",") ?? [];
 	const page = Number(searchParams.get("page") ?? "1");
 
-	const productsResp = await queryClient.fetchQuery(
-		get_FP_searchProducts({
+	const collectionDetails = await queryClient.fetchQuery(
+		getCollectionDetails({
 			request,
 			filters: {
 				colors,
@@ -40,24 +45,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				p_min,
 				sizes,
 				style,
-				categories,
+				categories: [],
 			},
 			pageIndex: page - 1,
 			pageSize: PAGE_SIZE,
+			collection_id: collectionId,
 		}),
 	);
 
 	const filtersData = await queryClient.fetchQuery(get_FP_searchProductsFilters({ request }));
 
 	return {
-		productsResp,
+		productsResp: collectionDetails.products,
+		collection: collectionDetails.collection,
 		filtersData,
 	};
 };
 
 const ArraySchema = z.array(z.string()).optional();
 const SearchFiltersSchema = z.object({
-	categories: ArraySchema,
 	sizes: ArraySchema,
 	colors: ArraySchema,
 	material: ArraySchema,
@@ -70,14 +76,14 @@ type Attribs = Record<AttributeType, ProductAttribute[]>;
 
 const maxDefault = 25000;
 
-export default function SearchPage() {
+export default function CollectionPage() {
 	const loaderData = useLoaderData<typeof loader>();
 	const rootLoaderData = useRouteLoaderData<typeof rootLoader>("root");
 	const allCoupons: FullCoupon[] = filterCoupons(rootLoaderData?.coupons ?? []) ?? [];
 
 	const products = loaderData.productsResp.products ?? [];
 	const filtersData = loaderData.filtersData;
-	const categories = filtersData.data?.categories ?? [];
+	const collection = loaderData.collection;
 
 	const colors = (filtersData.data?.attributes as Attribs)!.color ?? [];
 	const sizes = (filtersData.data?.attributes as Attribs)!.size ?? [];
@@ -87,7 +93,6 @@ export default function SearchPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const urlFilters = {
-		categories: searchParams.get("categories")?.split(",").filter(Boolean) ?? [],
 		colors: searchParams.get("colors")?.split(",").filter(Boolean) ?? [],
 		sizes: searchParams.get("sizes")?.split(",").filter(Boolean) ?? [],
 		material: searchParams.get("material")?.split(",").filter(Boolean) ?? [],
@@ -110,7 +115,7 @@ export default function SearchPage() {
 		const newParams = new URLSearchParams(searchParams);
 		let hasFilterChange = false;
 
-		(["categories", "colors", "sizes", "material", "style"] as const).forEach((key) => {
+		(["colors", "sizes", "material", "style"] as const).forEach((key) => {
 			const value = watched[key];
 			const currentValue = searchParams.get(key);
 
@@ -168,7 +173,6 @@ export default function SearchPage() {
 		const newParams = new URLSearchParams();
 		setSearchParams(newParams, { replace: true });
 		form.reset({
-			categories: [],
 			colors: [],
 			sizes: [],
 			material: [],
@@ -189,8 +193,9 @@ export default function SearchPage() {
 	return (
 		<>
 			<MetaDetails
-				metaTitle="Search | Voguewalk"
-				metaDescription="Discover exiciting offers, discounts, new arrivals for this season. Shop Now!"
+				metaTitle={(collection?.meta_details?.meta_title ?? "Collection") + " | Voguewalk"}
+				metaDescription={collection?.meta_details?.meta_description ?? ""}
+				metaKeywords={collection?.meta_details?.meta_keywords ?? ""}
 			/>
 			<div className="grid md:grid-cols-4 gap-2 max-container !h-full py-6">
 				<aside className="col-span-1 max-[920px]:hidden p-6 flex flex-col gap-4 [&>.fBx]:space-y-2 space-y-2 bg-card shadow-sm h-fit border border-border">
@@ -199,47 +204,6 @@ export default function SearchPage() {
 						<Button size={"sm"} variant={"link"} type="button" onClick={clearAllFilters}>
 							Clear All
 						</Button>
-					</div>
-					<div className="fBx">
-						<h3>Categories</h3>
-						<div>
-							{categories.map((category) => (
-								<Controller
-									key={category.id}
-									name="categories"
-									control={control}
-									render={({ field }) => {
-										const values: string[] = (field.value ?? []).map(String);
-										const idStr = String(category.id);
-										const checked = values.includes(idStr);
-
-										return (
-											<Label className="flex items-center px-2 py-1 cursor-pointer">
-												<Checkbox
-													checked={checked}
-													onCheckedChange={(val) => {
-														const isChecked = Boolean(val);
-														let next: string[];
-														if (isChecked) {
-															// add if not present
-															next = values.includes(idStr)
-																? values
-																: [...values, idStr];
-														} else {
-															// remove
-															next = values.filter((v) => v !== idStr);
-														}
-														field.onChange(next);
-													}}
-													className="mr-2 cursor-pointer"
-												/>
-												{category.category_name}
-											</Label>
-										);
-									}}
-								/>
-							))}
-						</div>
 					</div>
 					<div className="fBx">
 						<h3>Price (PKR)</h3>
@@ -448,6 +412,13 @@ export default function SearchPage() {
 					</div>
 				</aside>
 				<section className="col-span-3 px-4 py-4">
+					<div className="mb-6">
+						<h1 className="md:text-3xl text-2xl font-semibold tracking-tight">
+							{collection?.name}
+						</h1>
+						<p className="text-muted-foreground">{collection?.description}</p>
+					</div>
+
 					<div className="grid max-[920px]:grid-cols-3 max-[640px]:grid-cols-2 max-[325px]:grid-cols-1 min-[920px]:grid-cols-4 gap-4">
 						{products.length > 0 ? (
 							products.map((product) => (

@@ -30,8 +30,10 @@ export default function HomePage() {
 				metaDescription="Discover exiciting offers, discounts, new arrivals for this season. Shop Now!"
 			/>
 			<HeroSection data={hero_sections} />
-			<CollectionsSection collections={collections} />
-			<FeaturedProductsSection products={featured_products} />
+			<div className="space-y-10 mt-10">
+				<FeaturedProductsSection products={featured_products} />
+				<CollectionsSection collections={collections} />
+			</div>
 		</>
 	);
 }

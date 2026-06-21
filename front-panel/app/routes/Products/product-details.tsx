@@ -1,6 +1,6 @@
 import { queryClient } from "@ecom/shared/lib/query-client/queryClient";
 import { ChevronRight, CircleCheck, Copy, Heart } from "lucide-react";
-import { type LoaderFunctionArgs, useLoaderData, useNavigate, useRouteLoaderData } from "react-router";
+import { Link, type LoaderFunctionArgs, useLoaderData, useNavigate, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
 import ProductImageCarousel from "~/components/Products/ProductImagesCarousel";
 import { Breadcrumbs } from "~/components/SEO/Breadcrumbs";
@@ -404,32 +404,28 @@ export default function ProductDetailsPage() {
 								</div>
 							</div>
 						</form>
-						{data.collections.length > 0 && (
-							<motion.div
-								className="flex flex-col gap-1.5 mt-4"
-								initial={{ opacity: 0, y: 10 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ delay: 0.2 }}
-							>
-								<Label className="text-muted-foreground text-xs">Part of</Label>
+						{data.collections && data.collections.length > 0 && (
+							<div className="mt-8">
+								<Label className="text-muted-foreground text-sm mb-3">
+									Part of Collections
+								</Label>
 								<div className="flex flex-wrap gap-2">
-									{data.collections.map((col, index) => (
-										<motion.div
+									{data.collections.map((col) => (
+										<Link
 											key={col.id}
-											initial={{ opacity: 0, scale: 0.9 }}
-											animate={{ opacity: 1, scale: 1 }}
-											transition={{ delay: 0.05 * index }}
+											to={`/collection/${col.id}/${col.meta_details.url_key}`}
+											className="inline-block"
 										>
 											<Badge
 												variant="outline"
-												className="text-xs cursor-pointer hover:bg-accent"
+												className="text-sm px-4 py-1.5 hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
 											>
 												{col.name}
 											</Badge>
-										</motion.div>
+										</Link>
 									))}
 								</div>
-							</motion.div>
+							</div>
 						)}
 						<ProductAttributesSection product_attributes={data.product_attributes} />
 					</div>

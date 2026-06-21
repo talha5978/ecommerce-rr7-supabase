@@ -1,6 +1,7 @@
 import type { ApiError } from "@ecom/shared/utils/ApiError";
 import type { Database } from "@ecom/shared/types/supabase";
 import type { MetaDetailsRow } from "@ecom/shared/types/meta_details";
+import type { FP_SearchProductsResponse } from "@ecom/shared/types/products";
 
 export interface HighLevelCollection {
 	id: string;
@@ -94,4 +95,19 @@ export type FP_HomeCollection = {
 export type FP_HomeCollectionsResp = {
 	collections: FP_HomeCollection[] | null;
 	error: ApiError | null;
+};
+
+export type FP_CollectionData = {
+	collection: {
+		id: string;
+		name: string;
+		description: string;
+		meta_details: MetaDetailsRow | null;
+	} | null;
+	error: ApiError | null;
+};
+
+export type FP_CollectionDetails = {
+	collection: FP_CollectionData["collection"];
+	products: FP_SearchProductsResponse;
 };
