@@ -13,7 +13,7 @@ import type {
 	RecentOrder,
 } from "@ecom/shared/types/admin-dashboard";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<AdminDashboardService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class AdminDashboardService extends Service {
 	async getSalesAndOrdersData(): Promise<MainBarChartData> {
 		try {

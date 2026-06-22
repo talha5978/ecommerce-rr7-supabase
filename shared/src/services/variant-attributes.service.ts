@@ -13,7 +13,7 @@ import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 import { requireAllPermissions, requireAnyPermission } from "@ecom/shared/middlewares/permissions.middleware";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<VariantsAttributesService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class VariantsAttributesService extends Service {
 	/** Create bulk of variant attributes */
 	@UseMiddleware(

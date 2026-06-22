@@ -22,7 +22,7 @@ import { loggerMiddleware } from "@ecom/shared/middlewares/logger.middleware";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<CollectionsService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class CollectionsService extends Service {
 	/** Fetch collections for index page */
 	async getHighLevelCollections(

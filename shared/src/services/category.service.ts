@@ -30,7 +30,7 @@ import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<CategoryService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class CategoryService extends Service {
 	/** Fetch categoreies list where each category has at least one sub category (to be used for mutations and other tasks like in product creation page, updation page, theri filters and more...) */
 	async getAllCategories({

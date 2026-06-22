@@ -23,7 +23,7 @@ import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.midd
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductAttributesService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class ProductAttributesService extends Service {
 	/** Fetch product attributes types for index page */
 	async getHighLevelProductAttributes(): Promise<HighLevelProductAttributesResponse> {

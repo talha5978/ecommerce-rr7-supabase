@@ -32,7 +32,7 @@ import { requireAllPermissions } from "@ecom/shared//middlewares/permissions.mid
 import { Permission } from "@ecom/shared//permissions/permissions.enum";
 import type { GetProductFullDetailsResp, ProductFullDetails } from "@ecom/shared/types/product-details";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductsService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class ProductsService extends Service {
 	/** Fetch product name to show on varaint creation and updation page as a disabled field! */
 	async getProductName(product_id: string): Promise<ProductNameResponse> {

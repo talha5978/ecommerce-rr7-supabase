@@ -12,5 +12,31 @@
 			"require": "./src/*"
 		}
 	},
-	"types": "./src/*"
+	"types": "./src/*",
+	"dependencies": {
+		"@sparticuz/chromium": "^141.0.0",
+		"@stripe/stripe-js": "^8.3.0",
+		"@supabase/auth-js": "^2.108.2",
+		"@supabase/postgrest-js": "^2.108.2",
+		"@supabase/ssr": "^0.6.1",
+		"@supabase/supabase-js": "^2.108.2",
+		"@tabler/icons-react": "^3.44.0",
+		"@tanstack/react-query": "^5.101.0",
+		"clsx": "^2.1.1",
+		"date-fns": "^2.30.0",
+		"dotenv": "^17.4.2",
+		"js-sha256": "^0.11.1",
+		"leaflet-geosearch": "^4.4.0",
+		"lucide-react": "^0.511.0",
+		"sharp": "^0.34.4",
+		"slugify": "^1.6.9",
+		"stripe": "^19.3.1",
+		"tailwind-merge": "^3.6.0",
+		"uuid": "^11.1.0",
+		"zod": "^3.25.76"
+	},
+	"devDependencies": {
+		"@types/node": "^20.19.17",
+		"@types/uuid": "^10.0.0"
+	}
 }

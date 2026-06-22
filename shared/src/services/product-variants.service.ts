@@ -29,7 +29,7 @@ import { UseMiddleware } from "@ecom/shared//decorators/useMiddleware";
 import { requireAllPermissions } from "@ecom/shared//middlewares/permissions.middleware";
 import { Permission } from "@ecom/shared//permissions/permissions.enum";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductVariantsService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class ProductVariantsService extends Service {
 	/** Fetch products variants for a product */
 	async getProductVariants(
@@ -635,7 +635,7 @@ export class ProductVariantsService extends Service {
 	}
 }
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<FP_ProductVariantsService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class FP_ProductVariantsService extends Service {
 	/** Update a product variant stock after the order placement */
 	async updateProductVaraintStock(input: { variant_id: string; stock: number }[]): Promise<void> {

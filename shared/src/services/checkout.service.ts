@@ -10,7 +10,7 @@ import { asServiceMiddleware } from "@ecom/shared/middlewares/utils";
 import { verifyUser } from "@ecom/shared/middlewares/auth.middleware";
 import { FP_ProductVariantsService } from "./product-variants.service";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<CheckoutService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class CheckoutService extends Service {
 	/** Function to be used in the confirm checkout action function */
 	async confirmCheckout(payload: PlaceOrderServicePayload) {

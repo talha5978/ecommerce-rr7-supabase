@@ -268,6 +268,10 @@ export class CouponsService extends Service {
 
 			coupon_id = couponData.coupon_id;
 
+			if (coupon_id == null) {
+				throw new ApiError("Failed to insert coupon", 500, []);
+			}
+
 			// Handle specific_target_products
 			if (input.specific_target_products && input.specific_target_products.length > 0) {
 				const product_ids = await utilsSvc.insertSpecificCouponProducts({
@@ -290,7 +294,8 @@ export class CouponsService extends Service {
 
 					if (
 						input.customer_conditions.customer_emails != null &&
-						input.customer_conditions.customer_emails.length !== 0
+						input.customer_conditions.customer_emails.length !== 0 &&
+						customer_condition_id != null
 					) {
 						const email_ids = await utilsSvc.insertCustomerEmails({
 							customer_condition_id,

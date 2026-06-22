@@ -15,7 +15,7 @@ import type { HeroUpdateActionData, HeroSectionCreateData } from "@ecom/shared/s
 import { MediaService } from "@ecom/shared/services/media.service";
 import { stringToBooleanConverter } from "@ecom/shared/lib/utils";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<HeroSectionsService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class HeroSectionsService extends Service {
 	async gethighLevelHeroSections(
 		q = "",

@@ -12,7 +12,7 @@ import { Permission } from "@ecom/shared/permissions/permissions.enum";
 import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
 import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<ProductRAttributesService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class ProductRAttributesService extends Service {
 	/** Create bulk of product related attributes */
 	@UseMiddleware(requireAllPermissions([Permission.CREATE_PRODUCT_R_ATTRIBUTES]))

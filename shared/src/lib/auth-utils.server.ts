@@ -32,7 +32,7 @@ export function extractAuthId(request: Request): string | null {
 		`sb-${process.env.VITE_PROJECT_ID}-refresh-token`,
 	];
 
-	let rawToken = null;
+	let rawToken: string | null = null;
 	for (const name of candidates) {
 		if (cookies[name]) {
 			rawToken = cookies[name];

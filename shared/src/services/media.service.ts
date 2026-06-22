@@ -11,7 +11,7 @@ import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.middleware";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<MediaService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class MediaService extends Service {
 	/** Uploads image to supabase storage */
 	@UseMiddleware(requireAllPermissions([Permission.UPLOAD_IMAGES]))

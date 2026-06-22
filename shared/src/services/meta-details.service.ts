@@ -10,7 +10,7 @@ import { requireAllPermissions } from "@ecom/shared/middlewares/permissions.midd
 import { UseMiddleware } from "@ecom/shared/decorators/useMiddleware";
 import { Permission } from "@ecom/shared/permissions/permissions.enum";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<MetaDetailsService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class MetaDetailsService extends Service {
 	/** Create meta details row */
 	@UseMiddleware(requireAllPermissions([Permission.CREATE_META_DETAILS]))

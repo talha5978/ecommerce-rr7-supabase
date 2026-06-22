@@ -10,7 +10,7 @@ import type {
 	UpdateStoreContactInfo,
 } from "@ecom/shared/types/store-settings";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<StoreSettingsService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class StoreSettingsService extends Service {
 	/** Fetch the store settings */
 	async getStoreSettings(): Promise<getStoreSettingsResp> {

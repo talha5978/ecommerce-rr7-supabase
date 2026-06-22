@@ -8,7 +8,7 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 dotenvConfig({ path: path.resolve(__dirname, "../../../../.env") });
 
 function createSupabaseServerClient(request: Request) {
-	console.log(process.env.VITE_SUPABASE_URL, "\n", process.env.SUPABASE_SERVICE_ROLE__KEY);
+	//	console.log(process.env.VITE_SUPABASE_URL, "\n", process.env.SUPABASE_SERVICE_ROLE__KEY);
 	if (!process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE__KEY) {
 		throw new Error("Missing Supabase environment variables");
 	}

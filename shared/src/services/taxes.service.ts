@@ -12,7 +12,7 @@ import type { GetAllTaxesResp, GetALlTaxRates_FP, GetAllTaxTypes } from "@ecom/s
 import type { CreateTaxTypeFormValues, CreateTaxFormValues } from "@ecom/shared/schemas/taxes.schema";
 import { stringToBooleanConverter } from "@ecom/shared/lib/utils";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<TaxesService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class TaxesService extends Service {
 	/** Fetch the taxe rates for the admin settings */
 	@UseMiddleware(requireAllPermissions([Permission.MANAGE_SETTINGS]))

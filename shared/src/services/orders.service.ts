@@ -18,7 +18,7 @@ import { AuthService } from "@ecom/shared/services/auth.service";
 import { defaultOp, OrderFilters } from "@ecom/shared/schemas/orders-filter.schema";
 import { applyFilterOps } from "@ecom/shared/utils/applyFilterOps";
 
-@UseClassMiddleware(loggerMiddleware, asServiceMiddleware<OrdersService>(verifyUser))
+@UseClassMiddleware(loggerMiddleware, asServiceMiddleware(verifyUser))
 export class OrdersService extends Service {
 	/** Fetch all orders with filters */
 	async getAllOrders(
@@ -303,7 +303,7 @@ export class FP_OrdersService extends Service {
 				.select("id")
 				.single();
 
-			if (billingErr) {
+			if (billingErr && shipping_address_id) {
 				await this.deleteAddress(shipping_address_id);
 				throw new ApiError(billingErr.message, Number(billingErr.code), [billingErr.details]);
 			}
