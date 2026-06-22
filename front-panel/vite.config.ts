@@ -45,6 +45,7 @@ export default defineConfig(({ mode }) => {
 				"@radix-ui/react-tooltip",
 				"@radix-ui/react-dialog",
 				"lucide-react",
+				"path-to-regexp",
 			],
 		},
 		define: {
@@ -62,7 +63,10 @@ export default defineConfig(({ mode }) => {
 			port: 5173,
 		},
 		ssr: {
-			noExternal: ["lucide-react", "path-to-regexp"],
+			noExternal: ["path-to-regexp", "lucide-react"],
+			optimizeDeps: {
+				include: ["path-to-regexp", "lucide-react"],
+			},
 		},
 	};
 });
