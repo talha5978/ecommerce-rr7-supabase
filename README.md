@@ -137,15 +137,15 @@ Open [http://localhost:3000](http://localhost:3000)
 ## Database Setup (Supabase)
 
 1. Go to your Supabase Dashboard → **SQL Editor**
-2. Run the migration file:
-   ```sql
-   supabase/migrations/20260621120642_remote_schema.sql
-   ```
+2. Copy the contents of the migration file run the migration file:
+    ```sql
+    supabase/migrations/..._remote_schema.sql
+    ```
 3. Run any additional functions (category/sub-category deletion, etc.) if needed.
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in the required values:
+Copy `.env.sample` to `.env` and fill in the required values:
 
 ```
 VITE_ENV=<production or development>
@@ -167,7 +167,7 @@ This project is configured for deployment on Render, Railway, or any Docker-base
 
 1. **Name:** my-ecom-app (or anything)
 2. **Environment:** Docker
-3. **Environment:** Singapore (or any other)
+3. **Region:** Singapore (or any other)
 4. **Dockerfile Path:** front-panel/Dockerfile
 5. **Environment Variables:** Add these from .env
 6. **Secret Variable File:** Name set to .env file and copy paste .env content
