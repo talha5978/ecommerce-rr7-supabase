@@ -163,6 +163,13 @@ STRIPE_SECRET_KEY=<INSERT_KEY_FROM_STRIPE_DASHBOARD>
 
 ## Deployment
 
-This project is configured for deployment on Render, Railway, or any Docker-based platform using the provided Dockerfile. Moreover guide is coming soon
+This project is configured for deployment on Render, Railway, or any Docker-based platform using the provided Dockerfile. Currently the front-panel is deployed on render web service. Here is the path that you may follow to deploy a web service of this app to production.
+
+1. **Name:** my-ecom-app (or anything)
+2. **Environment:** Docker
+3. **Environment:** Singapore (or any other)
+4. **Dockerfile Path:** front-panel/Dockerfile
+5. **Environment Variables:** Add these from .env
+6. **Secret Variable File:** Name set to .env file and copy paste .env content
 
 <u><i>Developed by Talha<i><u>
