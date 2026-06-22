@@ -6,6 +6,8 @@ export default [
 	route("/logout", "./routes/_actions/logout.tsx"),
 	route("/auth/callback", "./routes/Login/google-login-callback.tsx"),
 
+	route("health", "./routes/health.ts"),
+
 	layout("./routes/layout.tsx", [
 		index("routes/Home/home.tsx"),
 		route("/product/:productId/:metaUrl", "./routes/Products/product-details.tsx"),
